@@ -234,6 +234,9 @@
                     <input type="date" id="filtro-hasta">
                 </div>
                 <button class="btn btn-secundario btn-limpiar-filtros" id="btn-limpiar-filtros">Limpiar</button>
+                <button class="btn btn-exito btn-limpiar-filtros" id="btn-exportar-excel" style="gap:0.375rem;">
+                    📥 Exportar Excel
+                </button>
             </div>
         </div>
 
@@ -283,6 +286,7 @@
         import { Toast } from '/js/components/toast.js';
         import { Loader } from '/js/components/loader.js';
         import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, puedeEditar, puedeEliminar, puedeCambiarEstado, badgeClase } from '/js/modules/acciones-requisiciones.js';
+        import { exportarRequisicionesExcel } from '/js/modules/exportar-excel.js';
 
         let usuarioActual = null;
         let perfilActual = null;
@@ -333,6 +337,37 @@
                 document.getElementById('filtro-hasta').value = '';
                 paginaActual = 1;
                 cargarRequisiciones();
+            });
+
+            // Exportar a Excel
+            document.getElementById('btn-exportar-excel').addEventListener('click', () => {
+                if (requisicionesCache.length === 0) {
+                    Toast.advertencia('No hay requisiciones para exportar.');
+                    return;
+                }
+
+                try {
+                    // Construir descripción de filtros aplicados
+                    const filtroEstado = document.getElementById('filtro-estado').value;
+                    const filtroDesde = document.getElementById('filtro-desde').value;
+                    const filtroHasta = document.getElementById('filtro-hasta').value;
+                    const filtroBusqueda = document.getElementById('filtro-busqueda').value.trim();
+                    let filtrosTexto = [];
+                    if (filtroEstado !== 'todos') filtrosTexto.push(`Estado: ${filtroEstado}`);
+                    if (filtroDesde) filtrosTexto.push(`Desde: ${filtroDesde}`);
+                    if (filtroHasta) filtrosTexto.push(`Hasta: ${filtroHasta}`);
+                    if (filtroBusqueda) filtrosTexto.push(`Búsqueda: "${filtroBusqueda}"`);
+
+                    const nombre = exportarRequisicionesExcel(requisicionesCache, {
+                        empresa: 'Electroingeniería S.A.S.',
+                        usuario: perfilActual.nombre_completo,
+                        filtros: filtrosTexto.length > 0 ? `Filtros: ${filtrosTexto.join(' | ')}` : 'Sin filtros aplicados'
+                    });
+
+                    Toast.exito(`Archivo "${nombre}" descargado.`);
+                } catch (err) {
+                    Toast.error(err.message || 'Error al exportar.');
+                }
             });
         }
 
