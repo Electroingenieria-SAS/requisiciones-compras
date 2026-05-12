@@ -36,6 +36,7 @@
         <div class="nav-links">
             <a href="/dashboard.html" class="nav-link activo">Dashboard</a>
             <a href="/requisiciones.html" class="nav-link">Requisiciones</a>
+            <a href="/admin.html" class="nav-link oculto" id="nav-admin">Administración</a>
         </div>
     </nav>
 
@@ -110,6 +111,11 @@
             const rolTexto = esAdministrador(perfil) ? 'Administrador' : 'Usuario';
             const rolClase = esAdministrador(perfil) ? 'badge-admin' : 'badge-usuario';
             document.getElementById('info-rol').innerHTML = `<span class="badge-estado ${rolClase}">${rolTexto}</span>`;
+
+            // Mostrar link de admin si es administrador
+            if (esAdministrador(perfil)) {
+                document.getElementById('nav-admin').classList.remove('oculto');
+            }
 
             // Cargar métricas
             const stats = await obtenerEstadisticas();

@@ -118,6 +118,7 @@
         <div class="nav-links">
             <a href="/dashboard.html" class="nav-link">Dashboard</a>
             <a href="/requisiciones.html" class="nav-link activo">Requisiciones</a>
+            <a href="/admin.html" class="nav-link oculto" id="nav-admin">Administración</a>
         </div>
         <div class="nav-acciones">
             <button class="btn btn-primario" id="btn-nueva-requisicion">+ Nueva Requisición</button>
@@ -310,6 +311,11 @@
             document.getElementById('campo-fecha').value = formatearFecha(new Date());
             document.getElementById('campo-solicitante').value = perfil.nombre_completo;
             document.getElementById('campo-proceso').value = perfil.proceso;
+
+            // Mostrar link de admin si es administrador
+            if (perfil.rol === 'administrador') {
+                document.getElementById('nav-admin').classList.remove('oculto');
+            }
 
             configurarEventos();
             await cargarRequisiciones();

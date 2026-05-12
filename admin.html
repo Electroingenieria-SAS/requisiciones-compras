@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Electroingeniería S.A.S.</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/requisiciones.css">
+    <style>
+        .usuarios-grid { display: grid; gap: 1rem; }
+        .usuario-card {
+            background: white; border-radius: var(--radio-lg); border: 1px solid var(--color-borde);
+            padding: 1.25rem; display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; transition: var(--transicion);
+        }
+        .usuario-card:hover { box-shadow: var(--sombra-md); }
+        .usuario-card.inactivo { opacity: 0.5; background: var(--color-gris-light); }
+        .usuario-info { flex: 1; display: flex; align-items: center; gap: 1rem; }
+        .usuario-avatar {
+            width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: var(--texto-lg); color: white;
+        }
+        .usuario-datos { flex: 1; }
+        .usuario-nombre { font-weight: 600; font-size: var(--texto-base); color: var(--color-texto); }
+        .usuario-email { font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+        .usuario-meta { display: flex; gap: 0.5rem; margin-top: 0.375rem; flex-wrap: wrap; }
+        .usuario-acciones { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .badge-sm {
+            font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: var(--radio-full);
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .badge-proceso { background: var(--color-azul-light); color: var(--color-azul); }
+        .badge-activo { background: var(--color-cumplido-bg); color: var(--color-cumplido); }
+        .badge-inactivo { background: var(--color-eliminado-bg); color: var(--color-error); }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: white; border-radius: var(--radio-lg); padding: 1rem 1.25rem;
+            border: 1px solid var(--color-borde); text-align: center;
+        }
+        .stat-numero { font-size: var(--texto-2xl); font-weight: 700; color: var(--color-azul); }
+        .stat-label { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-top: 0.25rem; }
+        .form-crear-usuario {
+            background: white; border-radius: var(--radio-lg); border: 1px solid var(--color-borde);
+            overflow: hidden; margin-bottom: 1.5rem;
+        }
+        .form-crear-header {
+            background: var(--color-azul); color: white; padding: 1rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .form-crear-header h3 { font-size: var(--texto-base); font-weight: 600; }
+        .form-crear-body { padding: 1.5rem; }
+        .form-crear-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid var(--color-borde);
+            display: flex; justify-content: flex-end; gap: 0.75rem; background: var(--color-gris-light);
+        }
+        @media (max-width: 640px) {
+            .usuario-card { flex-direction: column; align-items: flex-start; }
+            .usuario-acciones { width: 100%; }
+            .usuario-acciones .btn-accion { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <div class="header-izquierda"><img src="/assets/logo-header.png" alt="Electroingeniería" style="height:40px;border-radius:4px;"></div>
+        <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
+        <div class="header-derecha">
+            <div class="header-info">
+                <div class="header-info-codigo">S-TF-39 v1</div>
+                <div class="header-info-proceso" id="header-proceso">-</div>
+            </div>
+            <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <!-- NAV -->
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link">Requisiciones</a>
+            <a href="/admin.html" class="nav-link activo">Administración</a>
+        </div>
+        <div class="nav-acciones">
+            <button class="btn btn-primario" id="btn-mostrar-crear">+ Nuevo Usuario</button>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="contenido-principal">
+
+        <!-- Acceso denegado (para no-admins) -->
+        <div id="acceso-denegado" class="oculto">
+            <div class="estado-vacio">
+                <div class="estado-vacio-icono">🔒</div>
+                <h2 class="estado-vacio-titulo">Acceso restringido</h2>
+                <p class="estado-vacio-mensaje">Solo los administradores pueden acceder a esta sección.</p>
+                <a href="/dashboard.html" class="btn btn-primario">Volver al Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Panel admin -->
+        <div id="panel-admin" class="oculto">
+
+            <!-- Estadísticas -->
+            <div class="stats-row" id="stats-usuarios"></div>
+
+            <!-- Formulario crear usuario (oculto por defecto) -->
+            <div id="seccion-crear" class="oculto">
+                <div class="form-crear-usuario">
+                    <div class="form-crear-header">
+                        <h3>Crear nuevo usuario</h3>
+                        <button class="modal-cerrar" id="btn-cerrar-crear" style="color:white;font-size:1.5rem;">×</button>
+                    </div>
+                    <div class="form-crear-body">
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Nombre completo <span class="requerido">*</span></label>
+                                <input type="text" id="crear-nombre" class="input-campo" placeholder="Ej: María García">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Correo electrónico <span class="requerido">*</span></label>
+                                <input type="email" id="crear-email" class="input-campo" placeholder="usuario@electroingenieria.com">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Contraseña temporal <span class="requerido">*</span></label>
+                                <input type="text" id="crear-password" class="input-campo" placeholder="Mínimo 6 caracteres">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Proceso <span class="requerido">*</span></label>
+                                <select id="crear-proceso" class="input-campo input-select">
+                                    <option value="">Seleccione un proceso...</option>
+                                    <option>Gestión documental</option>
+                                    <option>Atención al usuario</option>
+                                    <option>Iluminación</option>
+                                    <option>SIG</option>
+                                    <option>Medio ambiente</option>
+                                    <option>Contabilidad</option>
+                                    <option>Cumplimiento</option>
+                                    <option>Direccionamiento estratégico</option>
+                                    <option>Finanzas</option>
+                                    <option>Gestión humana</option>
+                                    <option>Seguridad y salud en el trabajo</option>
+                                    <option>Jurídico</option>
+                                    <option>Calidad</option>
+                                    <option>Auditoría</option>
+                                    <option>Planeación</option>
+                                    <option>Logística suministros</option>
+                                    <option>Cartera</option>
+                                    <option>Ventas</option>
+                                    <option>Compras</option>
+                                    <option>Activos Fijos</option>
+                                    <option>Nómina</option>
+                                    <option>AOM</option>
+                                    <option>Logística AP</option>
+                                    <option>Servicios generales</option>
+                                    <option>Cierre</option>
+                                    <option>Ejecución</option>
+                                    <option>Administración</option>
+                                </select>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Rol</label>
+                                <select id="crear-rol" class="input-campo input-select">
+                                    <option value="usuario">Usuario</option>
+                                    <option value="administrador">Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-crear-footer">
+                        <button class="btn btn-secundario" id="btn-cancelar-crear">Cancelar</button>
+                        <button class="btn btn-primario" id="btn-guardar-usuario">Crear Usuario</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de usuarios -->
+            <div class="usuarios-grid" id="lista-usuarios"></div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { supabase } from '/js/config/supabase.js';
+        import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { Toast } from '/js/components/toast.js';
+        import { Loader } from '/js/components/loader.js';
+        import { Modal } from '/js/components/modal.js';
+
+        let usuarioActual = null;
+        let perfilActual = null;
+        let todosLosPerfiles = [];
+
+        // ─── Colores para avatares ───
+        const COLORES_AVATAR = ['#00369C','#2563EB','#7C3AED','#DB2777','#DC2626','#EA580C','#16A34A','#0891B2'];
+
+        function colorAvatar(nombre) {
+            let hash = 0;
+            for (let i = 0; i < nombre.length; i++) hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+            return COLORES_AVATAR[Math.abs(hash) % COLORES_AVATAR.length];
+        }
+
+        function inicialesNombre(nombre) {
+            return nombre.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        // ─── INICIALIZAR ───
+        async function inicializar() {
+            Loader.mostrar('Cargando administración...');
+
+            const { usuario, perfil } = await protegerRuta();
+            if (!usuario || !perfil) return;
+
+            usuarioActual = usuario;
+            perfilActual = perfil;
+
+            document.getElementById('header-proceso').textContent = perfil.proceso;
+
+            // Verificar que sea admin
+            if (!esAdministrador(perfil)) {
+                document.getElementById('acceso-denegado').classList.remove('oculto');
+                Loader.ocultar();
+                return;
+            }
+
+            document.getElementById('panel-admin').classList.remove('oculto');
+            configurarEventos();
+            await cargarUsuarios();
+            Loader.ocultar();
+        }
+
+        function configurarEventos() {
+            document.getElementById('btn-logout').addEventListener('click', async () => { Loader.mostrar('Cerrando sesión...'); await cerrarSesion(); });
+            document.getElementById('btn-mostrar-crear').addEventListener('click', () => document.getElementById('seccion-crear').classList.remove('oculto'));
+            document.getElementById('btn-cerrar-crear').addEventListener('click', () => document.getElementById('seccion-crear').classList.add('oculto'));
+            document.getElementById('btn-cancelar-crear').addEventListener('click', () => document.getElementById('seccion-crear').classList.add('oculto'));
+            document.getElementById('btn-guardar-usuario').addEventListener('click', crearUsuario);
+        }
+
+        // ─── CARGAR USUARIOS ───
+        async function cargarUsuarios() {
+            const { data, error } = await supabase.from('perfiles').select('*').order('created_at', { ascending: true });
+
+            if (error) { Toast.error('Error al cargar usuarios.'); return; }
+
+            todosLosPerfiles = data || [];
+            renderizarStats();
+            renderizarUsuarios();
+        }
+
+        function renderizarStats() {
+            const total = todosLosPerfiles.length;
+            const activos = todosLosPerfiles.filter(p => p.activo).length;
+            const admins = todosLosPerfiles.filter(p => p.rol === 'administrador').length;
+            const procesos = [...new Set(todosLosPerfiles.map(p => p.proceso))].length;
+
+            document.getElementById('stats-usuarios').innerHTML = `
+                <div class="stat-card"><div class="stat-numero">${total}</div><div class="stat-label">Total usuarios</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:var(--color-cumplido)">${activos}</div><div class="stat-label">Activos</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:var(--color-pendiente)">${admins}</div><div class="stat-label">Administradores</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:var(--color-en-proceso)">${procesos}</div><div class="stat-label">Procesos con usuario</div></div>
+            `;
+        }
+
+        function renderizarUsuarios() {
+            const contenedor = document.getElementById('lista-usuarios');
+
+            if (todosLosPerfiles.length === 0) {
+                contenedor.innerHTML = '<div class="estado-vacio"><p>No hay usuarios registrados.</p></div>';
+                return;
+            }
+
+            contenedor.innerHTML = todosLosPerfiles.map(p => {
+                const color = colorAvatar(p.nombre_completo);
+                const iniciales = inicialesNombre(p.nombre_completo);
+                const esActivo = p.activo;
+                const cardClase = esActivo ? '' : 'inactivo';
+                const badgeActivoHTML = esActivo
+                    ? '<span class="badge-sm badge-activo">Activo</span>'
+                    : '<span class="badge-sm badge-inactivo">Inactivo</span>';
+                const rolBadge = p.rol === 'administrador'
+                    ? '<span class="badge-sm badge-admin">Admin</span>'
+                    : '<span class="badge-sm" style="background:var(--color-gris-light);color:var(--color-texto-secundario);">Usuario</span>';
+
+                return `
+                    <div class="usuario-card ${cardClase}">
+                        <div class="usuario-info">
+                            <div class="usuario-avatar" style="background-color:${color}">${iniciales}</div>
+                            <div class="usuario-datos">
+                                <div class="usuario-nombre">${p.nombre_completo}</div>
+                                <div class="usuario-email">${p.id.substring(0, 8)}...</div>
+                                <div class="usuario-meta">
+                                    <span class="badge-sm badge-proceso">${p.proceso}</span>
+                                    ${rolBadge}
+                                    ${badgeActivoHTML}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="usuario-acciones">
+                            <button class="btn-accion btn-accion-editar" onclick="window._editarPerfil('${p.id}')">Editar</button>
+                            <button class="btn-accion btn-accion-estado" onclick="window._resetearPassword('${p.id}', '${p.nombre_completo}')">Contraseña</button>
+                            <button class="btn-accion ${esActivo ? 'btn-accion-eliminar' : 'btn-accion-ver'}" onclick="window._toggleActivo('${p.id}', ${esActivo})">
+                                ${esActivo ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ─── CREAR USUARIO ───
+        async function crearUsuario() {
+            const nombre = document.getElementById('crear-nombre').value.trim();
+            const email = document.getElementById('crear-email').value.trim();
+            const password = document.getElementById('crear-password').value;
+            const proceso = document.getElementById('crear-proceso').value;
+            const rol = document.getElementById('crear-rol').value;
+
+            if (!nombre) { Toast.advertencia('Ingrese el nombre completo.'); return; }
+            if (!email) { Toast.advertencia('Ingrese el correo electrónico.'); return; }
+            if (!password || password.length < 6) { Toast.advertencia('La contraseña debe tener al menos 6 caracteres.'); return; }
+            if (!proceso) { Toast.advertencia('Seleccione un proceso.'); return; }
+
+            const btn = document.getElementById('btn-guardar-usuario');
+            btn.disabled = true; btn.textContent = 'Creando...';
+
+            try {
+                // Obtener token actual
+                const { data: { session } } = await supabase.auth.getSession();
+
+                const response = await fetch('/.netlify/functions/admin-users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ action: 'crear', email, password, nombre_completo: nombre, proceso, rol })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    Toast.error(result.error || 'Error al crear usuario.');
+                    btn.disabled = false; btn.textContent = 'Crear Usuario';
+                    return;
+                }
+
+                Toast.exito(`Usuario "${nombre}" creado correctamente.`);
+
+                // Limpiar formulario
+                document.getElementById('crear-nombre').value = '';
+                document.getElementById('crear-email').value = '';
+                document.getElementById('crear-password').value = '';
+                document.getElementById('crear-proceso').value = '';
+                document.getElementById('crear-rol').value = 'usuario';
+                document.getElementById('seccion-crear').classList.add('oculto');
+
+                await cargarUsuarios();
+            } catch (err) {
+                Toast.error('Error de conexión al crear usuario.');
+            }
+
+            btn.disabled = false; btn.textContent = 'Crear Usuario';
+        }
+
+        // ─── EDITAR PERFIL ───
+        window._editarPerfil = function(userId) {
+            const perfil = todosLosPerfiles.find(p => p.id === userId);
+            if (!perfil) return;
+
+            const procesos = ['Gestión documental','Atención al usuario','Iluminación','SIG','Medio ambiente','Contabilidad',
+                'Cumplimiento','Direccionamiento estratégico','Finanzas','Gestión humana','Seguridad y salud en el trabajo',
+                'Jurídico','Calidad','Auditoría','Planeación','Logística suministros','Cartera','Ventas','Compras',
+                'Activos Fijos','Nómina','AOM','Logística AP','Servicios generales','Cierre','Ejecución','Administración'];
+
+            const opcionesProcesos = procesos.map(p =>
+                `<option value="${p}" ${p === perfil.proceso ? 'selected' : ''}>${p}</option>`
+            ).join('');
+
+            const html = `
+                <div style="display:grid;gap:1rem;">
+                    <div class="input-grupo">
+                        <label class="input-label">Nombre completo</label>
+                        <input type="text" id="edit-user-nombre" class="input-campo" value="${perfil.nombre_completo}">
+                    </div>
+                    <div class="input-grupo">
+                        <label class="input-label">Proceso</label>
+                        <select id="edit-user-proceso" class="input-campo input-select">${opcionesProcesos}</select>
+                    </div>
+                    <div class="input-grupo">
+                        <label class="input-label">Rol</label>
+                        <select id="edit-user-rol" class="input-campo input-select">
+                            <option value="usuario" ${perfil.rol === 'usuario' ? 'selected' : ''}>Usuario</option>
+                            <option value="administrador" ${perfil.rol === 'administrador' ? 'selected' : ''}>Administrador</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+
+            Modal.crear({
+                titulo: `Editar: ${perfil.nombre_completo}`,
+                contenido: html,
+                botones: [
+                    { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+                    { texto: 'Guardar', clase: 'btn-primario', onClick: async () => {
+                        const cambios = {
+                            nombre_completo: document.getElementById('edit-user-nombre').value.trim(),
+                            proceso: document.getElementById('edit-user-proceso').value,
+                            rol: document.getElementById('edit-user-rol').value
+                        };
+                        const { error } = await supabase.from('perfiles').update(cambios).eq('id', userId);
+                        if (error) { Toast.error('Error al actualizar.'); return; }
+                        Toast.exito('Perfil actualizado.');
+                        Modal.cerrar();
+                        await cargarUsuarios();
+                    }}
+                ]
+            });
+        };
+
+        // ─── RESETEAR CONTRASEÑA ───
+        window._resetearPassword = function(userId, nombre) {
+            const html = `
+                <p style="margin-bottom:1rem;font-size:var(--texto-sm);color:var(--color-texto-secundario);">
+                    Asigne una nueva contraseña temporal para <strong>${nombre}</strong>. El usuario deberá cambiarla después.
+                </p>
+                <div class="input-grupo">
+                    <label class="input-label">Nueva contraseña <span class="requerido">*</span></label>
+                    <input type="text" id="reset-password" class="input-campo" placeholder="Mínimo 6 caracteres">
+                </div>
+            `;
+
+            Modal.crear({
+                titulo: `Contraseña: ${nombre}`,
+                contenido: html, ancho: '450px',
+                botones: [
+                    { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+                    { texto: 'Cambiar contraseña', clase: 'btn-primario', onClick: async () => {
+                        const pass = document.getElementById('reset-password').value;
+                        if (!pass || pass.length < 6) { Toast.advertencia('Mínimo 6 caracteres.'); return; }
+
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const response = await fetch('/.netlify/functions/admin-users', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                            body: JSON.stringify({ action: 'resetear_password', user_id: userId, nuevo_password: pass })
+                        });
+                        const result = await response.json();
+                        if (!response.ok) { Toast.error(result.error); return; }
+                        Toast.exito('Contraseña actualizada.');
+                        Modal.cerrar();
+                    }}
+                ]
+            });
+        };
+
+        // ─── ACTIVAR/DESACTIVAR ───
+        window._toggleActivo = async function(userId, esActivo) {
+            const accion = esActivo ? 'desactivar' : 'activar';
+            if (!confirm(`¿Está seguro de ${accion} este usuario?`)) return;
+
+            const { error } = await supabase.from('perfiles').update({ activo: !esActivo }).eq('id', userId);
+            if (error) { Toast.error('Error al cambiar estado.'); return; }
+            Toast.exito(`Usuario ${accion === 'activar' ? 'activado' : 'desactivado'}.`);
+            await cargarUsuarios();
+        };
+
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+
+</body>
+</html>

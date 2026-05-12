@@ -5,6 +5,7 @@
 
 [build]
   publish = "."
+  functions = "netlify/functions"
 
 # Headers de seguridad
 [[headers]]
