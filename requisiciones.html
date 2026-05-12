@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisiciones - Electroingeniería S.A.S.</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/requisiciones.css">
+    <style>
+        /* ─── Filtros ─── */
+        .filtros-barra {
+            background: white;
+            border-radius: var(--radio-lg);
+            border: 1px solid var(--color-borde);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        .filtro-grupo { display: flex; flex-direction: column; gap: 0.25rem; }
+        .filtro-grupo label { font-size: 0.7rem; font-weight: 600; color: var(--color-texto-secundario); text-transform: uppercase; letter-spacing: 0.3px; }
+        .filtro-grupo input, .filtro-grupo select {
+            padding: 0.5rem 0.75rem; font-size: var(--texto-sm); border: 1px solid var(--color-borde);
+            border-radius: var(--radio-md); font-family: var(--fuente-principal); outline: none; background: white;
+        }
+        .filtro-grupo input:focus, .filtro-grupo select:focus { border-color: var(--color-azul); box-shadow: 0 0 0 2px rgba(0,54,156,0.1); }
+        .filtro-busqueda { flex: 1; min-width: 200px; }
+        .filtro-busqueda input { width: 100%; }
+        .btn-limpiar-filtros { font-size: var(--texto-sm); padding: 0.5rem 1rem; }
+
+        /* ─── Tabla ─── */
+        .tabla-contenedor {
+            background: white; border-radius: var(--radio-lg); border: 1px solid var(--color-borde); overflow: hidden;
+        }
+        .tabla-header {
+            padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-borde);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .tabla-header h2 { font-size: var(--texto-lg); font-weight: 600; }
+        .tabla-scroll { overflow-x: auto; }
+        .tabla-req { width: 100%; border-collapse: collapse; font-size: var(--texto-sm); }
+        .tabla-req thead tr { background-color: var(--color-gris-light); }
+        .tabla-req th {
+            padding: 0.75rem 0.75rem; text-align: left; font-weight: 600;
+            color: var(--color-texto-secundario); font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+        }
+        .tabla-req td { padding: 0.75rem; border-bottom: 1px solid var(--color-gris-light); }
+        .tabla-req tbody tr:hover { background-color: #F8FAFF; }
+        .fila-eliminada { opacity: 0.5; background-color: var(--color-eliminado-bg) !important; }
+        .fila-eliminada:hover { background-color: var(--color-eliminado-bg) !important; }
+        .td-objeto { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .td-id { font-weight: 600; color: var(--color-azul); white-space: nowrap; }
+
+        /* ─── Acciones ─── */
+        .acciones-grupo { display: flex; gap: 0.375rem; flex-wrap: nowrap; }
+        .btn-accion {
+            padding: 0.375rem 0.625rem; font-size: 0.7rem; border: 1px solid var(--color-borde);
+            border-radius: var(--radio-sm); cursor: pointer; font-family: var(--fuente-principal);
+            font-weight: 500; transition: var(--transicion); background: white; white-space: nowrap;
+        }
+        .btn-accion:hover { background-color: var(--color-gris-light); }
+        .btn-accion-ver { color: var(--color-azul); border-color: var(--color-azul); }
+        .btn-accion-ver:hover { background-color: var(--color-azul-light); }
+        .btn-accion-editar { color: var(--color-pendiente); border-color: var(--color-pendiente); }
+        .btn-accion-editar:hover { background-color: var(--color-pendiente-bg); }
+        .btn-accion-estado { color: var(--color-en-proceso); border-color: var(--color-en-proceso); }
+        .btn-accion-estado:hover { background-color: var(--color-en-proceso-bg); }
+        .btn-accion-eliminar { color: var(--color-error); border-color: var(--color-error); }
+        .btn-accion-eliminar:hover { background-color: var(--color-eliminado-bg); }
+
+        /* ─── Paginación ─── */
+        .paginacion {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1.25rem; border-top: 1px solid var(--color-borde); font-size: var(--texto-sm);
+        }
+        .paginacion-info { color: var(--color-texto-secundario); }
+        .paginacion-botones { display: flex; gap: 0.375rem; }
+        .paginacion-btn {
+            padding: 0.375rem 0.75rem; border: 1px solid var(--color-borde); border-radius: var(--radio-sm);
+            background: white; cursor: pointer; font-family: var(--fuente-principal); font-size: var(--texto-sm);
+        }
+        .paginacion-btn:hover:not(:disabled) { background: var(--color-gris-light); }
+        .paginacion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .paginacion-btn.activo { background: var(--color-azul); color: white; border-color: var(--color-azul); }
+
+        @media (max-width: 768px) {
+            .filtros-barra { flex-direction: column; }
+            .filtro-grupo { width: 100%; }
+            .filtro-grupo input, .filtro-grupo select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <div class="header-izquierda"><div class="header-logo-placeholder">LOGO</div></div>
+        <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
+        <div class="header-derecha">
+            <div class="header-info">
+                <div class="header-info-codigo">S-TF-39 v1</div>
+                <div class="header-info-proceso" id="header-proceso">-</div>
+            </div>
+            <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link activo">Requisiciones</a>
+        </div>
+        <div class="nav-acciones">
+            <button class="btn btn-primario" id="btn-nueva-requisicion">+ Nueva Requisición</button>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="contenido-principal">
+
+        <!-- FORMULARIO NUEVA REQUISICIÓN -->
+        <div id="seccion-formulario" class="oculto">
+            <div class="form-requisicion">
+                <div class="form-header">
+                    <span class="form-header-titulo">Nueva Requisición de Compra</span>
+                    <span class="form-header-id">El ID se asignará al guardar</span>
+                </div>
+                <div class="form-body">
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Información del solicitante</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Fecha <span class="campo-auto-badge">Automático</span></label>
+                                <input type="text" id="campo-fecha" class="input-campo input-readonly" readonly>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Solicitante <span class="campo-auto-badge">Automático</span></label>
+                                <input type="text" id="campo-solicitante" class="input-campo input-readonly" readonly>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Proceso <span class="campo-auto-badge">Automático</span></label>
+                                <input type="text" id="campo-proceso" class="input-campo input-readonly" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Datos de la solicitud</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Unidad de negocio <span class="requerido">*</span></label>
+                                <input type="text" id="campo-unidad-negocio" class="input-campo" placeholder="Ej: O01010505">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Centro de costo <span class="requerido">*</span></label>
+                                <input type="text" id="campo-centro-costo" class="input-campo" placeholder="Ej: D2899">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Lugar de entrega <span class="requerido">*</span></label>
+                                <input type="text" id="campo-lugar-entrega" class="input-campo" placeholder="Dirección o sede">
+                            </div>
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label">Objeto de la compra <span class="requerido">*</span></label>
+                                <textarea id="campo-objeto-compra" class="input-campo input-textarea" placeholder="Describa detalladamente lo que necesita comprar"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Detalles del producto</h3>
+                        <div class="form-grid form-grid-3">
+                            <div class="input-grupo"><label class="input-label">Cantidad <span class="requerido">*</span></label><input type="number" id="campo-cantidad" class="input-campo" placeholder="0" min="1"></div>
+                            <div class="input-grupo"><label class="input-label">Color</label><input type="text" id="campo-color" class="input-campo" placeholder="Ej: Negro"></div>
+                            <div class="input-grupo"><label class="input-label">Dimensiones</label><input type="text" id="campo-dimensiones" class="input-campo" placeholder="Ej: 30x20 cm"></div>
+                            <div class="input-grupo"><label class="input-label">Marca sugerida</label><input type="text" id="campo-marca" class="input-campo" placeholder="Marca"></div>
+                            <div class="input-grupo"><label class="input-label">Proveedor sugerido</label><input type="text" id="campo-proveedor" class="input-campo" placeholder="Proveedor"></div>
+                            <div class="input-grupo"><label class="input-label">Rango de precios</label><input type="text" id="campo-rango-precios" class="input-campo" placeholder="Ej: 100.000 - 500.000"></div>
+                        </div>
+                    </div>
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Información adicional</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo"><label class="input-label">URL de referencia</label><input type="url" id="campo-url" class="input-campo" placeholder="https://..."></div>
+                            <div class="input-grupo form-campo-full"><label class="input-label">Observaciones</label><textarea id="campo-observaciones" class="input-campo input-textarea" placeholder="Notas adicionales"></textarea></div>
+                        </div>
+                    </div>
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Ejecución de la compra <span class="requerido">*</span></h3>
+                        <div class="ejecuta-opciones">
+                            <div class="ejecuta-opcion">
+                                <input type="radio" name="quien-ejecuta" id="ejecuta-compras" value="Compras">
+                                <label for="ejecuta-compras">Compras<div class="ejecuta-descripcion">No podrá editar ni eliminar después.</div></label>
+                            </div>
+                            <div class="ejecuta-opcion">
+                                <input type="radio" name="quien-ejecuta" id="ejecuta-autonomo" value="Proceso Autónomo">
+                                <label for="ejecuta-autonomo">Proceso Autónomo<div class="ejecuta-descripcion">Podrá editar y eliminar.</div></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <button class="btn btn-secundario" id="btn-cancelar">Cancelar</button>
+                    <button class="btn btn-primario" id="btn-guardar">Guardar Requisición</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div id="seccion-filtros" class="oculto">
+            <div class="filtros-barra">
+                <div class="filtro-grupo filtro-busqueda">
+                    <label>Buscar</label>
+                    <input type="text" id="filtro-busqueda" placeholder="ID, objeto de compra o solicitante...">
+                </div>
+                <div class="filtro-grupo">
+                    <label>Estado</label>
+                    <select id="filtro-estado">
+                        <option value="todos">Todos</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Cumplido">Cumplido</option>
+                    </select>
+                </div>
+                <div class="filtro-grupo">
+                    <label>Desde</label>
+                    <input type="date" id="filtro-desde">
+                </div>
+                <div class="filtro-grupo">
+                    <label>Hasta</label>
+                    <input type="date" id="filtro-hasta">
+                </div>
+                <button class="btn btn-secundario btn-limpiar-filtros" id="btn-limpiar-filtros">Limpiar</button>
+            </div>
+        </div>
+
+        <!-- TABLA DE REQUISICIONES -->
+        <div id="seccion-lista" class="oculto">
+            <div class="tabla-contenedor">
+                <div class="tabla-header">
+                    <h2 id="tabla-titulo">Requisiciones (0)</h2>
+                </div>
+                <div class="tabla-scroll">
+                    <table class="tabla-req">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Solicitante</th>
+                                <th>Objeto de compra</th>
+                                <th>Cant.</th>
+                                <th>Ejecuta</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body"></tbody>
+                    </table>
+                </div>
+                <div class="paginacion" id="paginacion"></div>
+            </div>
+        </div>
+
+        <!-- ESTADO VACÍO -->
+        <div id="seccion-vacio">
+            <div class="estado-vacio">
+                <div class="estado-vacio-icono">📋</div>
+                <h2 class="estado-vacio-titulo">Sin requisiciones aún</h2>
+                <p class="estado-vacio-mensaje">Haz clic en "Nueva Requisición" para crear tu primera solicitud.</p>
+                <button class="btn btn-primario" id="btn-nueva-vacio">+ Nueva Requisición</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { crearRequisicion, obtenerRequisiciones, registrarHistorial } from '/js/services/requisiciones.service.js';
+        import { formatearFecha } from '/js/utils/formatters.js';
+        import { Toast } from '/js/components/toast.js';
+        import { Loader } from '/js/components/loader.js';
+        import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, puedeEditar, puedeEliminar, puedeCambiarEstado, badgeClase } from '/js/modules/acciones-requisiciones.js';
+
+        let usuarioActual = null;
+        let perfilActual = null;
+        let requisicionesCache = [];
+        let paginaActual = 1;
+        const POR_PAGINA = 15;
+
+        // ─── INICIALIZAR ───
+        async function inicializar() {
+            Loader.mostrar('Cargando...');
+            const { usuario, perfil } = await protegerRuta();
+            if (!usuario || !perfil) return;
+
+            usuarioActual = usuario;
+            perfilActual = perfil;
+
+            document.getElementById('header-proceso').textContent = perfil.proceso;
+            document.getElementById('campo-fecha').value = formatearFecha(new Date());
+            document.getElementById('campo-solicitante').value = perfil.nombre_completo;
+            document.getElementById('campo-proceso').value = perfil.proceso;
+
+            configurarEventos();
+            await cargarRequisiciones();
+            Loader.ocultar();
+        }
+
+        // ─── EVENTOS ───
+        function configurarEventos() {
+            document.getElementById('btn-nueva-requisicion').addEventListener('click', mostrarFormulario);
+            document.getElementById('btn-nueva-vacio').addEventListener('click', mostrarFormulario);
+            document.getElementById('btn-cancelar').addEventListener('click', ocultarFormulario);
+            document.getElementById('btn-guardar').addEventListener('click', guardarRequisicion);
+            document.getElementById('btn-logout').addEventListener('click', async () => { Loader.mostrar('Cerrando sesión...'); await cerrarSesion(); });
+
+            // Filtros con debounce
+            let timerBusqueda;
+            document.getElementById('filtro-busqueda').addEventListener('input', () => {
+                clearTimeout(timerBusqueda);
+                timerBusqueda = setTimeout(() => { paginaActual = 1; cargarRequisiciones(); }, 400);
+            });
+            document.getElementById('filtro-estado').addEventListener('change', () => { paginaActual = 1; cargarRequisiciones(); });
+            document.getElementById('filtro-desde').addEventListener('change', () => { paginaActual = 1; cargarRequisiciones(); });
+            document.getElementById('filtro-hasta').addEventListener('change', () => { paginaActual = 1; cargarRequisiciones(); });
+            document.getElementById('btn-limpiar-filtros').addEventListener('click', () => {
+                document.getElementById('filtro-busqueda').value = '';
+                document.getElementById('filtro-estado').value = 'todos';
+                document.getElementById('filtro-desde').value = '';
+                document.getElementById('filtro-hasta').value = '';
+                paginaActual = 1;
+                cargarRequisiciones();
+            });
+        }
+
+        // ─── FORMULARIO ───
+        function mostrarFormulario() {
+            limpiarFormulario();
+            document.getElementById('seccion-formulario').classList.remove('oculto');
+            document.getElementById('seccion-filtros').classList.add('oculto');
+            document.getElementById('seccion-vacio').classList.add('oculto');
+            document.getElementById('seccion-lista').classList.add('oculto');
+            document.getElementById('seccion-formulario').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function ocultarFormulario() {
+            document.getElementById('seccion-formulario').classList.add('oculto');
+            cargarRequisiciones();
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('campo-fecha').value = formatearFecha(new Date());
+            ['campo-unidad-negocio','campo-centro-costo','campo-lugar-entrega','campo-objeto-compra',
+             'campo-cantidad','campo-color','campo-dimensiones','campo-marca','campo-proveedor',
+             'campo-rango-precios','campo-url','campo-observaciones'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.querySelectorAll('input[name="quien-ejecuta"]').forEach(r => r.checked = false);
+        }
+
+        async function guardarRequisicion() {
+            const un = document.getElementById('campo-unidad-negocio').value.trim();
+            const cc = document.getElementById('campo-centro-costo').value.trim();
+            const le = document.getElementById('campo-lugar-entrega').value.trim();
+            const oc = document.getElementById('campo-objeto-compra').value.trim();
+            const cant = parseInt(document.getElementById('campo-cantidad').value, 10);
+            const qe = document.querySelector('input[name="quien-ejecuta"]:checked');
+
+            if (!un) { Toast.advertencia('Ingrese la unidad de negocio.'); return; }
+            if (!cc) { Toast.advertencia('Ingrese el centro de costo.'); return; }
+            if (!le) { Toast.advertencia('Ingrese el lugar de entrega.'); return; }
+            if (!oc) { Toast.advertencia('Describa el objeto de la compra.'); return; }
+            if (!cant || cant < 1) { Toast.advertencia('Ingrese una cantidad válida.'); return; }
+            if (!qe) { Toast.advertencia('Seleccione quién ejecuta la compra.'); return; }
+
+            const btn = document.getElementById('btn-guardar');
+            btn.disabled = true; btn.textContent = 'Guardando...';
+
+            const { requisicion, error } = await crearRequisicion({
+                user_id: usuarioActual.id, solicitante: perfilActual.nombre_completo, proceso: perfilActual.proceso,
+                unidad_negocio: un, centro_costo: cc, lugar_entrega: le, objeto_compra: oc, cantidad: cant,
+                color: document.getElementById('campo-color').value.trim(),
+                dimensiones: document.getElementById('campo-dimensiones').value.trim(),
+                marca_sugerida: document.getElementById('campo-marca').value.trim(),
+                proveedor_sugerido: document.getElementById('campo-proveedor').value.trim(),
+                rango_precios: document.getElementById('campo-rango-precios').value.trim(),
+                url_referencia: document.getElementById('campo-url').value.trim(),
+                observaciones: document.getElementById('campo-observaciones').value.trim(),
+                quien_ejecuta: qe.value, estado: 'Pendiente'
+            });
+
+            btn.disabled = false; btn.textContent = 'Guardar Requisición';
+
+            if (error) { Toast.error(error); return; }
+
+            await registrarHistorial({
+                requisicion_id: requisicion.id, id_requisicion: requisicion.id_requisicion,
+                user_id: usuarioActual.id, nombre_usuario: perfilActual.nombre_completo,
+                accion: 'creacion', detalle: `Requisición ${requisicion.id_requisicion} creada`
+            });
+
+            Toast.exito(`Requisición ${requisicion.id_requisicion} creada correctamente.`);
+            ocultarFormulario();
+        }
+
+        // ─── CARGAR Y RENDERIZAR TABLA ───
+        async function cargarRequisiciones() {
+            const filtros = {
+                busqueda: document.getElementById('filtro-busqueda').value.trim(),
+                estado: document.getElementById('filtro-estado').value,
+                desde: document.getElementById('filtro-desde').value,
+                hasta: document.getElementById('filtro-hasta').value
+            };
+
+            const { requisiciones, error } = await obtenerRequisiciones(filtros, perfilActual);
+            if (error) { Toast.error(error); return; }
+
+            requisicionesCache = requisiciones;
+
+            if (requisiciones.length === 0 && !filtros.busqueda && filtros.estado === 'todos' && !filtros.desde && !filtros.hasta) {
+                document.getElementById('seccion-vacio').classList.remove('oculto');
+                document.getElementById('seccion-filtros').classList.add('oculto');
+                document.getElementById('seccion-lista').classList.add('oculto');
+            } else {
+                document.getElementById('seccion-vacio').classList.add('oculto');
+                document.getElementById('seccion-filtros').classList.remove('oculto');
+                document.getElementById('seccion-lista').classList.remove('oculto');
+                renderizarTabla(requisiciones);
+            }
+        }
+
+        function renderizarTabla(datos) {
+            const total = datos.length;
+            const totalPaginas = Math.ceil(total / POR_PAGINA);
+            if (paginaActual > totalPaginas) paginaActual = Math.max(1, totalPaginas);
+
+            const inicio = (paginaActual - 1) * POR_PAGINA;
+            const paginados = datos.slice(inicio, inicio + POR_PAGINA);
+
+            document.getElementById('tabla-titulo').textContent = `Requisiciones (${total})`;
+
+            const tbody = document.getElementById('tabla-body');
+            if (paginados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--color-texto-secundario);">No se encontraron requisiciones con los filtros aplicados.</td></tr>`;
+            } else {
+                tbody.innerHTML = paginados.map(req => {
+                    const filaClase = req.eliminado ? 'fila-eliminada' : '';
+                    const estadoTexto = req.eliminado ? 'Eliminada' : req.estado;
+                    const badge = `<span class="badge-estado ${badgeClase(req)}">${estadoTexto}</span>`;
+
+                    let acciones = `<button class="btn-accion btn-accion-ver" data-accion="ver" data-id="${req.id}">Ver</button>`;
+                    if (puedeEditar(req, perfilActual)) {
+                        acciones += `<button class="btn-accion btn-accion-editar" data-accion="editar" data-id="${req.id}">Editar</button>`;
+                    }
+                    if (puedeCambiarEstado(req, perfilActual)) {
+                        acciones += `<button class="btn-accion btn-accion-estado" data-accion="estado" data-id="${req.id}">Estado</button>`;
+                    }
+                    if (puedeEliminar(req, perfilActual)) {
+                        acciones += `<button class="btn-accion btn-accion-eliminar" data-accion="eliminar" data-id="${req.id}">Eliminar</button>`;
+                    }
+
+                    return `<tr class="${filaClase}">
+                        <td class="td-id">${req.id_requisicion}</td>
+                        <td style="white-space:nowrap;">${formatearFecha(req.fecha)}</td>
+                        <td>${req.solicitante}</td>
+                        <td class="td-objeto" title="${req.objeto_compra}">${req.objeto_compra}</td>
+                        <td>${req.cantidad}</td>
+                        <td>${req.quien_ejecuta}</td>
+                        <td>${badge}</td>
+                        <td><div class="acciones-grupo">${acciones}</div></td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Paginación
+            const pag = document.getElementById('paginacion');
+            if (totalPaginas <= 1) {
+                pag.innerHTML = `<span class="paginacion-info">Mostrando ${total} requisición(es)</span><div></div>`;
+            } else {
+                let btns = '';
+                btns += `<button class="paginacion-btn" ${paginaActual === 1 ? 'disabled' : ''} data-pag="${paginaActual - 1}">← Ant</button>`;
+                for (let i = 1; i <= totalPaginas; i++) {
+                    if (i === 1 || i === totalPaginas || Math.abs(i - paginaActual) <= 1) {
+                        btns += `<button class="paginacion-btn ${i === paginaActual ? 'activo' : ''}" data-pag="${i}">${i}</button>`;
+                    } else if (Math.abs(i - paginaActual) === 2) {
+                        btns += `<span style="padding: 0 0.25rem; color: var(--color-gris);">…</span>`;
+                    }
+                }
+                btns += `<button class="paginacion-btn" ${paginaActual === totalPaginas ? 'disabled' : ''} data-pag="${paginaActual + 1}">Sig →</button>`;
+                pag.innerHTML = `<span class="paginacion-info">Mostrando ${inicio + 1}-${Math.min(inicio + POR_PAGINA, total)} de ${total}</span><div class="paginacion-botones">${btns}</div>`;
+            }
+
+            // Eventos de acciones
+            tbody.querySelectorAll('[data-accion]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const req = requisicionesCache.find(r => r.id === id);
+                    if (!req) return;
+
+                    switch (e.target.dataset.accion) {
+                        case 'ver': verDetalle(req); break;
+                        case 'editar': editarRequisicion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                        case 'estado': cambiarEstado(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                        case 'eliminar': confirmarEliminar(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                    }
+                });
+            });
+
+            // Eventos paginación
+            pag.querySelectorAll('[data-pag]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const p = parseInt(e.target.dataset.pag);
+                    if (p >= 1 && p <= totalPaginas) {
+                        paginaActual = p;
+                        renderizarTabla(requisicionesCache);
+                        document.querySelector('.tabla-contenedor').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+
+</body>
+</html>
