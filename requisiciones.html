@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisiciones - Electroingeniería S.A.S.</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/requisiciones.css">
+</head>
+<body>
+
+    <!-- ─── HEADER ─── -->
+    <header class="app-header">
+        <div class="header-izquierda">
+            <div class="header-logo-placeholder">LOGO</div>
+        </div>
+        <div class="header-centro">
+            REQUISICIONES DE COMPRAS ADMINISTRATIVAS
+        </div>
+        <div class="header-derecha">
+            <div class="header-info">
+                <div class="header-info-codigo">S-TF-39 v1</div>
+                <div class="header-info-proceso" id="header-proceso">-</div>
+            </div>
+            <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <!-- ─── NAVEGACIÓN ─── -->
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link activo">Requisiciones</a>
+        </div>
+        <div class="nav-acciones">
+            <button class="btn btn-primario" id="btn-nueva-requisicion">
+                + Nueva Requisición
+            </button>
+        </div>
+    </nav>
+
+    <!-- ─── CONTENIDO PRINCIPAL ─── -->
+    <main class="contenido-principal">
+
+        <!-- Formulario de nueva requisición (oculto por defecto) -->
+        <div id="seccion-formulario" class="oculto">
+            <div class="form-requisicion">
+                <div class="form-header">
+                    <span class="form-header-titulo">Nueva Requisición de Compra</span>
+                    <span class="form-header-id" id="form-id-preview">El ID se asignará al guardar</span>
+                </div>
+
+                <div class="form-body">
+                    <!-- SECCIÓN 1: Información automática -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Información del solicitante</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">
+                                    Fecha
+                                    <span class="campo-auto-badge">Automático</span>
+                                </label>
+                                <input type="text" id="campo-fecha" class="input-campo input-readonly" readonly>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">
+                                    Solicitante
+                                    <span class="campo-auto-badge">Automático</span>
+                                </label>
+                                <input type="text" id="campo-solicitante" class="input-campo input-readonly" readonly>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">
+                                    Proceso
+                                    <span class="campo-auto-badge">Automático</span>
+                                </label>
+                                <input type="text" id="campo-proceso" class="input-campo input-readonly" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: Datos de la solicitud -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Datos de la solicitud</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-unidad-negocio">
+                                    Unidad de negocio <span class="requerido">*</span>
+                                </label>
+                                <input type="text" id="campo-unidad-negocio" class="input-campo"
+                                    placeholder="Ej: O01010505" required>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-centro-costo">
+                                    Centro de costo <span class="requerido">*</span>
+                                </label>
+                                <input type="text" id="campo-centro-costo" class="input-campo"
+                                    placeholder="Ej: D2899" required>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-lugar-entrega">
+                                    Lugar de entrega <span class="requerido">*</span>
+                                </label>
+                                <input type="text" id="campo-lugar-entrega" class="input-campo"
+                                    placeholder="Dirección o sede de entrega" required>
+                            </div>
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label" for="campo-objeto-compra">
+                                    Objeto de la compra <span class="requerido">*</span>
+                                </label>
+                                <textarea id="campo-objeto-compra" class="input-campo input-textarea"
+                                    placeholder="Describa detalladamente lo que necesita comprar" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: Detalles del producto -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Detalles del producto</h3>
+                        <div class="form-grid form-grid-3">
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-cantidad">
+                                    Cantidad <span class="requerido">*</span>
+                                </label>
+                                <input type="number" id="campo-cantidad" class="input-campo"
+                                    placeholder="0" min="1" required>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-color">Color</label>
+                                <input type="text" id="campo-color" class="input-campo"
+                                    placeholder="Ej: Negro, Blanco">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-dimensiones">Dimensiones</label>
+                                <input type="text" id="campo-dimensiones" class="input-campo"
+                                    placeholder="Ej: 30x20x10 cm">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-marca">Marca sugerida</label>
+                                <input type="text" id="campo-marca" class="input-campo"
+                                    placeholder="Marca de preferencia">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-proveedor">Proveedor sugerido</label>
+                                <input type="text" id="campo-proveedor" class="input-campo"
+                                    placeholder="Proveedor de preferencia">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-rango-precios">
+                                    Rango de precios (COP)
+                                </label>
+                                <input type="text" id="campo-rango-precios" class="input-campo"
+                                    placeholder="Ej: 100.000 - 500.000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: Información adicional -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Información adicional</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label" for="campo-url">URL de referencia</label>
+                                <input type="url" id="campo-url" class="input-campo"
+                                    placeholder="https://ejemplo.com/producto">
+                            </div>
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label" for="campo-observaciones">Observaciones</label>
+                                <textarea id="campo-observaciones" class="input-campo input-textarea"
+                                    placeholder="Notas adicionales, especificaciones, urgencia, etc."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: Ejecución de compra -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Ejecución de la compra <span class="requerido">*</span></h3>
+                        <div class="ejecuta-opciones">
+                            <div class="ejecuta-opcion">
+                                <input type="radio" name="quien-ejecuta" id="ejecuta-compras" value="Compras" required>
+                                <label for="ejecuta-compras">
+                                    Compras
+                                    <div class="ejecuta-descripcion">
+                                        El área de Compras gestiona la adquisición. No podrá editar ni eliminar después.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="ejecuta-opcion">
+                                <input type="radio" name="quien-ejecuta" id="ejecuta-autonomo" value="Proceso Autónomo">
+                                <label for="ejecuta-autonomo">
+                                    Proceso Autónomo
+                                    <div class="ejecuta-descripcion">
+                                        Su proceso gestiona la compra directamente. Podrá editar y eliminar.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones del formulario -->
+                <div class="form-footer">
+                    <button type="button" class="btn btn-secundario" id="btn-cancelar">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primario" id="btn-guardar">
+                        Guardar Requisición
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado vacío (cuando no hay formulario ni requisiciones) -->
+        <div id="seccion-vacio">
+            <div class="estado-vacio">
+                <div class="estado-vacio-icono">📋</div>
+                <h2 class="estado-vacio-titulo">Sin requisiciones aún</h2>
+                <p class="estado-vacio-mensaje">
+                    Haz clic en "Nueva Requisición" para crear tu primera solicitud de compra.
+                </p>
+                <button class="btn btn-primario" id="btn-nueva-vacio">
+                    + Nueva Requisición
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de requisiciones (se implementará en Fase 5) -->
+        <div id="seccion-lista" class="oculto">
+            <!-- Aquí irá la tabla de requisiciones -->
+        </div>
+
+    </main>
+
+    <!-- JavaScript -->
+    <script type="module">
+        import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { crearRequisicion, obtenerRequisiciones, registrarHistorial } from '/js/services/requisiciones.service.js';
+        import { formatearFecha, aplicarFormatoMonedaInput } from '/js/utils/formatters.js';
+        import { Toast } from '/js/components/toast.js';
+        import { Loader } from '/js/components/loader.js';
+
+        // ─── Variables globales de la página ───
+        let usuarioActual = null;
+        let perfilActual = null;
+
+        /**
+         * Inicializar la página
+         */
+        async function inicializar() {
+            Loader.mostrar('Cargando...');
+
+            // Proteger ruta
+            const { usuario, perfil } = await protegerRuta();
+            if (!usuario || !perfil) return;
+
+            usuarioActual = usuario;
+            perfilActual = perfil;
+
+            // Llenar header
+            document.getElementById('header-proceso').textContent = perfil.proceso;
+
+            // Llenar campos automáticos del formulario
+            document.getElementById('campo-fecha').value = formatearFecha(new Date());
+            document.getElementById('campo-solicitante').value = perfil.nombre_completo;
+            document.getElementById('campo-proceso').value = perfil.proceso;
+
+            // Configurar eventos
+            configurarEventos();
+
+            // Cargar requisiciones existentes
+            await cargarRequisiciones();
+
+            Loader.ocultar();
+        }
+
+        /**
+         * Configurar todos los eventos de la página
+         */
+        function configurarEventos() {
+            // Botón nueva requisición (nav y vacío)
+            document.getElementById('btn-nueva-requisicion').addEventListener('click', mostrarFormulario);
+            document.getElementById('btn-nueva-vacio').addEventListener('click', mostrarFormulario);
+
+            // Botones del formulario
+            document.getElementById('btn-cancelar').addEventListener('click', ocultarFormulario);
+            document.getElementById('btn-guardar').addEventListener('click', guardarRequisicion);
+
+            // Cerrar sesión
+            document.getElementById('btn-logout').addEventListener('click', async () => {
+                Loader.mostrar('Cerrando sesión...');
+                await cerrarSesion();
+            });
+        }
+
+        /**
+         * Mostrar el formulario de nueva requisición
+         */
+        function mostrarFormulario() {
+            limpiarFormulario();
+            document.getElementById('seccion-formulario').classList.remove('oculto');
+            document.getElementById('seccion-vacio').classList.add('oculto');
+            document.getElementById('seccion-lista').classList.add('oculto');
+            // Scroll al formulario
+            document.getElementById('seccion-formulario').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * Ocultar el formulario
+         */
+        function ocultarFormulario() {
+            document.getElementById('seccion-formulario').classList.add('oculto');
+            cargarRequisiciones();
+        }
+
+        /**
+         * Limpiar todos los campos editables del formulario
+         */
+        function limpiarFormulario() {
+            // Actualizar fecha actual
+            document.getElementById('campo-fecha').value = formatearFecha(new Date());
+
+            // Limpiar campos editables
+            const camposLimpiar = [
+                'campo-unidad-negocio', 'campo-centro-costo', 'campo-lugar-entrega',
+                'campo-objeto-compra', 'campo-cantidad', 'campo-color',
+                'campo-dimensiones', 'campo-marca', 'campo-proveedor',
+                'campo-rango-precios', 'campo-url', 'campo-observaciones'
+            ];
+            camposLimpiar.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // Limpiar radio buttons
+            const radios = document.querySelectorAll('input[name="quien-ejecuta"]');
+            radios.forEach(r => r.checked = false);
+        }
+
+        /**
+         * Validar y guardar la requisición
+         */
+        async function guardarRequisicion() {
+            // Recoger valores
+            const unidadNegocio = document.getElementById('campo-unidad-negocio').value.trim();
+            const centroCosto = document.getElementById('campo-centro-costo').value.trim();
+            const lugarEntrega = document.getElementById('campo-lugar-entrega').value.trim();
+            const objetoCompra = document.getElementById('campo-objeto-compra').value.trim();
+            const cantidad = parseInt(document.getElementById('campo-cantidad').value, 10);
+            const quienEjecuta = document.querySelector('input[name="quien-ejecuta"]:checked');
+
+            // Validaciones
+            if (!unidadNegocio) {
+                Toast.advertencia('Ingrese la unidad de negocio.');
+                document.getElementById('campo-unidad-negocio').focus();
+                return;
+            }
+            if (!centroCosto) {
+                Toast.advertencia('Ingrese el centro de costo.');
+                document.getElementById('campo-centro-costo').focus();
+                return;
+            }
+            if (!lugarEntrega) {
+                Toast.advertencia('Ingrese el lugar de entrega.');
+                document.getElementById('campo-lugar-entrega').focus();
+                return;
+            }
+            if (!objetoCompra) {
+                Toast.advertencia('Describa el objeto de la compra.');
+                document.getElementById('campo-objeto-compra').focus();
+                return;
+            }
+            if (!cantidad || cantidad < 1) {
+                Toast.advertencia('Ingrese una cantidad válida.');
+                document.getElementById('campo-cantidad').focus();
+                return;
+            }
+            if (!quienEjecuta) {
+                Toast.advertencia('Seleccione quién ejecuta la compra.');
+                return;
+            }
+
+            // Preparar datos
+            const datos = {
+                user_id: usuarioActual.id,
+                solicitante: perfilActual.nombre_completo,
+                proceso: perfilActual.proceso,
+                unidad_negocio: unidadNegocio,
+                centro_costo: centroCosto,
+                lugar_entrega: lugarEntrega,
+                objeto_compra: objetoCompra,
+                cantidad: cantidad,
+                color: document.getElementById('campo-color').value.trim(),
+                dimensiones: document.getElementById('campo-dimensiones').value.trim(),
+                marca_sugerida: document.getElementById('campo-marca').value.trim(),
+                proveedor_sugerido: document.getElementById('campo-proveedor').value.trim(),
+                rango_precios: document.getElementById('campo-rango-precios').value.trim(),
+                url_referencia: document.getElementById('campo-url').value.trim(),
+                observaciones: document.getElementById('campo-observaciones').value.trim(),
+                quien_ejecuta: quienEjecuta.value,
+                estado: 'Pendiente'
+            };
+
+            // Deshabilitar botón
+            const btnGuardar = document.getElementById('btn-guardar');
+            btnGuardar.disabled = true;
+            btnGuardar.textContent = 'Guardando...';
+
+            // Guardar en Supabase
+            const { requisicion, error } = await crearRequisicion(datos);
+
+            if (error) {
+                Toast.error(error);
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = 'Guardar Requisición';
+                return;
+            }
+
+            // Registrar en historial
+            await registrarHistorial({
+                requisicion_id: requisicion.id,
+                id_requisicion: requisicion.id_requisicion,
+                user_id: usuarioActual.id,
+                nombre_usuario: perfilActual.nombre_completo,
+                accion: 'creacion',
+                detalle: `Requisición ${requisicion.id_requisicion} creada`
+            });
+
+            // Éxito
+            Toast.exito(`Requisición ${requisicion.id_requisicion} creada correctamente.`);
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = 'Guardar Requisición';
+
+            // Ocultar formulario y recargar lista
+            ocultarFormulario();
+        }
+
+        /**
+         * Cargar y mostrar requisiciones existentes
+         */
+        async function cargarRequisiciones() {
+            const { requisiciones, error } = await obtenerRequisiciones({}, perfilActual);
+
+            if (error) {
+                Toast.error(error);
+                return;
+            }
+
+            if (requisiciones.length === 0) {
+                document.getElementById('seccion-vacio').classList.remove('oculto');
+                document.getElementById('seccion-lista').classList.add('oculto');
+            } else {
+                document.getElementById('seccion-vacio').classList.add('oculto');
+                document.getElementById('seccion-lista').classList.remove('oculto');
+                renderizarListaSimple(requisiciones);
+            }
+        }
+
+        /**
+         * Renderizar lista simple de requisiciones (versión temporal antes de Fase 5)
+         */
+        function renderizarListaSimple(requisiciones) {
+            const contenedor = document.getElementById('seccion-lista');
+
+            const badgeClase = (estado) => {
+                const map = {
+                    'Pendiente': 'badge-pendiente',
+                    'En proceso': 'badge-en-proceso',
+                    'Cumplido': 'badge-cumplido'
+                };
+                return map[estado] || '';
+            };
+
+            let html = `
+                <div style="background: white; border-radius: var(--radio-lg); border: 1px solid var(--color-borde); overflow: hidden;">
+                    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-borde); display: flex; align-items: center; justify-content: space-between;">
+                        <h2 style="font-size: var(--texto-lg); font-weight: 600; color: var(--color-texto);">
+                            Mis Requisiciones (${requisiciones.length})
+                        </h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: var(--texto-sm);">
+                            <thead>
+                                <tr style="background-color: var(--color-gris-light);">
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">ID</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">Fecha</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">Objeto de compra</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">Cantidad</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">Ejecuta</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--color-texto-secundario);">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            requisiciones.forEach(req => {
+                const esEliminada = req.eliminado;
+                const estiloFila = esEliminada ? 'opacity: 0.5; background-color: var(--color-eliminado-bg);' : '';
+
+                html += `
+                    <tr style="border-bottom: 1px solid var(--color-borde); ${estiloFila}">
+                        <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--color-azul);">${req.id_requisicion}</td>
+                        <td style="padding: 0.75rem 1rem;">${formatearFecha(req.fecha)}</td>
+                        <td style="padding: 0.75rem 1rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${req.objeto_compra}</td>
+                        <td style="padding: 0.75rem 1rem;">${req.cantidad}</td>
+                        <td style="padding: 0.75rem 1rem;">${req.quien_ejecuta}</td>
+                        <td style="padding: 0.75rem 1rem;">
+                            <span class="badge-estado ${badgeClase(req.estado)}">${esEliminada ? 'Eliminada' : req.estado}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div></div>`;
+            contenedor.innerHTML = html;
+        }
+
+        // ─── Iniciar ───
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+
+</body>
+</html>

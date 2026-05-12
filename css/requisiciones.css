@@ -1,0 +1,419 @@
+/**
+ * ============================================================
+ * ESTILOS - REQUISICIONES
+ * Formulario, navegación y layout principal
+ * ============================================================
+ */
+
+/* ─── HEADER ─── */
+.app-header {
+    background-color: var(--color-azul);
+    color: white;
+    padding: 0 1.5rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--sombra-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-izquierda {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-logo-placeholder {
+    height: 36px;
+    padding: 0 1rem;
+    background-color: rgba(255,255,255,0.15);
+    border-radius: var(--radio-sm);
+    display: flex;
+    align-items: center;
+    font-size: var(--texto-xs);
+    color: rgba(255,255,255,0.7);
+}
+
+.header-centro {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.header-derecha {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: var(--texto-sm);
+}
+
+.header-info {
+    text-align: right;
+    line-height: 1.3;
+}
+
+.header-info-codigo {
+    font-size: var(--texto-xs);
+    opacity: 0.7;
+}
+
+.header-info-proceso {
+    font-weight: 500;
+}
+
+.btn-logout {
+    background-color: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    font-family: var(--fuente-principal);
+    transition: var(--transicion);
+}
+
+.btn-logout:hover {
+    background-color: rgba(255,255,255,0.25);
+}
+
+/* ─── NAVEGACIÓN ─── */
+.nav-bar {
+    background-color: var(--color-blanco);
+    border-bottom: 1px solid var(--color-borde);
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem;
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    color: var(--color-texto-secundario);
+    text-decoration: none;
+    border-radius: var(--radio-md);
+    transition: var(--transicion);
+}
+
+.nav-link:hover {
+    background-color: var(--color-gris-light);
+    color: var(--color-texto);
+    text-decoration: none;
+}
+
+.nav-link.activo {
+    background-color: var(--color-azul-light);
+    color: var(--color-azul);
+    font-weight: 600;
+}
+
+.nav-acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ─── CONTENIDO PRINCIPAL ─── */
+.contenido-principal {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--espacio-xl) var(--espacio-lg);
+}
+
+/* ─── FORMULARIO DE REQUISICIÓN ─── */
+.form-requisicion {
+    background-color: var(--color-blanco);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-sm);
+    border: 1px solid var(--color-borde);
+    overflow: hidden;
+}
+
+.form-header {
+    background-color: var(--color-azul);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.form-header-titulo {
+    font-size: var(--texto-lg);
+    font-weight: 600;
+}
+
+.form-header-id {
+    font-size: var(--texto-sm);
+    opacity: 0.8;
+    font-style: italic;
+}
+
+.form-body {
+    padding: 1.5rem;
+}
+
+.form-seccion {
+    margin-bottom: 2rem;
+}
+
+.form-seccion:last-child {
+    margin-bottom: 0;
+}
+
+.form-seccion-titulo {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--color-azul);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-azul-light);
+    margin-bottom: 1.25rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem 1.5rem;
+}
+
+.form-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-campo-full {
+    grid-column: 1 / -1;
+}
+
+/* Campos de solo lectura */
+.input-readonly {
+    background-color: var(--color-gris-light) !important;
+    color: var(--color-texto-secundario);
+    cursor: not-allowed;
+    border-color: var(--color-gris-light);
+}
+
+/* Textarea */
+.input-textarea {
+    min-height: 80px;
+    resize: vertical;
+    font-family: var(--fuente-principal);
+}
+
+/* Select */
+.input-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+
+/* Campo requerido */
+.input-label .requerido {
+    color: var(--color-error);
+    margin-left: 2px;
+}
+
+/* Indicador de campo automático */
+.campo-auto-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 0.125rem 0.5rem;
+    background-color: var(--color-en-proceso-bg);
+    color: var(--color-en-proceso);
+    border-radius: var(--radio-full);
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* ─── EJECUCIÓN DE COMPRA ─── */
+.ejecuta-opciones {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.ejecuta-opcion {
+    flex: 1;
+    position: relative;
+}
+
+.ejecuta-opcion input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.ejecuta-opcion label {
+    display: block;
+    padding: 1rem;
+    border: 2px solid var(--color-borde);
+    border-radius: var(--radio-md);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transicion);
+    font-weight: 500;
+    font-size: var(--texto-sm);
+}
+
+.ejecuta-opcion input[type="radio"]:checked + label {
+    border-color: var(--color-azul);
+    background-color: var(--color-azul-light);
+    color: var(--color-azul);
+}
+
+.ejecuta-opcion label:hover {
+    border-color: var(--color-azul);
+}
+
+.ejecuta-descripcion {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    margin-top: 0.25rem;
+    font-weight: 400;
+}
+
+/* ─── FOOTER DEL FORMULARIO ─── */
+.form-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--color-borde);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background-color: var(--color-gris-light);
+}
+
+/* ─── ESTADO VACÍO ─── */
+.estado-vacio {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-texto-secundario);
+}
+
+.estado-vacio-icono {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.estado-vacio-titulo {
+    font-size: var(--texto-lg);
+    font-weight: 600;
+    color: var(--color-texto);
+    margin-bottom: 0.5rem;
+}
+
+.estado-vacio-mensaje {
+    font-size: var(--texto-sm);
+    margin-bottom: 1.5rem;
+}
+
+/* ─── BADGES DE ESTADO ─── */
+.badge-estado {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radio-full);
+    font-size: var(--texto-xs);
+    font-weight: 600;
+}
+
+.badge-pendiente {
+    background-color: var(--color-pendiente-bg);
+    color: var(--color-pendiente);
+}
+
+.badge-en-proceso {
+    background-color: var(--color-en-proceso-bg);
+    color: var(--color-en-proceso);
+}
+
+.badge-cumplido {
+    background-color: var(--color-cumplido-bg);
+    color: var(--color-cumplido);
+}
+
+.badge-eliminado {
+    background-color: var(--color-eliminado-bg);
+    color: var(--color-eliminado);
+}
+
+.badge-admin {
+    background-color: var(--color-amarillo);
+    color: #1a1a00;
+}
+
+.badge-usuario {
+    background-color: var(--color-azul-light);
+    color: var(--color-azul);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .header-centro {
+        display: none;
+    }
+
+    .header-info {
+        display: none;
+    }
+
+    .app-header {
+        padding: 0 1rem;
+    }
+
+    .nav-bar {
+        padding: 0 1rem;
+        flex-wrap: wrap;
+        height: auto;
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+    }
+
+    .contenido-principal {
+        padding: var(--espacio-md);
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ejecuta-opciones {
+        flex-direction: column;
+    }
+
+    .form-footer {
+        flex-direction: column;
+    }
+
+    .form-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-links {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-acciones {
+        width: 100%;
+    }
+
+    .nav-acciones .btn {
+        width: 100%;
+    }
+}

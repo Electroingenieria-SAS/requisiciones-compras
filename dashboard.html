@@ -4,173 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Requisiciones | Electroingeniería S.A.S.</title>
-
-    <!-- Estilos -->
     <link rel="stylesheet" href="/css/variables.css">
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/components.css">
-
-    <style>
-        /* Estilos temporales del dashboard - se moverán a dashboard.css en la siguiente fase */
-        .app-header {
-            background-color: var(--color-azul);
-            color: white;
-            padding: 0 1.5rem;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--sombra-md);
-        }
-
-        .header-izquierda {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .header-logo {
-            height: 36px;
-            width: auto;
-        }
-
-        .header-logo-placeholder {
-            height: 36px;
-            padding: 0 1rem;
-            background-color: rgba(255,255,255,0.15);
-            border-radius: var(--radio-sm);
-            display: flex;
-            align-items: center;
-            font-size: var(--texto-xs);
-            color: rgba(255,255,255,0.7);
-        }
-
-        .header-centro {
-            font-size: var(--texto-sm);
-            font-weight: 600;
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-
-        .header-derecha {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-size: var(--texto-sm);
-        }
-
-        .header-info {
-            text-align: right;
-            line-height: 1.3;
-        }
-
-        .header-info-codigo {
-            font-size: var(--texto-xs);
-            opacity: 0.7;
-        }
-
-        .header-info-proceso {
-            font-weight: 500;
-        }
-
-        .btn-logout {
-            background-color: rgba(255,255,255,0.15);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radio-md);
-            cursor: pointer;
-            font-size: var(--texto-sm);
-            font-family: var(--fuente-principal);
-            transition: var(--transicion);
-        }
-
-        .btn-logout:hover {
-            background-color: rgba(255,255,255,0.25);
-        }
-
-        .dashboard-bienvenida {
-            max-width: 800px;
-            margin: 3rem auto;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .bienvenida-titulo {
-            font-size: var(--texto-2xl);
-            font-weight: 700;
-            color: var(--color-azul);
-            margin-bottom: 0.5rem;
-        }
-
-        .bienvenida-subtitulo {
-            color: var(--color-texto-secundario);
-            margin-bottom: 2rem;
-        }
-
-        .bienvenida-info {
-            background-color: var(--color-blanco);
-            border-radius: var(--radio-lg);
-            padding: 1.5rem;
-            box-shadow: var(--sombra-sm);
-            border: 1px solid var(--color-borde);
-            text-align: left;
-        }
-
-        .bienvenida-dato {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--color-gris-light);
-        }
-
-        .bienvenida-dato:last-child {
-            border-bottom: none;
-        }
-
-        .bienvenida-dato-label {
-            font-weight: 500;
-            color: var(--color-texto-secundario);
-        }
-
-        .bienvenida-dato-valor {
-            font-weight: 600;
-            color: var(--color-texto);
-        }
-
-        .badge-rol {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radio-full);
-            font-size: var(--texto-xs);
-            font-weight: 600;
-        }
-
-        .badge-admin {
-            background-color: var(--color-amarillo);
-            color: #1a1a00;
-        }
-
-        .badge-usuario {
-            background-color: var(--color-azul-light);
-            color: var(--color-azul);
-        }
-
-        .fase-mensaje {
-            margin-top: 2rem;
-            padding: 1rem 1.5rem;
-            background-color: var(--color-en-proceso-bg);
-            border-radius: var(--radio-md);
-            color: var(--color-en-proceso);
-            font-size: var(--texto-sm);
-        }
-
-        @media (max-width: 768px) {
-            .header-centro { display: none; }
-            .header-info { display: none; }
-            .app-header { padding: 0 1rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/requisiciones.css">
 </head>
 <body>
 
@@ -191,67 +28,103 @@
         </div>
     </header>
 
-    <!-- ─── CONTENIDO PRINCIPAL ─── -->
-    <main class="dashboard-bienvenida" id="contenido-principal" style="display:none;">
-        <h1 class="bienvenida-titulo" id="bienvenida-nombre">Bienvenido</h1>
-        <p class="bienvenida-subtitulo">Sistema de Requisiciones de Compras Administrativas</p>
+    <!-- ─── NAVEGACIÓN ─── -->
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link activo">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link">Requisiciones</a>
+        </div>
+    </nav>
 
-        <div class="bienvenida-info">
-            <div class="bienvenida-dato">
-                <span class="bienvenida-dato-label">Usuario</span>
-                <span class="bienvenida-dato-valor" id="info-nombre">-</span>
+    <!-- ─── CONTENIDO PRINCIPAL ─── -->
+    <main class="contenido-principal" id="contenido-principal" style="display:none;">
+
+        <!-- Tarjetas de métricas -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);">
+                <div style="font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-bottom: 0.5rem;">Total Requisiciones</div>
+                <div style="font-size: var(--texto-3xl); font-weight: 700; color: var(--color-azul);" id="metrica-total">0</div>
             </div>
-            <div class="bienvenida-dato">
-                <span class="bienvenida-dato-label">Proceso</span>
-                <span class="bienvenida-dato-valor" id="info-proceso">-</span>
+            <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); border-left: 4px solid var(--color-pendiente);">
+                <div style="font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-bottom: 0.5rem;">Pendientes</div>
+                <div style="font-size: var(--texto-3xl); font-weight: 700; color: var(--color-pendiente);" id="metrica-pendientes">0</div>
             </div>
-            <div class="bienvenida-dato">
-                <span class="bienvenida-dato-label">Rol</span>
-                <span class="bienvenida-dato-valor" id="info-rol">-</span>
+            <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); border-left: 4px solid var(--color-en-proceso);">
+                <div style="font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-bottom: 0.5rem;">En Proceso</div>
+                <div style="font-size: var(--texto-3xl); font-weight: 700; color: var(--color-en-proceso);" id="metrica-en-proceso">0</div>
             </div>
-            <div class="bienvenida-dato">
-                <span class="bienvenida-dato-label">Correo</span>
-                <span class="bienvenida-dato-valor" id="info-email">-</span>
+            <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); border-left: 4px solid var(--color-cumplido);">
+                <div style="font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-bottom: 0.5rem;">Cumplidas</div>
+                <div style="font-size: var(--texto-3xl); font-weight: 700; color: var(--color-cumplido);" id="metrica-cumplidas">0</div>
+            </div>
+            <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);">
+                <div style="font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-bottom: 0.5rem;">Tiempo promedio cumplimiento</div>
+                <div style="font-size: var(--texto-2xl); font-weight: 700; color: var(--color-texto);" id="metrica-promedio">- días</div>
             </div>
         </div>
 
-        <div class="fase-mensaje">
-            ✓ Login y autenticación funcionando correctamente. Las siguientes fases agregarán el formulario de requisiciones, la tabla con filtros, el dashboard de métricas y la exportación a Excel.
+        <!-- Info del usuario -->
+        <div style="background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--color-gris-light);">
+                <span style="font-weight: 500; color: var(--color-texto-secundario);">Usuario</span>
+                <span style="font-weight: 600;" id="info-nombre">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--color-gris-light);">
+                <span style="font-weight: 500; color: var(--color-texto-secundario);">Proceso</span>
+                <span style="font-weight: 600;" id="info-proceso">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--color-gris-light);">
+                <span style="font-weight: 500; color: var(--color-texto-secundario);">Rol</span>
+                <span id="info-rol">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                <span style="font-weight: 500; color: var(--color-texto-secundario);">Correo</span>
+                <span style="font-weight: 600;" id="info-email">-</span>
+            </div>
         </div>
     </main>
 
-    <!-- JavaScript modular -->
+    <!-- JavaScript -->
     <script type="module">
         import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { obtenerEstadisticas } from '/js/services/requisiciones.service.js';
         import { Loader } from '/js/components/loader.js';
 
         async function inicializar() {
-            Loader.mostrar('Verificando sesión...');
+            Loader.mostrar('Cargando dashboard...');
 
-            // Proteger ruta - redirige al login si no hay sesión
             const { usuario, perfil } = await protegerRuta();
-
             if (!usuario || !perfil) return;
 
-            // Llenar datos del usuario en la interfaz
+            // Header
             document.getElementById('header-proceso').textContent = perfil.proceso;
-            document.getElementById('bienvenida-nombre').textContent = `Bienvenido, ${perfil.nombre_completo}`;
+
+            // Info usuario
             document.getElementById('info-nombre').textContent = perfil.nombre_completo;
             document.getElementById('info-proceso').textContent = perfil.proceso;
             document.getElementById('info-email').textContent = usuario.email;
 
-            // Badge de rol
             const rolTexto = esAdministrador(perfil) ? 'Administrador' : 'Usuario';
             const rolClase = esAdministrador(perfil) ? 'badge-admin' : 'badge-usuario';
-            document.getElementById('info-rol').innerHTML = `<span class="badge-rol ${rolClase}">${rolTexto}</span>`;
+            document.getElementById('info-rol').innerHTML = `<span class="badge-estado ${rolClase}">${rolTexto}</span>`;
 
-            // Mostrar contenido
+            // Cargar métricas
+            const stats = await obtenerEstadisticas();
+            if (stats) {
+                document.getElementById('metrica-total').textContent = stats.total || 0;
+                document.getElementById('metrica-pendientes').textContent = stats.pendientes || 0;
+                document.getElementById('metrica-en-proceso').textContent = stats.en_proceso || 0;
+                document.getElementById('metrica-cumplidas').textContent = stats.cumplidas || 0;
+                document.getElementById('metrica-promedio').textContent =
+                    stats.tiempo_promedio_cumplimiento_dias
+                        ? `${stats.tiempo_promedio_cumplimiento_dias} días`
+                        : '- días';
+            }
+
             document.getElementById('contenido-principal').style.display = 'block';
-
             Loader.ocultar();
         }
 
-        // Botón cerrar sesión
         document.getElementById('btn-logout').addEventListener('click', async () => {
             Loader.mostrar('Cerrando sesión...');
             await cerrarSesion();
