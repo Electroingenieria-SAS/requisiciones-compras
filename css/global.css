@@ -1,0 +1,164 @@
+/**
+ * ============================================================
+ * ESTILOS GLOBALES
+ * Electroingeniería S.A.S.
+ * ============================================================
+ */
+
+/* ─── Google Fonts ─── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ─── Reset base ─── */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--fuente-principal);
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--color-azul);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ─── Botones globales ─── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    padding: 0.625rem 1.25rem;
+    font-family: var(--fuente-principal);
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    transition: var(--transicion);
+    white-space: nowrap;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primario {
+    background-color: var(--color-azul);
+    color: var(--color-blanco);
+}
+
+.btn-primario:hover:not(:disabled) {
+    background-color: var(--color-azul-hover);
+}
+
+.btn-secundario {
+    background-color: var(--color-gris-light);
+    color: var(--color-texto);
+    border: 1px solid var(--color-borde);
+}
+
+.btn-secundario:hover:not(:disabled) {
+    background-color: var(--color-borde);
+}
+
+.btn-peligro {
+    background-color: var(--color-error);
+    color: var(--color-blanco);
+}
+
+.btn-peligro:hover:not(:disabled) {
+    background-color: #DC2626;
+}
+
+.btn-exito {
+    background-color: var(--color-exito);
+    color: var(--color-blanco);
+}
+
+.btn-exito:hover:not(:disabled) {
+    background-color: #059669;
+}
+
+/* ─── Inputs globales ─── */
+.input-campo {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--fuente-principal);
+    font-size: var(--texto-sm);
+    color: var(--color-texto);
+    background-color: var(--color-blanco);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-md);
+    transition: var(--transicion);
+    outline: none;
+}
+
+.input-campo:focus {
+    border-color: var(--color-azul);
+    box-shadow: 0 0 0 3px rgba(0, 54, 156, 0.1);
+}
+
+.input-campo::placeholder {
+    color: var(--color-gris);
+}
+
+.input-label {
+    display: block;
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    color: var(--color-texto);
+    margin-bottom: var(--espacio-xs);
+}
+
+.input-grupo {
+    margin-bottom: var(--espacio-md);
+}
+
+/* ─── Utilidades ─── */
+.texto-centro {
+    text-align: center;
+}
+
+.texto-error {
+    color: var(--color-error);
+    font-size: var(--texto-sm);
+}
+
+.oculto {
+    display: none !important;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-centro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

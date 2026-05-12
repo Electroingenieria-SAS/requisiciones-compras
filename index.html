@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Requisiciones - Electroingeniería S.A.S.">
+    <title>Iniciar Sesión - Requisiciones | Electroingeniería S.A.S.</title>
+
+    <!-- Favicon (reemplazar con el real cuando esté disponible) -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+
+    <!-- ─── PÁGINA DE LOGIN ─── -->
+    <div class="login-pagina">
+        <div class="login-tarjeta">
+
+            <!-- Logo de la empresa -->
+            <div class="login-logo-placeholder" id="logo-container">
+                LOGO EMPRESA
+            </div>
+
+            <!-- Título -->
+            <h1 class="login-titulo">Requisiciones de Compras</h1>
+            <p class="login-subtitulo">Electroingeniería S.A.S.</p>
+
+            <!-- Mensaje de error -->
+            <div class="login-error" id="login-error"></div>
+
+            <!-- Formulario -->
+            <form class="login-formulario" id="login-form" autocomplete="off">
+
+                <!-- Campo: Correo (visualmente dice "Proceso" pero usa email) -->
+                <div class="input-grupo">
+                    <label class="input-label" for="login-email">Correo electrónico</label>
+                    <input
+                        type="email"
+                        id="login-email"
+                        class="input-campo"
+                        placeholder="usuario@electroingenieria.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <!-- Campo: Contraseña -->
+                <div class="input-grupo">
+                    <label class="input-label" for="login-password">Contraseña</label>
+                    <div class="input-password-grupo">
+                        <input
+                            type="password"
+                            id="login-password"
+                            class="input-campo"
+                            placeholder="Ingrese su contraseña"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle" id="password-toggle" aria-label="Mostrar contraseña">
+                            👁
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botón de login -->
+                <button type="submit" class="btn btn-primario login-btn" id="btn-login">
+                    Ingresar
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                &copy; 2025 Electroingeniería S.A.S. — Todos los derechos reservados
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript modular -->
+    <script type="module" src="/js/modules/login.js"></script>
+
+</body>
+</html>
