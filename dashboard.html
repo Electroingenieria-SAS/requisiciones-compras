@@ -6,7 +6,6 @@
     <title>Dashboard - Requisiciones | Electroingeniería S.A.S.</title>
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
     <link rel="stylesheet" href="/css/variables.css">
     <link rel="stylesheet" href="/css/global.css">
@@ -14,34 +13,23 @@
     <link rel="stylesheet" href="/css/requisiciones.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .dash-card {
             background: white; border-radius: var(--radio-lg); padding: 1.25rem;
-            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);
-            transition: var(--transicion);
+            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); transition: var(--transicion);
         }
         .dash-card:hover { box-shadow: var(--sombra-md); }
         .dash-card-label { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
         .dash-card-valor { font-size: var(--texto-3xl); font-weight: 700; }
-        .dash-card-detalle { font-size: var(--texto-xs); color: var(--color-gris); margin-top: 0.25rem; }
         .dash-card-borde { border-left: 4px solid; }
 
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .chart-panel {
-            background: white; border-radius: var(--radio-lg); padding: 1.5rem;
-            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);
-        }
+        .chart-panel { background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); }
         .chart-titulo { font-size: var(--texto-base); font-weight: 600; color: var(--color-texto); margin-bottom: 1rem; }
         .chart-container { position: relative; height: 280px; }
 
-        .actividad-panel {
-            background: white; border-radius: var(--radio-lg); padding: 1.5rem;
-            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde);
-        }
-        .actividad-item {
-            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;
-            border-bottom: 1px solid var(--color-gris-light); font-size: var(--texto-sm);
-        }
+        .actividad-panel { background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); }
+        .actividad-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--color-gris-light); font-size: var(--texto-sm); }
         .actividad-item:last-child { border-bottom: none; }
         .actividad-icono { font-size: 1.25rem; flex-shrink: 0; }
         .actividad-texto { flex: 1; color: var(--color-texto); }
@@ -62,31 +50,51 @@
         .info-saludo { font-size: var(--texto-lg); font-weight: 600; color: var(--color-texto); }
         .info-meta { font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-top: 0.125rem; }
 
+        /* ─── Notificaciones internas ─── */
+        .notif-banner {
+            background: linear-gradient(135deg, #EDE9FE, #DBEAFE); border: 1px solid var(--color-azul-light);
+            border-radius: var(--radio-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .notif-banner-icono { font-size: 2rem; flex-shrink: 0; }
+        .notif-banner-texto { flex: 1; }
+        .notif-banner-titulo { font-weight: 600; color: var(--color-azul); font-size: var(--texto-base); }
+        .notif-banner-detalle { font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-top: 0.25rem; }
+        .notif-banner-acciones { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .notif-items { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .notif-item {
+            background: white; padding: 0.75rem 1rem; border-radius: var(--radio-md);
+            border: 1px solid var(--color-borde); font-size: var(--texto-sm);
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+        }
+        .notif-item-id { font-weight: 600; color: var(--color-azul); }
+        .notif-item-info { flex: 1; color: var(--color-texto); }
+        .notif-item-badge { flex-shrink: 0; }
+
         .dash-vacio { text-align: center; padding: 3rem; color: var(--color-texto-secundario); }
-        .dash-vacio-icono { font-size: 3rem; margin-bottom: 0.5rem; }
 
         @media (max-width: 768px) {
             .charts-grid { grid-template-columns: 1fr; }
             .info-usuario-card { flex-direction: column; text-align: center; }
+            .notif-banner { flex-direction: column; text-align: center; }
+            .notif-banner-acciones { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
     <header class="app-header">
         <div class="header-izquierda"><img src="/assets/logo-header.png" alt="Electroingeniería" style="height:40px;border-radius:4px;"></div>
         <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
         <div class="header-derecha">
             <div class="header-info">
-                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-codigo">S-TF-39 v1</div>
                 <div class="header-info-proceso" id="header-proceso">-</div>
             </div>
             <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
         </div>
     </header>
 
-    <!-- NAV -->
     <nav class="nav-bar">
         <div class="nav-links">
             <a href="/dashboard.html" class="nav-link activo">Dashboard</a>
@@ -95,10 +103,9 @@
         </div>
     </nav>
 
-    <!-- CONTENIDO -->
     <main class="contenido-principal" id="contenido-principal" style="display:none;">
 
-        <!-- Saludo usuario -->
+        <!-- Saludo -->
         <div class="info-usuario-card">
             <div class="info-avatar" id="user-avatar">--</div>
             <div class="info-datos">
@@ -107,8 +114,11 @@
             </div>
         </div>
 
-        <!-- Métricas principales -->
-        <div class="dash-grid" id="metricas-grid">
+        <!-- Notificaciones internas (solo admin) -->
+        <div id="notif-container"></div>
+
+        <!-- Métricas -->
+        <div class="dash-grid">
             <div class="dash-card">
                 <div class="dash-card-label">Total requisiciones</div>
                 <div class="dash-card-valor" style="color:var(--color-azul);" id="m-total">0</div>
@@ -116,6 +126,10 @@
             <div class="dash-card dash-card-borde" style="border-left-color:var(--color-pendiente);">
                 <div class="dash-card-label">Pendientes</div>
                 <div class="dash-card-valor" style="color:var(--color-pendiente);" id="m-pendientes">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#8B5CF6;">
+                <div class="dash-card-label">En cotización</div>
+                <div class="dash-card-valor" style="color:#8B5CF6;" id="m-en-cotizacion">0</div>
             </div>
             <div class="dash-card dash-card-borde" style="border-left-color:var(--color-en-proceso);">
                 <div class="dash-card-label">En proceso</div>
@@ -168,7 +182,7 @@
         import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
         import { obtenerRequisiciones } from '/js/services/requisiciones.service.js';
         import { obtenerHistorialGlobal } from '/js/services/historial.service.js';
-        import { formatearMoneda, formatearFechaHora } from '/js/utils/formatters.js';
+        import { formatearMoneda, formatearFechaHora, formatearFecha } from '/js/utils/formatters.js';
         import { Loader } from '/js/components/loader.js';
         import { Toast } from '/js/components/toast.js';
 
@@ -178,18 +192,15 @@
             const { usuario, perfil } = await protegerRuta();
             if (!usuario || !perfil) return;
 
-            // Header
             document.getElementById('header-proceso').textContent = perfil.proceso;
             if (esAdministrador(perfil)) document.getElementById('nav-admin').classList.remove('oculto');
 
             // Saludo
             const iniciales = perfil.nombre_completo.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-avatar').textContent = iniciales;
-
             const hora = new Date().getHours();
             const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
             document.getElementById('user-saludo').textContent = `${saludo}, ${perfil.nombre_completo}`;
-
             const rolTexto = esAdministrador(perfil) ? 'Administrador' : 'Usuario';
             document.getElementById('user-meta').textContent = `${perfil.proceso} · ${rolTexto}`;
 
@@ -197,26 +208,31 @@
             const { requisiciones } = await obtenerRequisiciones({}, perfil);
             const activas = requisiciones.filter(r => !r.eliminado);
 
+            // ─── Notificaciones para admin ───
+            if (esAdministrador(perfil)) {
+                mostrarNotificaciones(requisiciones);
+            }
+
             // Métricas
             const pendientes = activas.filter(r => r.estado === 'Pendiente').length;
+            const enCotizacion = activas.filter(r => r.estado === 'En cotización').length;
             const enProceso = activas.filter(r => r.estado === 'En proceso').length;
             const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
             const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
                 .reduce((s, r) => s + Number(r.valor_real_compra), 0);
 
-            // Tiempo promedio
             const cumplicoConTiempo = activas.filter(r => r.estado === 'Cumplido');
             let promedioDias = '-';
             if (cumplicoConTiempo.length > 0) {
                 const totalDias = cumplicoConTiempo.reduce((s, r) => {
-                    const diff = new Date(r.updated_at) - new Date(r.created_at);
-                    return s + (diff / (1000 * 60 * 60 * 24));
+                    return s + ((new Date(r.updated_at) - new Date(r.created_at)) / 86400000);
                 }, 0);
                 promedioDias = (totalDias / cumplicoConTiempo.length).toFixed(1);
             }
 
             document.getElementById('m-total').textContent = activas.length;
             document.getElementById('m-pendientes').textContent = pendientes;
+            document.getElementById('m-en-cotizacion').textContent = enCotizacion;
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
             document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
@@ -224,7 +240,7 @@
 
             // Gráficos
             if (activas.length > 0) {
-                crearGraficoEstados(pendientes, enProceso, cumplidas);
+                crearGraficoEstados(pendientes, enCotizacion, enProceso, cumplidas);
                 crearGraficoMeses(activas);
                 crearGraficoProcesos(activas);
                 crearGraficoEjecutor(activas);
@@ -238,164 +254,168 @@
             Loader.ocultar();
         }
 
-        // ─── GRÁFICOS ───
+        // ─── NOTIFICACIONES INTERNAS ───
+        function mostrarNotificaciones(requisiciones) {
+            const container = document.getElementById('notif-container');
+            const ultimaVisita = localStorage.getItem('admin_ultima_visita');
+            const ahora = new Date().toISOString();
 
-        function crearGraficoEstados(pendientes, enProceso, cumplidas) {
+            // Requisiciones nuevas desde la última visita
+            let nuevas = [];
+            if (ultimaVisita) {
+                nuevas = requisiciones.filter(r => !r.eliminado && new Date(r.created_at) > new Date(ultimaVisita));
+            }
+
+            // Requisiciones pendientes (siempre mostrar)
+            const pendientes = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
+
+            // Guardar timestamp actual
+            localStorage.setItem('admin_ultima_visita', ahora);
+
+            if (nuevas.length === 0 && pendientes.length === 0) return;
+
+            let html = '';
+
+            // Banner de nuevas requisiciones
+            if (nuevas.length > 0) {
+                const badgeClaseMap = {
+                    'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion',
+                    'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido'
+                };
+
+                html += `
+                    <div class="notif-banner">
+                        <div class="notif-banner-icono">🔔</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo">${nuevas.length} nueva(s) requisición(es) desde tu última visita</div>
+                            <div class="notif-items">
+                                ${nuevas.slice(0, 5).map(r => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${r.id_requisicion}</span>
+                                        <span class="notif-item-info">${r.objeto_compra.substring(0, 40)}${r.objeto_compra.length > 40 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                        <span class="notif-item-badge">
+                                            <span class="badge-estado ${badgeClaseMap[r.estado] || ''}">${r.estado}</span>
+                                        </span>
+                                    </div>
+                                `).join('')}
+                                ${nuevas.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${nuevas.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver requisiciones</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Alerta de pendientes
+            if (pendientes.length > 0 && nuevas.length === 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:var(--color-pendiente);">
+                        <div class="notif-banner-icono">⏳</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:var(--color-pendiente);">Hay ${pendientes.length} requisición(es) pendiente(s)</div>
+                            <div class="notif-banner-detalle">Estas requisiciones están esperando ser procesadas.</div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ─── GRÁFICOS ───
+        function crearGraficoEstados(pendientes, enCotizacion, enProceso, cumplidas) {
             new Chart(document.getElementById('chart-estados'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pendientes', 'En proceso', 'Cumplidas'],
+                    labels: ['Pendientes', 'En cotización', 'En proceso', 'Cumplidas'],
                     datasets: [{
-                        data: [pendientes, enProceso, cumplidas],
-                        backgroundColor: ['#F59E0B', '#3B82F6', '#10B981'],
-                        borderWidth: 0,
-                        hoverOffset: 6
+                        data: [pendientes, enCotizacion, enProceso, cumplidas],
+                        backgroundColor: ['#F59E0B', '#8B5CF6', '#3B82F6', '#10B981'],
+                        borderWidth: 0, hoverOffset: 6
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } }
-                    },
+                    plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } },
                     cutout: '60%'
                 }
             });
         }
 
         function crearGraficoMeses(requisiciones) {
-            // Últimos 6 meses
-            const meses = [];
-            const datos = [];
-            const ahora = new Date();
-
+            const meses = []; const datos = []; const ahora = new Date();
             for (let i = 5; i >= 0; i--) {
                 const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
-                const label = fecha.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
-                meses.push(label);
-
-                const count = requisiciones.filter(r => {
+                meses.push(fecha.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' }));
+                datos.push(requisiciones.filter(r => {
                     const f = new Date(r.fecha);
                     return f.getMonth() === fecha.getMonth() && f.getFullYear() === fecha.getFullYear();
-                }).length;
-                datos.push(count);
+                }).length);
             }
-
             new Chart(document.getElementById('chart-meses'), {
                 type: 'bar',
-                data: {
-                    labels: meses,
-                    datasets: [{
-                        label: 'Requisiciones',
-                        data: datos,
-                        backgroundColor: '#00369C',
-                        borderRadius: 6,
-                        barThickness: 32
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                data: { labels: meses, datasets: [{ label: 'Requisiciones', data: datos, backgroundColor: '#00369C', borderRadius: 6, barThickness: 32 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
             });
         }
 
         function crearGraficoProcesos(requisiciones) {
             const conteo = {};
             requisiciones.forEach(r => { conteo[r.proceso] = (conteo[r.proceso] || 0) + 1; });
-
             const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
             const colores = ['#00369C','#3B82F6','#7C3AED','#DB2777','#DC2626','#EA580C','#F59E0B','#16A34A','#0891B2','#6366F1'];
-
             new Chart(document.getElementById('chart-procesos'), {
                 type: 'bar',
-                data: {
-                    labels: sorted.map(s => s[0].length > 18 ? s[0].substring(0, 18) + '…' : s[0]),
-                    datasets: [{
-                        label: 'Requisiciones',
-                        data: sorted.map(s => s[1]),
-                        backgroundColor: colores.slice(0, sorted.length),
-                        borderRadius: 4,
-                        barThickness: 20
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                data: { labels: sorted.map(s => s[0].length > 18 ? s[0].substring(0, 18) + '…' : s[0]),
+                    datasets: [{ label: 'Requisiciones', data: sorted.map(s => s[1]), backgroundColor: colores.slice(0, sorted.length), borderRadius: 4, barThickness: 20 }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
                     plugins: { legend: { display: false } },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        y: { grid: { display: false } }
-                    }
-                }
+                    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } }, y: { grid: { display: false } } } }
             });
         }
 
         function crearGraficoEjecutor(requisiciones) {
             const compras = requisiciones.filter(r => r.quien_ejecuta === 'Compras').length;
             const autonomo = requisiciones.filter(r => r.quien_ejecuta === 'Proceso Autónomo').length;
-
             new Chart(document.getElementById('chart-ejecutor'), {
                 type: 'doughnut',
-                data: {
-                    labels: ['Compras', 'Proceso Autónomo'],
-                    datasets: [{
-                        data: [compras, autonomo],
-                        backgroundColor: ['#00369C', '#F6D000'],
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } }
-                    },
-                    cutout: '60%'
-                }
+                data: { labels: ['Compras', 'Proceso Autónomo'],
+                    datasets: [{ data: [compras, autonomo], backgroundColor: ['#00369C', '#F6D000'], borderWidth: 0, hoverOffset: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } }, cutout: '60%' }
             });
         }
 
         // ─── ACTIVIDAD RECIENTE ───
-
         function renderizarActividad(historial) {
             const contenedor = document.getElementById('actividad-lista');
-
             if (!historial || historial.length === 0) {
-                contenedor.innerHTML = `<div class="dash-vacio"><div class="dash-vacio-icono">📭</div><p>Sin actividad registrada aún.</p></div>`;
+                contenedor.innerHTML = '<div class="dash-vacio"><p>Sin actividad registrada aún.</p></div>';
                 return;
             }
-
             const iconos = { 'creacion': '🟢', 'edicion': '✏️', 'eliminacion': '🗑️', 'cambio_estado': '🔄', 'restauracion': '♻️' };
             const acciones = { 'creacion': 'creó', 'edicion': 'editó', 'eliminacion': 'eliminó', 'cambio_estado': 'cambió estado de', 'restauracion': 'restauró' };
-
             contenedor.innerHTML = historial.map(h => {
                 const icono = iconos[h.accion] || '📝';
                 const accion = acciones[h.accion] || h.accion;
                 let detalle = '';
                 if (h.accion === 'cambio_estado' && h.valor_nuevo) detalle = ` → ${h.valor_nuevo}`;
                 if (h.accion === 'edicion' && h.campo_modificado) detalle = ` (${h.campo_modificado})`;
-
-                return `
-                    <div class="actividad-item">
-                        <span class="actividad-icono">${icono}</span>
-                        <span class="actividad-texto">
-                            <strong>${h.nombre_usuario}</strong> ${accion} <strong>${h.id_requisicion}</strong>${detalle}
-                        </span>
-                        <span class="actividad-fecha">${formatearFechaHora(h.fecha)}</span>
-                    </div>
-                `;
+                return `<div class="actividad-item">
+                    <span class="actividad-icono">${icono}</span>
+                    <span class="actividad-texto"><strong>${h.nombre_usuario}</strong> ${accion} <strong>${h.id_requisicion}</strong>${detalle}</span>
+                    <span class="actividad-fecha">${formatearFechaHora(h.fecha)}</span>
+                </div>`;
             }).join('');
         }
 
-        // ─── EVENTOS ───
-        document.getElementById('btn-logout').addEventListener('click', async () => {
-            Loader.mostrar('Cerrando sesión...');
-            await cerrarSesion();
-        });
-
+        document.getElementById('btn-logout').addEventListener('click', async () => { Loader.mostrar('Cerrando sesión...'); await cerrarSesion(); });
         document.addEventListener('DOMContentLoaded', inicializar);
     </script>
 

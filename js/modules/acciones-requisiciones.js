@@ -371,7 +371,7 @@ export function confirmarEliminar(req, usuario, perfil, onEliminado) {
  * Mostrar modal de cambio de estado
  */
 export function cambiarEstado(req, usuario, perfil, onCambiado) {
-    const estados = ['Pendiente', 'En proceso', 'Cumplido'];
+    const estados = ['Pendiente', 'En cotización', 'En proceso', 'Cumplido'];
     const estadoActual = req.estado;
 
     let opcionesHTML = estados
@@ -578,7 +578,7 @@ export async function verHistorial(req) {
  */
 function badgeClase(req) {
     if (req.eliminado) return 'badge-eliminado';
-    const map = { 'Pendiente': 'badge-pendiente', 'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido' };
+    const map = { 'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion', 'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido' };
     return map[req.estado] || '';
 }
 

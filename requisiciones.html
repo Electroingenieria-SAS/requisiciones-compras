@@ -107,7 +107,7 @@
         <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
         <div class="header-derecha">
             <div class="header-info">
-                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-codigo">S-TF-39 v1</div>
                 <div class="header-info-proceso" id="header-proceso">-</div>
             </div>
             <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
@@ -226,6 +226,7 @@
                     <select id="filtro-estado">
                         <option value="todos">Todos</option>
                         <option value="Pendiente">Pendiente</option>
+                        <option value="En cotización">En cotización</option>
                         <option value="En proceso">En proceso</option>
                         <option value="Cumplido">Cumplido</option>
                     </select>
@@ -379,17 +380,6 @@
                     Toast.error(err.message || 'Error al exportar.');
                 }
             });
-         // Formato monetario en rango de precios
-            document.getElementById('campo-rango-precios').addEventListener('input', (e) => {
-                let valor = e.target.value;
-                let partes = valor.split('-');
-                partes = partes.map(p => {
-                    let num = p.replace(/[^0-9]/g, '');
-                    if (num === '') return '';
-                    return '$' + parseInt(num, 10).toLocaleString('es-CO');
-                });
-                e.target.value = partes.join(' - ');
-            });   
         }
 
         // ─── FORMULARIO ───

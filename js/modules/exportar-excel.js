@@ -123,6 +123,7 @@ export function exportarRequisicionesExcel(requisiciones, info = {}) {
 function crearHojaResumen(requisiciones, empresa, fechaExport) {
     const activas = requisiciones.filter(r => !r.eliminado);
     const pendientes = activas.filter(r => r.estado === 'Pendiente').length;
+    const enCotizacion = activas.filter(r => r.estado === 'En cotización').length;
     const enProceso = activas.filter(r => r.estado === 'En proceso').length;
     const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
     const eliminadas = requisiciones.filter(r => r.eliminado).length;
@@ -153,6 +154,7 @@ function crearHojaResumen(requisiciones, empresa, fechaExport) {
         ['Métrica', 'Valor'],
         ['Total requisiciones activas', activas.length],
         ['Pendientes', pendientes],
+        ['En cotización', enCotizacion],
         ['En proceso', enProceso],
         ['Cumplidas', cumplidas],
         ['Eliminadas', eliminadas],

@@ -191,6 +191,7 @@
 .badge-estado { display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radio-full); font-size: var(--texto-xs); font-weight: 600; }
 .badge-pendiente { background-color: var(--color-pendiente-bg); color: var(--color-pendiente); }
 .badge-en-proceso { background-color: var(--color-en-proceso-bg); color: var(--color-en-proceso); }
+.badge-en-cotizacion { background-color: var(--color-en-cotizacion-bg); color: var(--color-en-cotizacion); }
 .badge-cumplido { background-color: var(--color-cumplido-bg); color: var(--color-cumplido); }
 .badge-eliminado { background-color: var(--color-eliminado-bg); color: var(--color-eliminado); }
 .badge-admin { background-color: var(--color-amarillo); color: #1a1a00; }
