@@ -354,18 +354,6 @@
                 if (requisicionesCache.length === 0) {
                     Toast.advertencia('No hay requisiciones para exportar.');
                     return;
-
-            // Formato monetario en rango de precios
-            document.getElementById('campo-rango-precios').addEventListener('input', (e) => {
-                let valor = e.target.value;
-                let partes = valor.split('-');
-                partes = partes.map(p => {
-                    let num = p.replace(/[^0-9]/g, '');
-                    if (num === '') return '';
-                    return '$' + parseInt(num, 10).toLocaleString('es-CO');
-                });
-                e.target.value = partes.join(' - ');
-            });
                 }
 
                 try {
@@ -391,6 +379,17 @@
                     Toast.error(err.message || 'Error al exportar.');
                 }
             });
+         // Formato monetario en rango de precios
+            document.getElementById('campo-rango-precios').addEventListener('input', (e) => {
+                let valor = e.target.value;
+                let partes = valor.split('-');
+                partes = partes.map(p => {
+                    let num = p.replace(/[^0-9]/g, '');
+                    if (num === '') return '';
+                    return '$' + parseInt(num, 10).toLocaleString('es-CO');
+                });
+                e.target.value = partes.join(' - ');
+            });   
         }
 
         // ─── FORMULARIO ───
