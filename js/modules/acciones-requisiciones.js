@@ -45,6 +45,7 @@ export function puedeCambiarEstado(req, perfil) {
     if (req.estado === 'Cumplido') return false;
     if (perfil.rol === 'administrador') return true;
     if (req.user_id !== perfil.id) return false;
+    if (req.quien_ejecuta === 'Compras') return false;
     return true;
 }
 
