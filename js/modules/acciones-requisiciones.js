@@ -8,6 +8,7 @@
  */
 
 import { actualizarRequisicion, eliminarRequisicion, registrarHistorial } from '../services/requisiciones.service.js';
+import { obtenerHistorial } from '../services/historial.service.js';
 import { formatearFecha, formatearMoneda, formatearFechaHora } from '../utils/formatters.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
@@ -495,6 +496,81 @@ export function cambiarEstado(req, usuario, perfil, onCambiado) {
             if (v) e.target.value = parseInt(v, 10).toLocaleString('es-CO');
         });
     }
+}
+
+/**
+ * Mostrar modal de historial de cambios
+ */
+export async function verHistorial(req) {
+    const { historial, error } = await obtenerHistorial(req.id);
+
+    if (error) {
+        Toast.error(error);
+        return;
+    }
+
+    const accionLabel = {
+        'creacion': '🟢 Creación',
+        'edicion': '✏️ Edición',
+        'eliminacion': '🗑️ Eliminación',
+        'cambio_estado': '🔄 Cambio de estado',
+        'restauracion': '♻️ Restauración'
+    };
+
+    let contenidoHTML;
+
+    if (historial.length === 0) {
+        contenidoHTML = `
+            <div style="text-align:center;padding:2rem;color:var(--color-texto-secundario);">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">📭</div>
+                <p>No hay registros de cambios para esta requisición.</p>
+            </div>
+        `;
+    } else {
+        contenidoHTML = `
+            <div style="font-size:var(--texto-sm);color:var(--color-texto-secundario);margin-bottom:1rem;">
+                ${historial.length} registro(s) de cambios
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;max-height:400px;overflow-y:auto;padding-right:0.5rem;">
+                ${historial.map(h => {
+                    const label = accionLabel[h.accion] || h.accion;
+                    let detalle = '';
+
+                    if (h.accion === 'edicion' && h.campo_modificado) {
+                        detalle = `
+                            <div style="margin-top:0.375rem;padding:0.5rem;background:var(--color-gris-light);border-radius:var(--radio-sm);font-size:0.75rem;">
+                                <strong>Campo:</strong> ${h.campo_modificado}<br>
+                                <span style="color:var(--color-error);">Antes:</span> ${h.valor_anterior || '(vacío)'}<br>
+                                <span style="color:var(--color-cumplido);">Después:</span> ${h.valor_nuevo || '(vacío)'}
+                            </div>
+                        `;
+                    } else if (h.detalle) {
+                        detalle = `<div style="margin-top:0.25rem;font-size:0.75rem;color:var(--color-texto-secundario);">${h.detalle}</div>`;
+                    }
+
+                    return `
+                        <div style="padding:0.75rem;border:1px solid var(--color-borde);border-radius:var(--radio-md);background:white;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-weight:600;font-size:var(--texto-sm);">${label}</span>
+                                <span style="font-size:0.7rem;color:var(--color-gris);">${formatearFechaHora(h.fecha)}</span>
+                            </div>
+                            <div style="font-size:0.8rem;color:var(--color-texto-secundario);margin-top:0.25rem;">
+                                Por: <strong>${h.nombre_usuario}</strong>
+                            </div>
+                            ${detalle}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    Modal.crear({
+        titulo: `Historial - ${req.id_requisicion}`,
+        contenido: contenidoHTML,
+        ancho: '550px',
+        botones: [{ texto: 'Cerrar', clase: 'btn-secundario', onClick: Modal.cerrar }]
+    });
 }
 
 /**

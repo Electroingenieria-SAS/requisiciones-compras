@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="12" fill="#00369C"/>
+  <!-- Dots pattern -->
+  <circle cx="30" cy="16" r="5.5" fill="#A4A8AB"/>
+  <circle cx="42" cy="16" r="5.5" fill="#A4A8AB"/>
+  <circle cx="54" cy="16" r="5.5" fill="#A4A8AB"/>
+  <circle cx="22" cy="28" r="5.5" fill="#A4A8AB"/>
+  <circle cx="34" cy="28" r="5.5" fill="#F6D000"/>
+  <circle cx="46" cy="28" r="5.5" fill="#F6D000"/>
+  <circle cx="58" cy="28" r="5.5" fill="#A4A8AB"/>
+  <circle cx="18" cy="40" r="5.5" fill="#FFFFFF"/>
+  <circle cx="30" cy="40" r="5.5" fill="#FFFFFF"/>
+  <circle cx="42" cy="40" r="5.5" fill="#F6D000"/>
+  <circle cx="54" cy="40" r="5.5" fill="#A4A8AB"/>
+  <circle cx="30" cy="52" r="5.5" fill="#A4A8AB"/>
+  <circle cx="42" cy="52" r="5.5" fill="#A4A8AB"/>
+  <!-- "ei" text -->
+  <text x="50" y="84" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="32" fill="#FFFFFF">ei</text>
+</svg>

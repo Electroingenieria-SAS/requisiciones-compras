@@ -14,7 +14,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Estos datos son públicos (anon key) y seguros de exponer en frontend.
 // La seguridad real la maneja Row Level Security (RLS) en la base de datos.
 const SUPABASE_URL = 'https://ckxnhoxdsezapamdiwsc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNreG5ob3hkc2V6YXBhbWRpd3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MzU3OTcsImV4cCI6MjA5NDExMTc5N30.zxYckiyhTiaMNNTdF-rsEeKduIIyC4jM_y_t0loVvU0';
+const SUPABASE_ANON_KEY = 'PEGAR_AQUI_TU_ANON_KEY';
 
 // ─── Crear cliente Supabase ───
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
