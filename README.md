@@ -85,7 +85,6 @@ Sistema web empresarial para la gestión de requisiciones de compras administrat
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-7. Desplegar en Netlify conectando el repositorio de GitHub
 
 ### Colores Corporativos
 
@@ -95,4 +94,4 @@ Sistema web empresarial para la gestión de requisiciones de compras administrat
 
 ### Costo
 
-$0/mes en plan gratuito (Supabase Free + Netlify Free + GitHub Free)
+$0/mes en plan gratuito (Supabase Free + GitHub Free)
