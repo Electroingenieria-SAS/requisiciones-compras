@@ -208,9 +208,11 @@
             const { requisiciones } = await obtenerRequisiciones({}, perfil);
             const activas = requisiciones.filter(r => !r.eliminado);
 
-            // ─── Notificaciones para admin ───
+            // ─── Notificaciones ───
             if (esAdministrador(perfil)) {
-                mostrarNotificaciones(requisiciones);
+                mostrarNotificacionesAdmin(requisiciones);
+            } else {
+                await mostrarNotificacionesUsuario();
             }
 
             // Métricas
@@ -255,34 +257,30 @@
         }
 
         // ─── NOTIFICACIONES INTERNAS ───
-        function mostrarNotificaciones(requisiciones) {
+
+        // Notificaciones para el ADMIN (requisiciones nuevas)
+        function mostrarNotificacionesAdmin(requisiciones) {
             const container = document.getElementById('notif-container');
             const ultimaVisita = localStorage.getItem('admin_ultima_visita');
             const ahora = new Date().toISOString();
 
-            // Requisiciones nuevas desde la última visita
             let nuevas = [];
             if (ultimaVisita) {
                 nuevas = requisiciones.filter(r => !r.eliminado && new Date(r.created_at) > new Date(ultimaVisita));
             }
 
-            // Requisiciones pendientes (siempre mostrar)
             const pendientes = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
-
-            // Guardar timestamp actual
             localStorage.setItem('admin_ultima_visita', ahora);
 
             if (nuevas.length === 0 && pendientes.length === 0) return;
 
             let html = '';
 
-            // Banner de nuevas requisiciones
             if (nuevas.length > 0) {
                 const badgeClaseMap = {
                     'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion',
                     'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido'
                 };
-
                 html += `
                     <div class="notif-banner">
                         <div class="notif-banner-icono">🔔</div>
@@ -293,9 +291,7 @@
                                     <div class="notif-item">
                                         <span class="notif-item-id">${r.id_requisicion}</span>
                                         <span class="notif-item-info">${r.objeto_compra.substring(0, 40)}${r.objeto_compra.length > 40 ? '...' : ''} — <em>${r.solicitante}</em></span>
-                                        <span class="notif-item-badge">
-                                            <span class="badge-estado ${badgeClaseMap[r.estado] || ''}">${r.estado}</span>
-                                        </span>
+                                        <span class="notif-item-badge"><span class="badge-estado ${badgeClaseMap[r.estado] || ''}">${r.estado}</span></span>
                                     </div>
                                 `).join('')}
                                 ${nuevas.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${nuevas.length - 5} más...</div>` : ''}
@@ -304,11 +300,9 @@
                         <div class="notif-banner-acciones">
                             <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver requisiciones</a>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
 
-            // Alerta de pendientes
             if (pendientes.length > 0 && nuevas.length === 0) {
                 html += `
                     <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:var(--color-pendiente);">
@@ -320,9 +314,69 @@
                         <div class="notif-banner-acciones">
                             <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
+
+            container.innerHTML = html;
+        }
+
+        // Notificaciones para USUARIOS (cambios en sus requisiciones)
+        async function mostrarNotificacionesUsuario() {
+            const container = document.getElementById('notif-container');
+            const ultimaVisita = localStorage.getItem('user_ultima_visita');
+            const ahora = new Date().toISOString();
+
+            // Guardar visita actual
+            localStorage.setItem('user_ultima_visita', ahora);
+
+            // Consultar cambios hechos por otros en mis requisiciones
+            const { data, error } = await supabase.rpc('obtener_mis_notificaciones', {
+                desde: ultimaVisita || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            });
+
+            if (error || !data || data.length === 0) return;
+
+            const accionTexto = {
+                'cambio_estado': '🔄 Estado cambiado',
+                'edicion': '✏️ Editada',
+                'eliminacion': '🗑️ Eliminada',
+                'creacion': '🟢 Creada',
+                'restauracion': '♻️ Restaurada'
+            };
+
+            const badgeClaseMap = {
+                'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion',
+                'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido'
+            };
+
+            let html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg, #DBEAFE, #EDE9FE); border-color: var(--color-azul-light);">
+                    <div class="notif-banner-icono">🔔</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo">${data.length} actualización(es) en tus requisiciones</div>
+                        <div class="notif-banner-detalle">Cambios realizados por otros usuarios desde tu última visita.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 8).map(n => {
+                                const label = accionTexto[n.accion] || n.accion;
+                                let detalle = '';
+                                if (n.accion === 'cambio_estado' && n.valor_nuevo) {
+                                    detalle = `<span class="badge-estado ${badgeClaseMap[n.valor_nuevo] || ''}" style="margin-left:0.5rem;">${n.valor_nuevo}</span>`;
+                                } else if (n.accion === 'edicion' && n.campo_modificado) {
+                                    detalle = ` <span style="color:var(--color-gris);">(${n.campo_modificado})</span>`;
+                                }
+                                return `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${n.id_requisicion}</span>
+                                        <span class="notif-item-info">${label} por <strong>${n.nombre_usuario}</strong>${detalle}</span>
+                                    </div>`;
+                            }).join('')}
+                            ${data.length > 8 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${data.length - 8} más...</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver mis requisiciones</a>
+                    </div>
+                </div>`;
 
             container.innerHTML = html;
         }
