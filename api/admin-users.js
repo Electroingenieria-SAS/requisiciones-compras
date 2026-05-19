@@ -109,7 +109,8 @@ export default async function handler(req, res) {
                 nombre_completo: nombre_completo.trim(),
                 proceso: proceso.trim(),
                 rol: rol || 'usuario',
-                activo: true
+                activo: true,
+                requiere_cambio_password: true
             };
 
             const perfilInsert = await fetch(`${SUPABASE_URL}/rest/v1/perfiles`, {
@@ -162,6 +163,17 @@ export default async function handler(req, res) {
             if (!resetResponse.ok) {
                 return res.status(500).json({ error: 'Error al cambiar la contraseña.' });
             }
+
+            // Marcar que el usuario debe cambiar la contraseña en su próximo login
+            await fetch(`${SUPABASE_URL}/rest/v1/perfiles?id=eq.${user_id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    'apikey': SUPABASE_SERVICE_ROLE_KEY
+                },
+                body: JSON.stringify({ requiere_cambio_password: true })
+            });
 
             return res.status(200).json({ mensaje: 'Contraseña actualizada correctamente.' });
         }

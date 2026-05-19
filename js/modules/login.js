@@ -70,9 +70,13 @@ function configurarFormulario() {
         // Login exitoso
         Toast.exito(`Bienvenido, ${resultado.perfil.nombre_completo}`);
 
-        // Esperar un momento para que se vea el toast
+        // Si requiere cambiar contraseña, redirigir ahí
+        const destino = resultado.perfil.requiere_cambio_password
+            ? '/cambiar-password.html'
+            : '/dashboard.html';
+
         setTimeout(() => {
-            window.location.href = '/dashboard.html';
+            window.location.href = destino;
         }, 800);
     });
 }

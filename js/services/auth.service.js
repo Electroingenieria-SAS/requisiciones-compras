@@ -125,6 +125,7 @@ export async function obtenerPerfil(userId) {
 
 /**
  * Proteger una página: redirige al login si no hay sesión
+ * También redirige a cambio de contraseña si el usuario lo requiere.
  * Debe llamarse al inicio de cada página protegida.
  * @returns {Object} { usuario, perfil }
  */
@@ -140,6 +141,12 @@ export async function protegerRuta() {
 
     if (!perfil || !perfil.activo) {
         await cerrarSesion();
+        return { usuario: null, perfil: null };
+    }
+
+    // Si requiere cambiar contraseña, redirigir (excepto si ya está en esa página)
+    if (perfil.requiere_cambio_password && !window.location.pathname.includes('cambiar-password')) {
+        window.location.href = '/cambiar-password.html';
         return { usuario: null, perfil: null };
     }
 
