@@ -107,7 +107,7 @@
         <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
         <div class="header-derecha">
             <div class="header-info">
-                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-codigo">S-TF-39 v1</div>
                 <div class="header-info-proceso" id="header-proceso">-</div>
             </div>
             <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
@@ -288,7 +288,7 @@
     </main>
 
     <script type="module">
-        import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { protegerRuta, cerrarSesion, esAdministrador, puedeGestionarUsuarios } from '/js/services/auth.service.js';
         import { crearRequisicion, obtenerRequisiciones, registrarHistorial } from '/js/services/requisiciones.service.js';
         import { formatearFecha } from '/js/utils/formatters.js';
         import { Toast } from '/js/components/toast.js';
@@ -316,8 +316,8 @@
             document.getElementById('campo-solicitante').value = perfil.nombre_completo;
             document.getElementById('campo-proceso').value = perfil.proceso;
 
-            // Mostrar link de admin si es administrador
-            if (perfil.rol === 'administrador') {
+            // Mostrar link de admin si puede gestionar usuarios
+            if (puedeGestionarUsuarios(perfil)) {
                 document.getElementById('nav-admin').classList.remove('oculto');
             }
 
