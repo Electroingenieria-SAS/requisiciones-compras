@@ -19,13 +19,14 @@ import { Toast } from '../components/toast.js';
 export function puedeEditar(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
-    // En estado "Pendiente aprobación": ni admin ni nadie edita (excepto el creador en "Rechazada")
     if (req.estado === 'Pendiente aprobación') return false;
-    // En "Rechazada", solo el creador puede editar (para reenviar)
     if (req.estado === 'Rechazada') {
         return req.user_id === perfil.id;
     }
-    if (perfil.rol === 'administrador') return true;
+    // Super admin puede editar todo
+    if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
+    // Admin de compras puede editar requisiciones aprobadas (para correcciones operativas)
+    if (perfil.rol === 'admin_compras') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
@@ -38,7 +39,10 @@ export function puedeEliminar(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
     if (req.estado === 'Pendiente aprobación') return false;
-    if (perfil.rol === 'administrador') return true;
+    // Solo el super admin puede eliminar requisiciones aprobadas
+    if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
+    // El admin de compras NO elimina (solo gestiona)
+    if (perfil.rol === 'admin_compras') return false;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
@@ -50,10 +54,12 @@ export function puedeEliminar(req, perfil) {
 export function puedeCambiarEstado(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
-    // El admin NO puede cambiar estado mientras esté pendiente de aprobación o rechazada
     if (req.estado === 'Pendiente aprobación') return false;
     if (req.estado === 'Rechazada') return false;
-    if (perfil.rol === 'administrador') return true;
+    // Super admin puede cambiar estado de cualquier requisición
+    if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
+    // Admin de compras gestiona los estados de las requisiciones aprobadas
+    if (perfil.rol === 'admin_compras') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
