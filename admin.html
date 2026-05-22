@@ -74,7 +74,7 @@
         <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
         <div class="header-derecha">
             <div class="header-info">
-                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-codigo">S-TF-39 v1</div>
                 <div class="header-info-proceso" id="header-proceso">-</div>
             </div>
             <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
@@ -168,18 +168,30 @@
                             </div>
                             <div class="input-grupo">
                                 <label class="input-label">Rol</label>
-                                <select id="crear-rol" class="input-campo input-select">
+                                <select id="crear-rol" class="input-campo input-select" onchange="actualizarCamposJerarquia()">
                                     <option value="usuario">Usuario</option>
-                                    <option value="administrador">Administrador</option>
+                                    <option value="jefe">Jefe</option>
+                                    <option value="director">Director / Gerente</option>
+                                    <option value="admin_compras">Administrador de Compras</option>
+                                    <option value="super_admin">Super Administrador</option>
                                 </select>
                             </div>
-                            <div class="input-grupo" style="grid-column: 1 / -1;">
-                                <label class="input-label">Jefe directo (aprobador de compras)</label>
+                            <div class="input-grupo" id="grupo-jefe" style="grid-column: 1 / -1;">
+                                <label class="input-label">Jefe directo (aprobador)</label>
                                 <select id="crear-jefe" class="input-campo input-select">
                                     <option value="">Sin jefe asignado</option>
                                 </select>
                                 <small style="color: var(--color-gris); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
-                                    Si no se asigna, las requisiciones de "Compras" pasarán directo a Pendiente sin aprobación.
+                                    Aplica para usuarios. Sin jefe, las requisiciones de "Compras" pasan directo a Pendiente.
+                                </small>
+                            </div>
+                            <div class="input-grupo" id="grupo-director" style="grid-column: 1 / -1; display: none;">
+                                <label class="input-label">Director / Gerente (aprobador)</label>
+                                <select id="crear-director" class="input-campo input-select">
+                                    <option value="">Sin director asignado</option>
+                                </select>
+                                <small style="color: var(--color-gris); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                                    Aplica para jefes. El director aprueba las requisiciones que el jefe cree.
                                 </small>
                             </div>
                         </div>
@@ -199,7 +211,7 @@
 
     <script type="module">
         import { supabase } from '/js/config/supabase.js';
-        import { protegerRuta, cerrarSesion, esAdministrador } from '/js/services/auth.service.js';
+        import { protegerRuta, cerrarSesion, esAdministrador, puedeGestionarUsuarios } from '/js/services/auth.service.js';
         import { Toast } from '/js/components/toast.js';
         import { Loader } from '/js/components/loader.js';
         import { Modal } from '/js/components/modal.js';
@@ -233,8 +245,8 @@
 
             document.getElementById('header-proceso').textContent = perfil.proceso;
 
-            // Verificar que sea admin
-            if (!esAdministrador(perfil)) {
+            // Verificar que pueda gestionar usuarios (super_admin o admin_compras)
+            if (!puedeGestionarUsuarios(perfil)) {
                 document.getElementById('acceso-denegado').classList.remove('oculto');
                 Loader.ocultar();
                 return;
@@ -267,27 +279,76 @@
         }
 
         function poblarDropdownJefes() {
-            const select = document.getElementById('crear-jefe');
-            if (!select) return;
-            // Solo usuarios activos pueden ser jefes
-            const opciones = todosLosPerfiles
-                .filter(p => p.activo)
-                .map(p => `<option value="${p.id}|${p.nombre_completo}">${p.nombre_completo} — ${p.proceso}</option>`)
+            const selectJefe = document.getElementById('crear-jefe');
+            const selectDirector = document.getElementById('crear-director');
+            if (!selectJefe) return;
+
+            // Solo jefes activos pueden ser jefes de usuarios
+            const opcionesJefes = todosLosPerfiles
+                .filter(p => p.activo && (p.rol === 'jefe' || p.rol === 'super_admin'))
+                .map(p => `<option value="${p.id}|${p.nombre_completo}">${p.nombre_completo} — ${p.proceso} (${etiquetaRol(p.rol)})</option>`)
                 .join('');
-            select.innerHTML = '<option value="">Sin jefe asignado</option>' + opciones;
+            selectJefe.innerHTML = '<option value="">Sin jefe asignado</option>' + opcionesJefes;
+
+            // Solo directores activos pueden ser directores de jefes
+            if (selectDirector) {
+                const opcionesDirectores = todosLosPerfiles
+                    .filter(p => p.activo && (p.rol === 'director' || p.rol === 'super_admin'))
+                    .map(p => `<option value="${p.id}|${p.nombre_completo}">${p.nombre_completo} — ${p.proceso} (${etiquetaRol(p.rol)})</option>`)
+                    .join('');
+                selectDirector.innerHTML = '<option value="">Sin director asignado</option>' + opcionesDirectores;
+            }
         }
+
+        function etiquetaRol(rol) {
+            const map = {
+                'super_admin': 'Super Admin',
+                'director': 'Director',
+                'jefe': 'Jefe',
+                'admin_compras': 'Admin Compras',
+                'usuario': 'Usuario'
+            };
+            return map[rol] || rol;
+        }
+
+        // Mostrar campos según el rol seleccionado (al crear)
+        window.actualizarCamposJerarquia = function() {
+            const rol = document.getElementById('crear-rol').value;
+            const grupoJefe = document.getElementById('grupo-jefe');
+            const grupoDirector = document.getElementById('grupo-director');
+
+            // Usuario y admin_compras → necesitan jefe
+            if (rol === 'usuario' || rol === 'admin_compras') {
+                grupoJefe.style.display = 'block';
+                grupoDirector.style.display = 'none';
+            }
+            // Jefe → necesita director
+            else if (rol === 'jefe') {
+                grupoJefe.style.display = 'none';
+                grupoDirector.style.display = 'block';
+            }
+            // Director y super_admin → no necesitan superior
+            else {
+                grupoJefe.style.display = 'none';
+                grupoDirector.style.display = 'none';
+            }
+        };
 
         function renderizarStats() {
             const total = todosLosPerfiles.length;
             const activos = todosLosPerfiles.filter(p => p.activo).length;
-            const admins = todosLosPerfiles.filter(p => p.rol === 'administrador').length;
-            const procesos = [...new Set(todosLosPerfiles.map(p => p.proceso))].length;
+            const superAdmins = todosLosPerfiles.filter(p => p.rol === 'super_admin').length;
+            const directores = todosLosPerfiles.filter(p => p.rol === 'director').length;
+            const jefes = todosLosPerfiles.filter(p => p.rol === 'jefe').length;
+            const adminsCompras = todosLosPerfiles.filter(p => p.rol === 'admin_compras').length;
 
             document.getElementById('stats-usuarios').innerHTML = `
                 <div class="stat-card"><div class="stat-numero">${total}</div><div class="stat-label">Total usuarios</div></div>
                 <div class="stat-card"><div class="stat-numero" style="color:var(--color-cumplido)">${activos}</div><div class="stat-label">Activos</div></div>
-                <div class="stat-card"><div class="stat-numero" style="color:var(--color-pendiente)">${admins}</div><div class="stat-label">Administradores</div></div>
-                <div class="stat-card"><div class="stat-numero" style="color:var(--color-en-proceso)">${procesos}</div><div class="stat-label">Procesos con usuario</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:#92400E">${superAdmins}</div><div class="stat-label">Super Admins</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:#1E40AF">${directores}</div><div class="stat-label">Directores</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:#3730A3">${jefes}</div><div class="stat-label">Jefes</div></div>
+                <div class="stat-card"><div class="stat-numero" style="color:#9F1239">${adminsCompras}</div><div class="stat-label">Admin Compras</div></div>
             `;
         }
 
@@ -307,9 +368,28 @@
                 const badgeActivoHTML = esActivo
                     ? '<span class="badge-sm badge-activo">Activo</span>'
                     : '<span class="badge-sm badge-inactivo">Inactivo</span>';
-                const rolBadge = p.rol === 'administrador'
-                    ? '<span class="badge-sm badge-admin">Admin</span>'
-                    : '<span class="badge-sm" style="background:var(--color-gris-light);color:var(--color-texto-secundario);">Usuario</span>';
+
+                // Badge según el rol
+                const rolStyles = {
+                    'super_admin': 'background:#FEF3C7;color:#92400E;',
+                    'director': 'background:#DBEAFE;color:#1E40AF;',
+                    'jefe': 'background:#E0E7FF;color:#3730A3;',
+                    'admin_compras': 'background:#FCE7F3;color:#9F1239;',
+                    'usuario': 'background:var(--color-gris-light);color:var(--color-texto-secundario);'
+                };
+                const rolBadge = `<span class="badge-sm" style="${rolStyles[p.rol] || rolStyles['usuario']}">${etiquetaRol(p.rol)}</span>`;
+
+                // Mostrar jerarquía según el rol
+                let jerarquiaHTML = '';
+                if (p.rol === 'usuario' || p.rol === 'admin_compras') {
+                    jerarquiaHTML = p.nombre_jefe
+                        ? `<span class="badge-sm" style="background:#FEF3C7;color:#92400E;">👤 Jefe: ${p.nombre_jefe}</span>`
+                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;">⚠️ Sin jefe</span>`;
+                } else if (p.rol === 'jefe') {
+                    jerarquiaHTML = p.nombre_director
+                        ? `<span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">👔 Director: ${p.nombre_director}</span>`
+                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;">⚠️ Sin director</span>`;
+                }
 
                 return `
                     <div class="usuario-card ${cardClase}">
@@ -322,7 +402,7 @@
                                     <span class="badge-sm badge-proceso">${p.proceso}</span>
                                     ${rolBadge}
                                     ${badgeActivoHTML}
-                                    ${p.nombre_jefe ? `<span class="badge-sm" style="background:#FEF3C7;color:#92400E;">👤 ${p.nombre_jefe}</span>` : ''}
+                                    ${jerarquiaHTML}
                                 </div>
                             </div>
                         </div>
@@ -346,19 +426,32 @@
             const proceso = document.getElementById('crear-proceso').value;
             const rol = document.getElementById('crear-rol').value;
             const jefeValor = document.getElementById('crear-jefe').value;
+            const directorValor = document.getElementById('crear-director').value;
 
-            // Extraer id y nombre del jefe (formato: "uuid|nombre")
+            // Extraer id y nombre del jefe
             let jefe_id = null, nombre_jefe = null;
             if (jefeValor) {
                 const partes = jefeValor.split('|');
                 jefe_id = partes[0];
                 nombre_jefe = partes[1];
             }
+            // Extraer id y nombre del director
+            let director_id = null, nombre_director = null;
+            if (directorValor) {
+                const partes = directorValor.split('|');
+                director_id = partes[0];
+                nombre_director = partes[1];
+            }
 
             if (!nombre) { Toast.advertencia('Ingrese el nombre completo.'); return; }
             if (!email) { Toast.advertencia('Ingrese el correo electrónico.'); return; }
             if (!password || password.length < 6) { Toast.advertencia('La contraseña debe tener al menos 6 caracteres.'); return; }
             if (!proceso) { Toast.advertencia('Seleccione un proceso.'); return; }
+
+            // Validar jerarquía obligatoria
+            if (rol === 'jefe' && !director_id) {
+                Toast.advertencia('Un jefe debe tener un director asignado.'); return;
+            }
 
             const btn = document.getElementById('btn-guardar-usuario');
             btn.disabled = true; btn.textContent = 'Creando...';
@@ -372,7 +465,12 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session.access_token}`
                     },
-                    body: JSON.stringify({ action: 'crear', email, password, nombre_completo: nombre, proceso, rol, jefe_id, nombre_jefe })
+                    body: JSON.stringify({
+                        action: 'crear', email, password,
+                        nombre_completo: nombre, proceso, rol,
+                        jefe_id, nombre_jefe,
+                        director_id, nombre_director
+                    })
                 });
 
                 const result = await response.json();
@@ -391,6 +489,9 @@
                 document.getElementById('crear-password').value = '';
                 document.getElementById('crear-proceso').value = '';
                 document.getElementById('crear-rol').value = 'usuario';
+                document.getElementById('crear-jefe').value = '';
+                document.getElementById('crear-director').value = '';
+                actualizarCamposJerarquia();
                 document.getElementById('seccion-crear').classList.add('oculto');
 
                 await cargarUsuarios();
@@ -415,10 +516,16 @@
                 `<option value="${p}" ${p === perfil.proceso ? 'selected' : ''}>${p}</option>`
             ).join('');
 
-            // Opciones de jefe (excluir el propio usuario)
+            // Opciones de jefe: solo perfiles con rol "jefe" o super_admin
             const opcionesJefes = todosLosPerfiles
-                .filter(u => u.activo && u.id !== perfil.id)
-                .map(u => `<option value="${u.id}|${u.nombre_completo}" ${perfil.jefe_id === u.id ? 'selected' : ''}>${u.nombre_completo} — ${u.proceso}</option>`)
+                .filter(u => u.activo && u.id !== perfil.id && (u.rol === 'jefe' || u.rol === 'super_admin'))
+                .map(u => `<option value="${u.id}|${u.nombre_completo}" ${perfil.jefe_id === u.id ? 'selected' : ''}>${u.nombre_completo} — ${u.proceso} (${etiquetaRol(u.rol)})</option>`)
+                .join('');
+
+            // Opciones de director: solo perfiles con rol "director" o super_admin
+            const opcionesDirectores = todosLosPerfiles
+                .filter(u => u.activo && u.id !== perfil.id && (u.rol === 'director' || u.rol === 'super_admin'))
+                .map(u => `<option value="${u.id}|${u.nombre_completo}" ${perfil.director_id === u.id ? 'selected' : ''}>${u.nombre_completo} — ${u.proceso} (${etiquetaRol(u.rol)})</option>`)
                 .join('');
 
             const html = `
@@ -433,20 +540,46 @@
                     </div>
                     <div class="input-grupo">
                         <label class="input-label">Rol</label>
-                        <select id="edit-user-rol" class="input-campo input-select">
+                        <select id="edit-user-rol" class="input-campo input-select" onchange="window._toggleCamposEdit()">
                             <option value="usuario" ${perfil.rol === 'usuario' ? 'selected' : ''}>Usuario</option>
-                            <option value="administrador" ${perfil.rol === 'administrador' ? 'selected' : ''}>Administrador</option>
+                            <option value="jefe" ${perfil.rol === 'jefe' ? 'selected' : ''}>Jefe</option>
+                            <option value="director" ${perfil.rol === 'director' ? 'selected' : ''}>Director / Gerente</option>
+                            <option value="admin_compras" ${perfil.rol === 'admin_compras' ? 'selected' : ''}>Administrador de Compras</option>
+                            <option value="super_admin" ${perfil.rol === 'super_admin' ? 'selected' : ''}>Super Administrador</option>
                         </select>
                     </div>
-                    <div class="input-grupo">
-                        <label class="input-label">Jefe directo (aprobador de compras)</label>
+                    <div class="input-grupo" id="edit-grupo-jefe">
+                        <label class="input-label">Jefe directo (aprobador)</label>
                         <select id="edit-user-jefe" class="input-campo input-select">
                             <option value="">Sin jefe asignado</option>
                             ${opcionesJefes}
                         </select>
                     </div>
+                    <div class="input-grupo" id="edit-grupo-director">
+                        <label class="input-label">Director / Gerente (aprobador)</label>
+                        <select id="edit-user-director" class="input-campo input-select">
+                            <option value="">Sin director asignado</option>
+                            ${opcionesDirectores}
+                        </select>
+                    </div>
                 </div>
             `;
+
+            window._toggleCamposEdit = function() {
+                const rol = document.getElementById('edit-user-rol').value;
+                const grupoJefe = document.getElementById('edit-grupo-jefe');
+                const grupoDirector = document.getElementById('edit-grupo-director');
+                if (rol === 'usuario' || rol === 'admin_compras') {
+                    grupoJefe.style.display = 'block';
+                    grupoDirector.style.display = 'none';
+                } else if (rol === 'jefe') {
+                    grupoJefe.style.display = 'none';
+                    grupoDirector.style.display = 'block';
+                } else {
+                    grupoJefe.style.display = 'none';
+                    grupoDirector.style.display = 'none';
+                }
+            };
 
             Modal.crear({
                 titulo: `Editar: ${perfil.nombre_completo}`,
@@ -455,18 +588,25 @@
                     { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
                     { texto: 'Guardar', clase: 'btn-primario', onClick: async () => {
                         const jefeValor = document.getElementById('edit-user-jefe').value;
+                        const directorValor = document.getElementById('edit-user-director').value;
                         let jefe_id = null, nombre_jefe = null;
-                        if (jefeValor) {
-                            const partes = jefeValor.split('|');
-                            jefe_id = partes[0];
-                            nombre_jefe = partes[1];
+                        if (jefeValor) { const partes = jefeValor.split('|'); jefe_id = partes[0]; nombre_jefe = partes[1]; }
+                        let director_id = null, nombre_director = null;
+                        if (directorValor) { const partes = directorValor.split('|'); director_id = partes[0]; nombre_director = partes[1]; }
+
+                        const nuevoRol = document.getElementById('edit-user-rol').value;
+                        if (nuevoRol === 'jefe' && !director_id) {
+                            Toast.advertencia('Un jefe debe tener un director asignado.'); return;
                         }
+
                         const cambios = {
                             nombre_completo: document.getElementById('edit-user-nombre').value.trim(),
                             proceso: document.getElementById('edit-user-proceso').value,
-                            rol: document.getElementById('edit-user-rol').value,
+                            rol: nuevoRol,
                             jefe_id,
-                            nombre_jefe
+                            nombre_jefe,
+                            director_id,
+                            nombre_director
                         };
                         const { error } = await supabase.from('perfiles').update(cambios).eq('id', userId);
                         if (error) { Toast.error('Error al actualizar.'); return; }
@@ -476,6 +616,9 @@
                     }}
                 ]
             });
+
+            // Aplicar visibilidad inicial
+            setTimeout(() => window._toggleCamposEdit(), 50);
         };
 
         // ─── RESETEAR CONTRASEÑA ───
