@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Requisiciones | Electroingeniería S.A.S.</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/requisiciones.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .dash-card {
+            background: white; border-radius: var(--radio-lg); padding: 1.25rem;
+            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); transition: var(--transicion);
+        }
+        .dash-card:hover { box-shadow: var(--sombra-md); }
+        .dash-card-label { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+        .dash-card-valor { font-size: var(--texto-3xl); font-weight: 700; }
+        .dash-card-borde { border-left: 4px solid; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .chart-panel { background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); }
+        .chart-titulo { font-size: var(--texto-base); font-weight: 600; color: var(--color-texto); margin-bottom: 1rem; }
+        .chart-container { position: relative; height: 280px; }
+
+        .actividad-panel { background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); }
+        .actividad-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--color-gris-light); font-size: var(--texto-sm); }
+        .actividad-item:last-child { border-bottom: none; }
+        .actividad-icono { font-size: 1.25rem; flex-shrink: 0; }
+        .actividad-texto { flex: 1; color: var(--color-texto); }
+        .actividad-texto strong { color: var(--color-azul); }
+        .actividad-fecha { font-size: var(--texto-xs); color: var(--color-gris); white-space: nowrap; }
+
+        .info-usuario-card {
+            background: white; border-radius: var(--radio-lg); padding: 1.25rem;
+            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1.25rem;
+        }
+        .info-avatar {
+            width: 56px; height: 56px; border-radius: 50%; background: var(--color-azul);
+            display: flex; align-items: center; justify-content: center; color: white;
+            font-weight: 700; font-size: var(--texto-xl); flex-shrink: 0;
+        }
+        .info-datos { flex: 1; }
+        .info-saludo { font-size: var(--texto-lg); font-weight: 600; color: var(--color-texto); }
+        .info-meta { font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-top: 0.125rem; }
+
+        /* ─── Notificaciones internas ─── */
+        .notif-banner {
+            background: linear-gradient(135deg, #EDE9FE, #DBEAFE); border: 1px solid var(--color-azul-light);
+            border-radius: var(--radio-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .notif-banner-icono { font-size: 2rem; flex-shrink: 0; }
+        .notif-banner-texto { flex: 1; }
+        .notif-banner-titulo { font-weight: 600; color: var(--color-azul); font-size: var(--texto-base); }
+        .notif-banner-detalle { font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-top: 0.25rem; }
+        .notif-banner-acciones { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .notif-items { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .notif-item {
+            background: white; padding: 0.75rem 1rem; border-radius: var(--radio-md);
+            border: 1px solid var(--color-borde); font-size: var(--texto-sm);
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+        }
+        .notif-item-id { font-weight: 600; color: var(--color-azul); }
+        .notif-item-info { flex: 1; color: var(--color-texto); }
+        .notif-item-badge { flex-shrink: 0; }
+
+        .dash-vacio { text-align: center; padding: 3rem; color: var(--color-texto-secundario); }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .info-usuario-card { flex-direction: column; text-align: center; }
+            .notif-banner { flex-direction: column; text-align: center; }
+            .notif-banner-acciones { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-izquierda"><img src="/assets/logo-header.png" alt="Electroingeniería" style="height:40px;border-radius:4px;"></div>
+        <div class="header-centro">REQUISICIONES DE COMPRAS ADMINISTRATIVAS</div>
+        <div class="header-derecha">
+            <div class="header-info">
+                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-proceso" id="header-proceso">-</div>
+            </div>
+            <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link activo">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link">Requisiciones</a>
+            <a href="/admin.html" class="nav-link oculto" id="nav-admin">Administración</a>
+        </div>
+    </nav>
+
+    <main class="contenido-principal" id="contenido-principal" style="display:none;">
+
+        <!-- Saludo -->
+        <div class="info-usuario-card">
+            <div class="info-avatar" id="user-avatar">--</div>
+            <div class="info-datos">
+                <div class="info-saludo" id="user-saludo">Bienvenido</div>
+                <div class="info-meta" id="user-meta">-</div>
+            </div>
+        </div>
+
+        <!-- Notificaciones internas (solo admin) -->
+        <div id="notif-container"></div>
+
+        <!-- Métricas -->
+        <div class="dash-grid">
+            <div class="dash-card">
+                <div class="dash-card-label">Total requisiciones</div>
+                <div class="dash-card-valor" style="color:var(--color-azul);" id="m-total">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#B91C1C;">
+                <div class="dash-card-label">Pendientes aprobación</div>
+                <div class="dash-card-valor" style="color:#B91C1C;" id="m-pendientes-aprobacion">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#991B1B;">
+                <div class="dash-card-label">Rechazadas</div>
+                <div class="dash-card-valor" style="color:#991B1B;" id="m-rechazadas">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-pendiente);">
+                <div class="dash-card-label">Pendientes</div>
+                <div class="dash-card-valor" style="color:var(--color-pendiente);" id="m-pendientes">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#8B5CF6;">
+                <div class="dash-card-label">En cotización</div>
+                <div class="dash-card-valor" style="color:#8B5CF6;" id="m-en-cotizacion">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-en-proceso);">
+                <div class="dash-card-label">En proceso</div>
+                <div class="dash-card-valor" style="color:var(--color-en-proceso);" id="m-en-proceso">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-cumplido);">
+                <div class="dash-card-label">Cumplidas</div>
+                <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Valor total compras</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor">$0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Tiempo promedio</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-promedio">- días</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-panel">
+                <div class="chart-titulo">Requisiciones por estado</div>
+                <div class="chart-container"><canvas id="chart-estados"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-titulo">Requisiciones por mes</div>
+                <div class="chart-container"><canvas id="chart-meses"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-titulo">Por proceso (Top 10)</div>
+                <div class="chart-container"><canvas id="chart-procesos"></canvas></div>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-titulo">Compras vs Proceso Autónomo</div>
+                <div class="chart-container"><canvas id="chart-ejecutor"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Actividad reciente -->
+        <div class="actividad-panel">
+            <div class="chart-titulo">Actividad reciente</div>
+            <div id="actividad-lista"></div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { supabase } from '/js/config/supabase.js';
+        import { protegerRuta, cerrarSesion, esAdministrador, puedeGestionarUsuarios, etiquetaRol } from '/js/services/auth.service.js';
+        import { obtenerRequisiciones } from '/js/services/requisiciones.service.js';
+        import { obtenerHistorialGlobal } from '/js/services/historial.service.js';
+        import { formatearMoneda, formatearFechaHora, formatearFecha } from '/js/utils/formatters.js';
+        import { Loader } from '/js/components/loader.js';
+        import { Toast } from '/js/components/toast.js';
+
+        async function inicializar() {
+            Loader.mostrar('Cargando dashboard...');
+
+            const { usuario, perfil } = await protegerRuta();
+            if (!usuario || !perfil) return;
+
+            document.getElementById('header-proceso').textContent = perfil.proceso;
+            if (puedeGestionarUsuarios(perfil)) document.getElementById('nav-admin').classList.remove('oculto');
+
+            // Saludo
+            const iniciales = perfil.nombre_completo.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('user-avatar').textContent = iniciales;
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
+            document.getElementById('user-saludo').textContent = `${saludo}, ${perfil.nombre_completo}`;
+            const rolTexto = etiquetaRol(perfil.rol);
+            document.getElementById('user-meta').textContent = `${perfil.proceso} · ${rolTexto}`;
+
+            // Cargar datos
+            const { requisiciones } = await obtenerRequisiciones({}, perfil);
+            const activas = requisiciones.filter(r => !r.eliminado);
+
+            // ─── Notificaciones por rol ───
+            // Cada rol ve notificaciones diferentes:
+            // - Super admin → resumen del sistema (nuevas y pendientes globales)
+            // - Director y Jefe → aprobaciones pendientes de su equipo
+            // - Admin de Compras → requisiciones aprobadas listas para gestionar
+            // - Usuario → cambios hechos por otros en sus requisiciones
+
+            if (perfil.rol === 'admin_compras') {
+                mostrarNotificacionesAdminCompras(requisiciones);
+            } else if (perfil.rol === 'jefe' || perfil.rol === 'director') {
+                await mostrarAprobacionesPendientes(perfil);
+            } else if (esAdministrador(perfil)) {
+                mostrarNotificacionesAdmin(requisiciones);
+            } else {
+                await mostrarNotificacionesUsuario();
+            }
+
+            // Métricas
+            const pendientesAprobacion = activas.filter(r => r.estado === 'Pendiente aprobación').length;
+            const rechazadas = activas.filter(r => r.estado === 'Rechazada').length;
+            const pendientes = activas.filter(r => r.estado === 'Pendiente').length;
+            const enCotizacion = activas.filter(r => r.estado === 'En cotización').length;
+            const enProceso = activas.filter(r => r.estado === 'En proceso').length;
+            const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
+            const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
+                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
+
+            const cumplicoConTiempo = activas.filter(r => r.estado === 'Cumplido');
+            let promedioDias = '-';
+            if (cumplicoConTiempo.length > 0) {
+                const totalDias = cumplicoConTiempo.reduce((s, r) => {
+                    return s + ((new Date(r.updated_at) - new Date(r.created_at)) / 86400000);
+                }, 0);
+                promedioDias = (totalDias / cumplicoConTiempo.length).toFixed(1);
+            }
+
+            document.getElementById('m-total').textContent = activas.length;
+            document.getElementById('m-pendientes-aprobacion').textContent = pendientesAprobacion;
+            document.getElementById('m-rechazadas').textContent = rechazadas;
+            document.getElementById('m-pendientes').textContent = pendientes;
+            document.getElementById('m-en-cotizacion').textContent = enCotizacion;
+            document.getElementById('m-en-proceso').textContent = enProceso;
+            document.getElementById('m-cumplidas').textContent = cumplidas;
+            document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
+            document.getElementById('m-promedio').textContent = `${promedioDias} días`;
+
+            // Gráficos
+            if (activas.length > 0) {
+                crearGraficoEstados(pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas);
+                crearGraficoMeses(activas);
+                crearGraficoProcesos(activas);
+                crearGraficoEjecutor(activas);
+            }
+
+            // Actividad reciente
+            const { historial } = await obtenerHistorialGlobal(15);
+            renderizarActividad(historial);
+
+            document.getElementById('contenido-principal').style.display = 'block';
+            Loader.ocultar();
+        }
+
+        // ─── NOTIFICACIONES INTERNAS ───
+
+        // Notificaciones para ADMIN DE COMPRAS (requisiciones aprobadas listas para gestionar)
+        function mostrarNotificacionesAdminCompras(requisiciones) {
+            const container = document.getElementById('notif-container');
+
+            const listas = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
+            const enCotizacion = requisiciones.filter(r => !r.eliminado && r.estado === 'En cotización');
+
+            if (listas.length === 0 && enCotizacion.length === 0) {
+                container.innerHTML = `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#10B981;">
+                        <div class="notif-banner-icono">✅</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#065F46;">Sin pendientes de gestión</div>
+                            <div class="notif-banner-detalle">No hay requisiciones aprobadas esperando ser cotizadas o gestionadas. Todo al día.</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+
+            if (listas.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FED7AA);border-color:#F59E0B;">
+                        <div class="notif-banner-icono">📋</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#92400E;">${listas.length} requisición(es) aprobada(s) esperando gestión</div>
+                            <div class="notif-banner-detalle">Estas requisiciones están listas para cotizar y comprar.</div>
+                            <div class="notif-items">
+                                ${listas.slice(0, 5).map(r => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${r.id_requisicion}</span>
+                                        <span class="notif-item-info">${r.objeto_compra.substring(0, 45)}${r.objeto_compra.length > 45 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                    </div>
+                                `).join('')}
+                                ${listas.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${listas.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
+                        </div>
+                    </div>`;
+            }
+
+            if (enCotizacion.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-color:#8B5CF6;">
+                        <div class="notif-banner-icono">💼</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#5B21B6;">${enCotizacion.length} requisición(es) en cotización</div>
+                            <div class="notif-banner-detalle">Recuerda hacer seguimiento a las cotizaciones en proceso.</div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-secundario" style="font-size:var(--texto-sm);">Ver</a>
+                        </div>
+                    </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Notificaciones de aprobaciones pendientes para JEFES Y DIRECTORES
+        async function mostrarAprobacionesPendientes(perfil) {
+            const container = document.getElementById('notif-container');
+            const { data, error } = await supabase.rpc('obtener_aprobaciones_pendientes');
+
+            if (error || !data || data.length === 0) return;
+
+            const html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:#F59E0B;">
+                    <div class="notif-banner-icono">⚠️</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo" style="color:#B45309;">${data.length} requisición(es) esperando tu aprobación</div>
+                        <div class="notif-banner-detalle">Como jefe directo, debes aprobar o rechazar estas solicitudes para que puedan gestionarse.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 5).map(r => `
+                                <div class="notif-item">
+                                    <span class="notif-item-id">${r.id_requisicion}</span>
+                                    <span class="notif-item-info">${r.objeto_compra.substring(0, 50)}${r.objeto_compra.length > 50 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                </div>
+                            `).join('')}
+                            ${data.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${data.length - 5} más...</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Revisar aprobaciones</a>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        }
+
+        // Notificaciones para el ADMIN (requisiciones nuevas)
+        function mostrarNotificacionesAdmin(requisiciones) {
+            const container = document.getElementById('notif-container');
+            const ultimaVisita = localStorage.getItem('admin_ultima_visita');
+            const ahora = new Date().toISOString();
+
+            let nuevas = [];
+            if (ultimaVisita) {
+                nuevas = requisiciones.filter(r => !r.eliminado && new Date(r.created_at) > new Date(ultimaVisita));
+            }
+
+            const pendientes = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
+            localStorage.setItem('admin_ultima_visita', ahora);
+
+            if (nuevas.length === 0 && pendientes.length === 0) return;
+
+            let html = '';
+
+            if (nuevas.length > 0) {
+                const badgeClaseMap = {
+                    'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion',
+                    'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido'
+                };
+                html += `
+                    <div class="notif-banner">
+                        <div class="notif-banner-icono">🔔</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo">${nuevas.length} nueva(s) requisición(es) desde tu última visita</div>
+                            <div class="notif-items">
+                                ${nuevas.slice(0, 5).map(r => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${r.id_requisicion}</span>
+                                        <span class="notif-item-info">${r.objeto_compra.substring(0, 40)}${r.objeto_compra.length > 40 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                        <span class="notif-item-badge"><span class="badge-estado ${badgeClaseMap[r.estado] || ''}">${r.estado}</span></span>
+                                    </div>
+                                `).join('')}
+                                ${nuevas.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${nuevas.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver requisiciones</a>
+                        </div>
+                    </div>`;
+            }
+
+            if (pendientes.length > 0 && nuevas.length === 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:var(--color-pendiente);">
+                        <div class="notif-banner-icono">⏳</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:var(--color-pendiente);">Hay ${pendientes.length} requisición(es) pendiente(s)</div>
+                            <div class="notif-banner-detalle">Estas requisiciones están esperando ser procesadas.</div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
+                        </div>
+                    </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Notificaciones para USUARIOS (cambios en sus requisiciones)
+        async function mostrarNotificacionesUsuario() {
+            const container = document.getElementById('notif-container');
+            const ultimaVisita = localStorage.getItem('user_ultima_visita');
+            const ahora = new Date().toISOString();
+
+            // Guardar visita actual
+            localStorage.setItem('user_ultima_visita', ahora);
+
+            // Consultar cambios hechos por otros en mis requisiciones
+            const { data, error } = await supabase.rpc('obtener_mis_notificaciones', {
+                desde: ultimaVisita || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            });
+
+            if (error || !data || data.length === 0) return;
+
+            const accionTexto = {
+                'cambio_estado': '🔄 Estado cambiado',
+                'edicion': '✏️ Editada',
+                'eliminacion': '🗑️ Eliminada',
+                'creacion': '🟢 Creada',
+                'restauracion': '♻️ Restaurada'
+            };
+
+            const badgeClaseMap = {
+                'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion',
+                'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido'
+            };
+
+            let html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg, #DBEAFE, #EDE9FE); border-color: var(--color-azul-light);">
+                    <div class="notif-banner-icono">🔔</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo">${data.length} actualización(es) en tus requisiciones</div>
+                        <div class="notif-banner-detalle">Cambios realizados por otros usuarios desde tu última visita.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 8).map(n => {
+                                const label = accionTexto[n.accion] || n.accion;
+                                let detalle = '';
+                                if (n.accion === 'cambio_estado' && n.valor_nuevo) {
+                                    detalle = `<span class="badge-estado ${badgeClaseMap[n.valor_nuevo] || ''}" style="margin-left:0.5rem;">${n.valor_nuevo}</span>`;
+                                } else if (n.accion === 'edicion' && n.campo_modificado) {
+                                    detalle = ` <span style="color:var(--color-gris);">(${n.campo_modificado})</span>`;
+                                }
+                                return `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${n.id_requisicion}</span>
+                                        <span class="notif-item-info">${label} por <strong>${n.nombre_usuario}</strong>${detalle}</span>
+                                    </div>`;
+                            }).join('')}
+                            ${data.length > 8 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${data.length - 8} más...</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver mis requisiciones</a>
+                    </div>
+                </div>`;
+
+            container.innerHTML = html;
+        }
+
+        // ─── GRÁFICOS ───
+        function crearGraficoEstados(pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas) {
+            new Chart(document.getElementById('chart-estados'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendiente aprobación', 'Rechazadas', 'Pendientes', 'En cotización', 'En proceso', 'Cumplidas'],
+                    datasets: [{
+                        data: [pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas],
+                        backgroundColor: ['#B91C1C', '#991B1B', '#F59E0B', '#8B5CF6', '#3B82F6', '#10B981'],
+                        borderWidth: 0, hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } } },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        function crearGraficoMeses(requisiciones) {
+            const meses = []; const datos = []; const ahora = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+                meses.push(fecha.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' }));
+                datos.push(requisiciones.filter(r => {
+                    const f = new Date(r.fecha);
+                    return f.getMonth() === fecha.getMonth() && f.getFullYear() === fecha.getFullYear();
+                }).length);
+            }
+            new Chart(document.getElementById('chart-meses'), {
+                type: 'bar',
+                data: { labels: meses, datasets: [{ label: 'Requisiciones', data: datos, backgroundColor: '#00369C', borderRadius: 6, barThickness: 32 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        function crearGraficoProcesos(requisiciones) {
+            const conteo = {};
+            requisiciones.forEach(r => { conteo[r.proceso] = (conteo[r.proceso] || 0) + 1; });
+            const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const colores = ['#00369C','#3B82F6','#7C3AED','#DB2777','#DC2626','#EA580C','#F59E0B','#16A34A','#0891B2','#6366F1'];
+            new Chart(document.getElementById('chart-procesos'), {
+                type: 'bar',
+                data: { labels: sorted.map(s => s[0].length > 18 ? s[0].substring(0, 18) + '…' : s[0]),
+                    datasets: [{ label: 'Requisiciones', data: sorted.map(s => s[1]), backgroundColor: colores.slice(0, sorted.length), borderRadius: 4, barThickness: 20 }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } }, y: { grid: { display: false } } } }
+            });
+        }
+
+        function crearGraficoEjecutor(requisiciones) {
+            const compras = requisiciones.filter(r => r.quien_ejecuta === 'Compras').length;
+            const autonomo = requisiciones.filter(r => r.quien_ejecuta === 'Proceso Autónomo').length;
+            new Chart(document.getElementById('chart-ejecutor'), {
+                type: 'doughnut',
+                data: { labels: ['Compras', 'Proceso Autónomo'],
+                    datasets: [{ data: [compras, autonomo], backgroundColor: ['#00369C', '#F6D000'], borderWidth: 0, hoverOffset: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } }, cutout: '60%' }
+            });
+        }
+
+        // ─── ACTIVIDAD RECIENTE ───
+        function renderizarActividad(historial) {
+            const contenedor = document.getElementById('actividad-lista');
+            if (!historial || historial.length === 0) {
+                contenedor.innerHTML = '<div class="dash-vacio"><p>Sin actividad registrada aún.</p></div>';
+                return;
+            }
+            const iconos = { 'creacion': '🟢', 'edicion': '✏️', 'eliminacion': '🗑️', 'cambio_estado': '🔄', 'restauracion': '♻️' };
+            const acciones = { 'creacion': 'creó', 'edicion': 'editó', 'eliminacion': 'eliminó', 'cambio_estado': 'cambió estado de', 'restauracion': 'restauró' };
+            contenedor.innerHTML = historial.map(h => {
+                const icono = iconos[h.accion] || '📝';
+                const accion = acciones[h.accion] || h.accion;
+                let detalle = '';
+                if (h.accion === 'cambio_estado' && h.valor_nuevo) detalle = ` → ${h.valor_nuevo}`;
+                if (h.accion === 'edicion' && h.campo_modificado) detalle = ` (${h.campo_modificado})`;
+                return `<div class="actividad-item">
+                    <span class="actividad-icono">${icono}</span>
+                    <span class="actividad-texto"><strong>${h.nombre_usuario}</strong> ${accion} <strong>${h.id_requisicion}</strong>${detalle}</span>
+                    <span class="actividad-fecha">${formatearFechaHora(h.fecha)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        document.getElementById('btn-logout').addEventListener('click', async () => { Loader.mostrar('Cerrando sesión...'); await cerrarSesion(); });
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+
+</body>
+</html>

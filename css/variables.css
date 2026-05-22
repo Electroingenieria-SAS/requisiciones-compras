@@ -1,0 +1,80 @@
+/**
+ * ============================================================
+ * VARIABLES CSS CORPORATIVAS
+ * Electroingeniería S.A.S.
+ * ============================================================
+ * Todos los colores, fuentes y espaciados se definen aquí.
+ * Cambiar un valor aquí lo cambia en TODA la aplicación.
+ * ============================================================
+ */
+
+:root {
+    /* ─── Colores corporativos ─── */
+    --color-azul: #00369C;
+    --color-azul-hover: #002A7A;
+    --color-azul-light: #E8EEF8;
+    --color-amarillo: #F6D000;
+    --color-amarillo-hover: #E0BD00;
+    --color-gris: #A4A8AB;
+    --color-gris-light: #F4F5F6;
+    --color-gris-dark: #6B7280;
+
+    /* ─── Colores de estado ─── */
+    --color-pendiente: #F59E0B;
+    --color-pendiente-bg: #FEF3C7;
+    --color-en-proceso: #3B82F6;
+    --color-en-proceso-bg: #DBEAFE;
+    --color-cumplido: #10B981;
+    --color-cumplido-bg: #D1FAE5;
+    --color-en-cotizacion: #8B5CF6;
+    --color-en-cotizacion-bg: #EDE9FE;
+    --color-eliminado: #EF4444;
+    --color-eliminado-bg: #FEE2E2;
+
+    /* ─── Colores de interfaz ─── */
+    --color-fondo: #F8F9FC;
+    --color-blanco: #FFFFFF;
+    --color-texto: #1F2937;
+    --color-texto-secundario: #6B7280;
+    --color-borde: #E5E7EB;
+    --color-exito: #10B981;
+    --color-error: #EF4444;
+    --color-advertencia: #F59E0B;
+    --color-info: #3B82F6;
+
+    /* ─── Tipografía ─── */
+    --fuente-principal: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --fuente-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --texto-xs: 0.75rem;
+    --texto-sm: 0.875rem;
+    --texto-base: 1rem;
+    --texto-lg: 1.125rem;
+    --texto-xl: 1.25rem;
+    --texto-2xl: 1.5rem;
+    --texto-3xl: 1.875rem;
+
+    /* ─── Espaciados ─── */
+    --espacio-xs: 0.25rem;
+    --espacio-sm: 0.5rem;
+    --espacio-md: 1rem;
+    --espacio-lg: 1.5rem;
+    --espacio-xl: 2rem;
+    --espacio-2xl: 3rem;
+
+    /* ─── Bordes ─── */
+    --radio-sm: 0.375rem;
+    --radio-md: 0.5rem;
+    --radio-lg: 0.75rem;
+    --radio-xl: 1rem;
+    --radio-full: 9999px;
+
+    /* ─── Sombras ─── */
+    --sombra-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --sombra-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --sombra-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+    /* ─── Transiciones ─── */
+    --transicion: all 0.2s ease;
+    --transicion-lenta: all 0.3s ease;
+}
