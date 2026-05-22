@@ -428,12 +428,33 @@
             const btn = document.getElementById('btn-guardar');
             btn.disabled = true; btn.textContent = 'Guardando...';
 
-            // Lógica de aprobación:
-            // - Si ejecuta "Compras" Y el usuario tiene jefe asignado → estado "Pendiente aprobación"
-            // - Si ejecuta "Compras" pero NO tiene jefe → estado "Pendiente" (flujo normal)
-            // - Si ejecuta "Proceso Autónomo" → estado "Pendiente" (sin aprobación)
-            const requiereAprobacion = qe.value === 'Compras' && !!perfilActual.jefe_id;
+            // ─── LÓGICA DE APROBACIÓN INTELIGENTE ───
+            // Usamos la función SQL detectar_aprobador() que decide automáticamente
+            // según el rol del creador:
+            // - Super admin / Director → sin aprobación (Pendiente directo)
+            // - Jefe → requiere aprobación del Director
+            // - Admin de Compras → requiere aprobación del Jefe de Compras
+            // - Usuario → requiere aprobación del Jefe directo
+            //
+            // Excepción: si quien_ejecuta es "Proceso Autónomo", NUNCA requiere aprobación
+            // (el proceso gestiona su propia compra)
+
+            let aprobadorInfo = { requiere_aprobacion: false };
+
+            if (qe.value === 'Compras') {
+                // Solo cuando ejecuta Compras se evalúa el flujo de aprobación
+                const { data, error: errorAprob } = await supabase.rpc('detectar_aprobador', {
+                    p_user_id: usuarioActual.id
+                });
+                if (!errorAprob && data) {
+                    aprobadorInfo = data;
+                }
+            }
+
+            const requiereAprobacion = aprobadorInfo.requiere_aprobacion === true;
             const estadoInicial = requiereAprobacion ? 'Pendiente aprobación' : 'Pendiente';
+            const aprobadorId = requiereAprobacion ? aprobadorInfo.aprobador_id : null;
+            const nombreAprobador = requiereAprobacion ? aprobadorInfo.nombre_aprobador : null;
 
             const { requisicion, error } = await crearRequisicion({
                 user_id: usuarioActual.id, solicitante: perfilActual.nombre_completo, proceso: perfilActual.proceso,
@@ -448,7 +469,7 @@
                 quien_ejecuta: qe.value,
                 estado: estadoInicial,
                 requiere_aprobacion: requiereAprobacion,
-                jefe_proceso_id: requiereAprobacion ? perfilActual.jefe_id : null
+                jefe_proceso_id: aprobadorId
             });
 
             btn.disabled = false; btn.textContent = 'Guardar Requisición';
@@ -460,21 +481,21 @@
                 user_id: usuarioActual.id, nombre_usuario: perfilActual.nombre_completo,
                 accion: 'creacion',
                 detalle: requiereAprobacion
-                    ? `Requisición ${requisicion.id_requisicion} creada y enviada a aprobación de ${perfilActual.nombre_jefe}`
-                    : `Requisición ${requisicion.id_requisicion} creada`
+                    ? `Requisición ${requisicion.id_requisicion} creada y enviada a aprobación de ${nombreAprobador}`
+                    : `Requisición ${requisicion.id_requisicion} creada (sin aprobación requerida)`
             });
 
             if (requiereAprobacion) {
-                Toast.exito(`Requisición ${requisicion.id_requisicion} enviada a aprobación de ${perfilActual.nombre_jefe}.`);
+                Toast.exito(`Requisición ${requisicion.id_requisicion} enviada a aprobación de ${nombreAprobador}.`);
 
-                // Enviar correo al jefe (sin bloquear la UI)
+                // Enviar correo al aprobador (sin bloquear la UI)
                 fetch('/api/notificar-aprobacion', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id_requisicion: requisicion.id_requisicion,
-                        jefe_id: perfilActual.jefe_id,
-                        nombre_jefe: perfilActual.nombre_jefe,
+                        jefe_id: aprobadorId,
+                        nombre_jefe: nombreAprobador,
                         solicitante: perfilActual.nombre_completo,
                         solicitante_email: usuarioActual.email,
                         proceso: perfilActual.proceso,

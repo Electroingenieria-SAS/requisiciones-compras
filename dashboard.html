@@ -216,11 +216,18 @@
             const { requisiciones } = await obtenerRequisiciones({}, perfil);
             const activas = requisiciones.filter(r => !r.eliminado);
 
-            // ─── Notificaciones ───
-            // Todos los jefes ven sus aprobaciones pendientes
-            await mostrarAprobacionesPendientes(perfil);
+            // ─── Notificaciones por rol ───
+            // Cada rol ve notificaciones diferentes:
+            // - Super admin → resumen del sistema (nuevas y pendientes globales)
+            // - Director y Jefe → aprobaciones pendientes de su equipo
+            // - Admin de Compras → requisiciones aprobadas listas para gestionar
+            // - Usuario → cambios hechos por otros en sus requisiciones
 
-            if (esAdministrador(perfil)) {
+            if (perfil.rol === 'admin_compras') {
+                mostrarNotificacionesAdminCompras(requisiciones);
+            } else if (perfil.rol === 'jefe' || perfil.rol === 'director') {
+                await mostrarAprobacionesPendientes(perfil);
+            } else if (esAdministrador(perfil)) {
                 mostrarNotificacionesAdmin(requisiciones);
             } else {
                 await mostrarNotificacionesUsuario();
@@ -273,7 +280,68 @@
 
         // ─── NOTIFICACIONES INTERNAS ───
 
-        // Notificaciones de aprobaciones pendientes para JEFES
+        // Notificaciones para ADMIN DE COMPRAS (requisiciones aprobadas listas para gestionar)
+        function mostrarNotificacionesAdminCompras(requisiciones) {
+            const container = document.getElementById('notif-container');
+
+            const listas = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
+            const enCotizacion = requisiciones.filter(r => !r.eliminado && r.estado === 'En cotización');
+
+            if (listas.length === 0 && enCotizacion.length === 0) {
+                container.innerHTML = `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#10B981;">
+                        <div class="notif-banner-icono">✅</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#065F46;">Sin pendientes de gestión</div>
+                            <div class="notif-banner-detalle">No hay requisiciones aprobadas esperando ser cotizadas o gestionadas. Todo al día.</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+
+            if (listas.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FED7AA);border-color:#F59E0B;">
+                        <div class="notif-banner-icono">📋</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#92400E;">${listas.length} requisición(es) aprobada(s) esperando gestión</div>
+                            <div class="notif-banner-detalle">Estas requisiciones están listas para cotizar y comprar.</div>
+                            <div class="notif-items">
+                                ${listas.slice(0, 5).map(r => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${r.id_requisicion}</span>
+                                        <span class="notif-item-info">${r.objeto_compra.substring(0, 45)}${r.objeto_compra.length > 45 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                    </div>
+                                `).join('')}
+                                ${listas.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${listas.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
+                        </div>
+                    </div>`;
+            }
+
+            if (enCotizacion.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-color:#8B5CF6;">
+                        <div class="notif-banner-icono">💼</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#5B21B6;">${enCotizacion.length} requisición(es) en cotización</div>
+                            <div class="notif-banner-detalle">Recuerda hacer seguimiento a las cotizaciones en proceso.</div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html" class="btn btn-secundario" style="font-size:var(--texto-sm);">Ver</a>
+                        </div>
+                    </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Notificaciones de aprobaciones pendientes para JEFES Y DIRECTORES
         async function mostrarAprobacionesPendientes(perfil) {
             const container = document.getElementById('notif-container');
             const { data, error } = await supabase.rpc('obtener_aprobaciones_pendientes');
