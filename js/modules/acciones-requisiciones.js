@@ -19,6 +19,12 @@ import { Toast } from '../components/toast.js';
 export function puedeEditar(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
+    // En estado "Pendiente aprobación": ni admin ni nadie edita (excepto el creador en "Rechazada")
+    if (req.estado === 'Pendiente aprobación') return false;
+    // En "Rechazada", solo el creador puede editar (para reenviar)
+    if (req.estado === 'Rechazada') {
+        return req.user_id === perfil.id;
+    }
     if (perfil.rol === 'administrador') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
@@ -31,6 +37,7 @@ export function puedeEditar(req, perfil) {
 export function puedeEliminar(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
+    if (req.estado === 'Pendiente aprobación') return false;
     if (perfil.rol === 'administrador') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
@@ -43,10 +50,22 @@ export function puedeEliminar(req, perfil) {
 export function puedeCambiarEstado(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
+    // El admin NO puede cambiar estado mientras esté pendiente de aprobación o rechazada
+    if (req.estado === 'Pendiente aprobación') return false;
+    if (req.estado === 'Rechazada') return false;
     if (perfil.rol === 'administrador') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
+}
+
+/**
+ * Verificar si el usuario puede aprobar/rechazar una requisición
+ */
+export function puedeAprobar(req, perfil) {
+    if (req.eliminado) return false;
+    if (req.estado !== 'Pendiente aprobación') return false;
+    return req.jefe_proceso_id === perfil.id;
 }
 
 /**
@@ -575,11 +594,140 @@ export async function verHistorial(req) {
 }
 
 /**
+ * Mostrar modal para aprobar o rechazar una requisición
+ */
+export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
+    const html = `
+        <div style="display:grid;gap:1rem;">
+            <div style="background:var(--color-azul-light);border-radius:var(--radio-md);padding:1rem;">
+                <div style="font-size:var(--texto-xs);color:var(--color-azul);font-weight:600;margin-bottom:0.25rem;">REQUISICIÓN</div>
+                <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-base);">${req.id_requisicion}</div>
+                <div style="font-size:var(--texto-sm);color:var(--color-texto);margin-top:0.5rem;">${req.objeto_compra}</div>
+                <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);margin-top:0.5rem;">
+                    Solicitante: <strong>${req.solicitante}</strong> · Cantidad: <strong>${req.cantidad}</strong>
+                    ${req.rango_precios ? ` · Rango: <strong>${req.rango_precios}</strong>` : ''}
+                </div>
+            </div>
+            <div class="input-grupo">
+                <label class="input-label">Motivo (obligatorio solo si rechaza)</label>
+                <textarea id="motivo-aprobacion" class="input-campo" rows="3" placeholder="Comentario para el solicitante..."></textarea>
+            </div>
+        </div>
+    `;
+
+    Modal.crear({
+        titulo: `Aprobar requisición - ${req.id_requisicion}`,
+        contenido: html,
+        ancho: '500px',
+        botones: [
+            { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+            { texto: 'Rechazar', clase: 'btn-peligro', onClick: async () => {
+                const motivo = document.getElementById('motivo-aprobacion').value.trim();
+                if (!motivo) { Toast.advertencia('Debe ingresar el motivo del rechazo.'); return; }
+
+                const { error } = await actualizarRequisicion(req.id, {
+                    estado: 'Rechazada',
+                    motivo_rechazo: motivo,
+                    aprobado_por: usuario.id,
+                    nombre_aprobador: perfil.nombre_completo,
+                    fecha_aprobacion: new Date().toISOString()
+                });
+                if (error) { Toast.error(error); return; }
+
+                await registrarHistorial({
+                    requisicion_id: req.id, id_requisicion: req.id_requisicion,
+                    user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
+                    accion: 'cambio_estado',
+                    campo_modificado: 'estado',
+                    valor_anterior: 'Pendiente aprobación',
+                    valor_nuevo: 'Rechazada',
+                    detalle: `Rechazada: ${motivo}`
+                });
+
+                Toast.exito('Requisición rechazada. El solicitante será notificado.');
+                Modal.cerrar();
+                if (onProcesado) onProcesado();
+            }},
+            { texto: '✓ Aprobar', clase: 'btn-primario', onClick: async () => {
+                const motivo = document.getElementById('motivo-aprobacion').value.trim();
+
+                const { error } = await actualizarRequisicion(req.id, {
+                    estado: 'Pendiente',
+                    aprobado_por: usuario.id,
+                    nombre_aprobador: perfil.nombre_completo,
+                    fecha_aprobacion: new Date().toISOString(),
+                    motivo_rechazo: null
+                });
+                if (error) { Toast.error(error); return; }
+
+                await registrarHistorial({
+                    requisicion_id: req.id, id_requisicion: req.id_requisicion,
+                    user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
+                    accion: 'cambio_estado',
+                    campo_modificado: 'estado',
+                    valor_anterior: 'Pendiente aprobación',
+                    valor_nuevo: 'Pendiente',
+                    detalle: motivo ? `Aprobada: ${motivo}` : 'Aprobada para gestión de Compras'
+                });
+
+                Toast.exito('Requisición aprobada. Pasa al flujo de Compras.');
+                Modal.cerrar();
+                if (onProcesado) onProcesado();
+            }}
+        ]
+    });
+}
+
+/**
+ * Función especial para reenviar una requisición rechazada a aprobación
+ */
+export async function reenviarAprobacion(req, usuario, perfil, onReenviado) {
+    Modal.crear({
+        titulo: 'Reenviar a aprobación',
+        contenido: `<p>¿Desea reenviar la requisición <strong>${req.id_requisicion}</strong> a aprobación de su jefe? Asegúrese de haber editado los campos necesarios antes de reenviar.</p>`,
+        botones: [
+            { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+            { texto: 'Reenviar', clase: 'btn-primario', onClick: async () => {
+                const { error } = await actualizarRequisicion(req.id, {
+                    estado: 'Pendiente aprobación',
+                    motivo_rechazo: null,
+                    aprobado_por: null,
+                    nombre_aprobador: null,
+                    fecha_aprobacion: null
+                });
+                if (error) { Toast.error(error); return; }
+
+                await registrarHistorial({
+                    requisicion_id: req.id, id_requisicion: req.id_requisicion,
+                    user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
+                    accion: 'cambio_estado',
+                    campo_modificado: 'estado',
+                    valor_anterior: 'Rechazada',
+                    valor_nuevo: 'Pendiente aprobación',
+                    detalle: 'Reenviada a aprobación tras correcciones'
+                });
+
+                Toast.exito('Requisición reenviada a aprobación.');
+                Modal.cerrar();
+                if (onReenviado) onReenviado();
+            }}
+        ]
+    });
+}
+
+/**
  * Helper: clase CSS del badge según estado
  */
 function badgeClase(req) {
     if (req.eliminado) return 'badge-eliminado';
-    const map = { 'Pendiente': 'badge-pendiente', 'En cotización': 'badge-en-cotizacion', 'En proceso': 'badge-en-proceso', 'Cumplido': 'badge-cumplido' };
+    const map = {
+        'Pendiente aprobación': 'badge-pendiente-aprobacion',
+        'Rechazada': 'badge-rechazada',
+        'Pendiente': 'badge-pendiente',
+        'En cotización': 'badge-en-cotizacion',
+        'En proceso': 'badge-en-proceso',
+        'Cumplido': 'badge-cumplido'
+    };
     return map[req.estado] || '';
 }
 

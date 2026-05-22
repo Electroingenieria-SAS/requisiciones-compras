@@ -163,8 +163,6 @@
                                     <option>Servicios generales</option>
                                     <option>Cierre</option>
                                     <option>Ejecución</option>
-                                    <option>Mantenimiento</option>
-                                    <option>Sistemas</option>
                                     <option>Administración</option>
                                 </select>
                             </div>
@@ -174,6 +172,15 @@
                                     <option value="usuario">Usuario</option>
                                     <option value="administrador">Administrador</option>
                                 </select>
+                            </div>
+                            <div class="input-grupo" style="grid-column: 1 / -1;">
+                                <label class="input-label">Jefe directo (aprobador de compras)</label>
+                                <select id="crear-jefe" class="input-campo input-select">
+                                    <option value="">Sin jefe asignado</option>
+                                </select>
+                                <small style="color: var(--color-gris); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                                    Si no se asigna, las requisiciones de "Compras" pasarán directo a Pendiente sin aprobación.
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -256,6 +263,18 @@
             todosLosPerfiles = data || [];
             renderizarStats();
             renderizarUsuarios();
+            poblarDropdownJefes();
+        }
+
+        function poblarDropdownJefes() {
+            const select = document.getElementById('crear-jefe');
+            if (!select) return;
+            // Solo usuarios activos pueden ser jefes
+            const opciones = todosLosPerfiles
+                .filter(p => p.activo)
+                .map(p => `<option value="${p.id}|${p.nombre_completo}">${p.nombre_completo} — ${p.proceso}</option>`)
+                .join('');
+            select.innerHTML = '<option value="">Sin jefe asignado</option>' + opciones;
         }
 
         function renderizarStats() {
@@ -303,6 +322,7 @@
                                     <span class="badge-sm badge-proceso">${p.proceso}</span>
                                     ${rolBadge}
                                     ${badgeActivoHTML}
+                                    ${p.nombre_jefe ? `<span class="badge-sm" style="background:#FEF3C7;color:#92400E;">👤 ${p.nombre_jefe}</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -325,6 +345,15 @@
             const password = document.getElementById('crear-password').value;
             const proceso = document.getElementById('crear-proceso').value;
             const rol = document.getElementById('crear-rol').value;
+            const jefeValor = document.getElementById('crear-jefe').value;
+
+            // Extraer id y nombre del jefe (formato: "uuid|nombre")
+            let jefe_id = null, nombre_jefe = null;
+            if (jefeValor) {
+                const partes = jefeValor.split('|');
+                jefe_id = partes[0];
+                nombre_jefe = partes[1];
+            }
 
             if (!nombre) { Toast.advertencia('Ingrese el nombre completo.'); return; }
             if (!email) { Toast.advertencia('Ingrese el correo electrónico.'); return; }
@@ -335,7 +364,6 @@
             btn.disabled = true; btn.textContent = 'Creando...';
 
             try {
-                // Obtener token actual
                 const { data: { session } } = await supabase.auth.getSession();
 
                 const response = await fetch('/api/admin-users', {
@@ -344,7 +372,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session.access_token}`
                     },
-                    body: JSON.stringify({ action: 'crear', email, password, nombre_completo: nombre, proceso, rol })
+                    body: JSON.stringify({ action: 'crear', email, password, nombre_completo: nombre, proceso, rol, jefe_id, nombre_jefe })
                 });
 
                 const result = await response.json();
@@ -381,11 +409,17 @@
             const procesos = ['Gestión documental','Atención al usuario','Iluminación','SIG','Medio ambiente','Contabilidad',
                 'Cumplimiento','Direccionamiento estratégico','Finanzas','Gestión humana','Seguridad y salud en el trabajo',
                 'Jurídico','Calidad','Auditoría','Planeación','Logística suministros','Cartera','Ventas','Compras',
-                'Activos Fijos','Nómina','AOM','Logística AP','Servicios generales','Cierre','Ejecución','Mantenimiento','Administración'];
+                'Activos Fijos','Nómina','AOM','Logística AP','Servicios generales','Cierre','Ejecución','Administración'];
 
             const opcionesProcesos = procesos.map(p =>
                 `<option value="${p}" ${p === perfil.proceso ? 'selected' : ''}>${p}</option>`
             ).join('');
+
+            // Opciones de jefe (excluir el propio usuario)
+            const opcionesJefes = todosLosPerfiles
+                .filter(u => u.activo && u.id !== perfil.id)
+                .map(u => `<option value="${u.id}|${u.nombre_completo}" ${perfil.jefe_id === u.id ? 'selected' : ''}>${u.nombre_completo} — ${u.proceso}</option>`)
+                .join('');
 
             const html = `
                 <div style="display:grid;gap:1rem;">
@@ -404,6 +438,13 @@
                             <option value="administrador" ${perfil.rol === 'administrador' ? 'selected' : ''}>Administrador</option>
                         </select>
                     </div>
+                    <div class="input-grupo">
+                        <label class="input-label">Jefe directo (aprobador de compras)</label>
+                        <select id="edit-user-jefe" class="input-campo input-select">
+                            <option value="">Sin jefe asignado</option>
+                            ${opcionesJefes}
+                        </select>
+                    </div>
                 </div>
             `;
 
@@ -413,10 +454,19 @@
                 botones: [
                     { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
                     { texto: 'Guardar', clase: 'btn-primario', onClick: async () => {
+                        const jefeValor = document.getElementById('edit-user-jefe').value;
+                        let jefe_id = null, nombre_jefe = null;
+                        if (jefeValor) {
+                            const partes = jefeValor.split('|');
+                            jefe_id = partes[0];
+                            nombre_jefe = partes[1];
+                        }
                         const cambios = {
                             nombre_completo: document.getElementById('edit-user-nombre').value.trim(),
                             proceso: document.getElementById('edit-user-proceso').value,
-                            rol: document.getElementById('edit-user-rol').value
+                            rol: document.getElementById('edit-user-rol').value,
+                            jefe_id,
+                            nombre_jefe
                         };
                         const { error } = await supabase.from('perfiles').update(cambios).eq('id', userId);
                         if (error) { Toast.error('Error al actualizar.'); return; }

@@ -123,6 +123,14 @@
                 <div class="dash-card-label">Total requisiciones</div>
                 <div class="dash-card-valor" style="color:var(--color-azul);" id="m-total">0</div>
             </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#B91C1C;">
+                <div class="dash-card-label">Pendientes aprobación</div>
+                <div class="dash-card-valor" style="color:#B91C1C;" id="m-pendientes-aprobacion">0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:#991B1B;">
+                <div class="dash-card-label">Rechazadas</div>
+                <div class="dash-card-valor" style="color:#991B1B;" id="m-rechazadas">0</div>
+            </div>
             <div class="dash-card dash-card-borde" style="border-left-color:var(--color-pendiente);">
                 <div class="dash-card-label">Pendientes</div>
                 <div class="dash-card-valor" style="color:var(--color-pendiente);" id="m-pendientes">0</div>
@@ -209,6 +217,9 @@
             const activas = requisiciones.filter(r => !r.eliminado);
 
             // ─── Notificaciones ───
+            // Todos los jefes ven sus aprobaciones pendientes
+            await mostrarAprobacionesPendientes(perfil);
+
             if (esAdministrador(perfil)) {
                 mostrarNotificacionesAdmin(requisiciones);
             } else {
@@ -216,6 +227,8 @@
             }
 
             // Métricas
+            const pendientesAprobacion = activas.filter(r => r.estado === 'Pendiente aprobación').length;
+            const rechazadas = activas.filter(r => r.estado === 'Rechazada').length;
             const pendientes = activas.filter(r => r.estado === 'Pendiente').length;
             const enCotizacion = activas.filter(r => r.estado === 'En cotización').length;
             const enProceso = activas.filter(r => r.estado === 'En proceso').length;
@@ -233,6 +246,8 @@
             }
 
             document.getElementById('m-total').textContent = activas.length;
+            document.getElementById('m-pendientes-aprobacion').textContent = pendientesAprobacion;
+            document.getElementById('m-rechazadas').textContent = rechazadas;
             document.getElementById('m-pendientes').textContent = pendientes;
             document.getElementById('m-en-cotizacion').textContent = enCotizacion;
             document.getElementById('m-en-proceso').textContent = enProceso;
@@ -242,7 +257,7 @@
 
             // Gráficos
             if (activas.length > 0) {
-                crearGraficoEstados(pendientes, enCotizacion, enProceso, cumplidas);
+                crearGraficoEstados(pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas);
                 crearGraficoMeses(activas);
                 crearGraficoProcesos(activas);
                 crearGraficoEjecutor(activas);
@@ -257,6 +272,37 @@
         }
 
         // ─── NOTIFICACIONES INTERNAS ───
+
+        // Notificaciones de aprobaciones pendientes para JEFES
+        async function mostrarAprobacionesPendientes(perfil) {
+            const container = document.getElementById('notif-container');
+            const { data, error } = await supabase.rpc('obtener_aprobaciones_pendientes');
+
+            if (error || !data || data.length === 0) return;
+
+            const html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:#F59E0B;">
+                    <div class="notif-banner-icono">⚠️</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo" style="color:#B45309;">${data.length} requisición(es) esperando tu aprobación</div>
+                        <div class="notif-banner-detalle">Como jefe directo, debes aprobar o rechazar estas solicitudes para que puedan gestionarse.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 5).map(r => `
+                                <div class="notif-item">
+                                    <span class="notif-item-id">${r.id_requisicion}</span>
+                                    <span class="notif-item-info">${r.objeto_compra.substring(0, 50)}${r.objeto_compra.length > 50 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                </div>
+                            `).join('')}
+                            ${data.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${data.length - 5} más...</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Revisar aprobaciones</a>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        }
 
         // Notificaciones para el ADMIN (requisiciones nuevas)
         function mostrarNotificacionesAdmin(requisiciones) {
@@ -382,20 +428,20 @@
         }
 
         // ─── GRÁFICOS ───
-        function crearGraficoEstados(pendientes, enCotizacion, enProceso, cumplidas) {
+        function crearGraficoEstados(pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas) {
             new Chart(document.getElementById('chart-estados'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pendientes', 'En cotización', 'En proceso', 'Cumplidas'],
+                    labels: ['Pendiente aprobación', 'Rechazadas', 'Pendientes', 'En cotización', 'En proceso', 'Cumplidas'],
                     datasets: [{
-                        data: [pendientes, enCotizacion, enProceso, cumplidas],
-                        backgroundColor: ['#F59E0B', '#8B5CF6', '#3B82F6', '#10B981'],
+                        data: [pendientesAprobacion, rechazadas, pendientes, enCotizacion, enProceso, cumplidas],
+                        backgroundColor: ['#B91C1C', '#991B1B', '#F59E0B', '#8B5CF6', '#3B82F6', '#10B981'],
                         borderWidth: 0, hoverOffset: 6
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } },
+                    plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } } },
                     cutout: '60%'
                 }
             });

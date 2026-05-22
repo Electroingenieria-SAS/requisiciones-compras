@@ -193,6 +193,8 @@
 .badge-en-proceso { background-color: var(--color-en-proceso-bg); color: var(--color-en-proceso); }
 .badge-en-cotizacion { background-color: var(--color-en-cotizacion-bg); color: var(--color-en-cotizacion); }
 .badge-cumplido { background-color: var(--color-cumplido-bg); color: var(--color-cumplido); }
+.badge-pendiente-aprobacion { background-color: #FEE2E2; color: #B91C1C; }
+.badge-rechazada { background-color: #FECACA; color: #991B1B; }
 .badge-eliminado { background-color: var(--color-eliminado-bg); color: var(--color-eliminado); }
 .badge-admin { background-color: var(--color-amarillo); color: #1a1a00; }
 .badge-usuario { background-color: var(--color-azul-light); color: var(--color-azul); }

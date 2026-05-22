@@ -225,6 +225,8 @@
                     <label>Estado</label>
                     <select id="filtro-estado">
                         <option value="todos">Todos</option>
+                        <option value="Pendiente aprobación">Pendiente aprobación</option>
+                        <option value="Rechazada">Rechazada</option>
                         <option value="Pendiente">Pendiente</option>
                         <option value="En cotización">En cotización</option>
                         <option value="En proceso">En proceso</option>
@@ -291,7 +293,7 @@
         import { formatearFecha } from '/js/utils/formatters.js';
         import { Toast } from '/js/components/toast.js';
         import { Loader } from '/js/components/loader.js';
-        import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, verHistorial, puedeEditar, puedeEliminar, puedeCambiarEstado, badgeClase } from '/js/modules/acciones-requisiciones.js';
+        import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, verHistorial, aprobarRequisicion, reenviarAprobacion, puedeEditar, puedeEliminar, puedeCambiarEstado, puedeAprobar, badgeClase } from '/js/modules/acciones-requisiciones.js';
         import { exportarRequisicionesExcel } from '/js/modules/exportar-excel.js';
 
         let usuarioActual = null;
@@ -426,6 +428,13 @@
             const btn = document.getElementById('btn-guardar');
             btn.disabled = true; btn.textContent = 'Guardando...';
 
+            // Lógica de aprobación:
+            // - Si ejecuta "Compras" Y el usuario tiene jefe asignado → estado "Pendiente aprobación"
+            // - Si ejecuta "Compras" pero NO tiene jefe → estado "Pendiente" (flujo normal)
+            // - Si ejecuta "Proceso Autónomo" → estado "Pendiente" (sin aprobación)
+            const requiereAprobacion = qe.value === 'Compras' && !!perfilActual.jefe_id;
+            const estadoInicial = requiereAprobacion ? 'Pendiente aprobación' : 'Pendiente';
+
             const { requisicion, error } = await crearRequisicion({
                 user_id: usuarioActual.id, solicitante: perfilActual.nombre_completo, proceso: perfilActual.proceso,
                 unidad_negocio: un, centro_costo: cc, lugar_entrega: le, objeto_compra: oc, cantidad: cant,
@@ -436,7 +445,10 @@
                 rango_precios: document.getElementById('campo-rango-precios').value.trim(),
                 url_referencia: document.getElementById('campo-url').value.trim(),
                 observaciones: document.getElementById('campo-observaciones').value.trim(),
-                quien_ejecuta: qe.value, estado: 'Pendiente'
+                quien_ejecuta: qe.value,
+                estado: estadoInicial,
+                requiere_aprobacion: requiereAprobacion,
+                jefe_proceso_id: requiereAprobacion ? perfilActual.jefe_id : null
             });
 
             btn.disabled = false; btn.textContent = 'Guardar Requisición';
@@ -446,10 +458,38 @@
             await registrarHistorial({
                 requisicion_id: requisicion.id, id_requisicion: requisicion.id_requisicion,
                 user_id: usuarioActual.id, nombre_usuario: perfilActual.nombre_completo,
-                accion: 'creacion', detalle: `Requisición ${requisicion.id_requisicion} creada`
+                accion: 'creacion',
+                detalle: requiereAprobacion
+                    ? `Requisición ${requisicion.id_requisicion} creada y enviada a aprobación de ${perfilActual.nombre_jefe}`
+                    : `Requisición ${requisicion.id_requisicion} creada`
             });
 
-            Toast.exito(`Requisición ${requisicion.id_requisicion} creada correctamente.`);
+            if (requiereAprobacion) {
+                Toast.exito(`Requisición ${requisicion.id_requisicion} enviada a aprobación de ${perfilActual.nombre_jefe}.`);
+
+                // Enviar correo al jefe (sin bloquear la UI)
+                fetch('/api/notificar-aprobacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_requisicion: requisicion.id_requisicion,
+                        jefe_id: perfilActual.jefe_id,
+                        nombre_jefe: perfilActual.nombre_jefe,
+                        solicitante: perfilActual.nombre_completo,
+                        solicitante_email: usuarioActual.email,
+                        proceso: perfilActual.proceso,
+                        objeto_compra: oc,
+                        cantidad: cant,
+                        rango_precios: document.getElementById('campo-rango-precios').value.trim(),
+                        lugar_entrega: le,
+                        unidad_negocio: un,
+                        centro_costo: cc,
+                        observaciones: document.getElementById('campo-observaciones').value.trim()
+                    })
+                }).catch(err => console.error('Error al enviar correo de aprobación:', err));
+            } else {
+                Toast.exito(`Requisición ${requisicion.id_requisicion} creada correctamente.`);
+            }
             ocultarFormulario();
         }
 
@@ -500,8 +540,14 @@
 
                     let acciones = `<button class="btn-accion btn-accion-ver" data-accion="ver" data-id="${req.id}">Ver</button>`;
                     acciones += `<button class="btn-accion" data-accion="historial" data-id="${req.id}" style="color:#7C3AED;border-color:#7C3AED;">Historial</button>`;
+                    if (puedeAprobar(req, perfilActual)) {
+                        acciones += `<button class="btn-accion" data-accion="aprobar" data-id="${req.id}" style="color:#10B981;border-color:#10B981;font-weight:600;">✓ Aprobar</button>`;
+                    }
                     if (puedeEditar(req, perfilActual)) {
                         acciones += `<button class="btn-accion btn-accion-editar" data-accion="editar" data-id="${req.id}">Editar</button>`;
+                    }
+                    if (req.estado === 'Rechazada' && req.user_id === perfilActual.id) {
+                        acciones += `<button class="btn-accion" data-accion="reenviar" data-id="${req.id}" style="color:#3B82F6;border-color:#3B82F6;">Reenviar</button>`;
                     }
                     if (puedeCambiarEstado(req, perfilActual)) {
                         acciones += `<button class="btn-accion btn-accion-estado" data-accion="estado" data-id="${req.id}">Estado</button>`;
@@ -551,7 +597,9 @@
                     switch (e.target.dataset.accion) {
                         case 'ver': verDetalle(req); break;
                         case 'historial': verHistorial(req); break;
+                        case 'aprobar': aprobarRequisicion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'editar': editarRequisicion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                        case 'reenviar': reenviarAprobacion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'estado': cambiarEstado(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'eliminar': confirmarEliminar(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                     }

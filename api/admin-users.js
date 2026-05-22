@@ -70,7 +70,7 @@ export default async function handler(req, res) {
         }
 
         // Parsear datos
-        const { action, email, password, nombre_completo, proceso, rol, user_id, nuevo_password } = req.body;
+        const { action, email, password, nombre_completo, proceso, rol, user_id, nuevo_password, jefe_id, nombre_jefe } = req.body;
 
         // ─── CREAR USUARIO ───
         if (action === 'crear') {
@@ -110,7 +110,9 @@ export default async function handler(req, res) {
                 proceso: proceso.trim(),
                 rol: rol || 'usuario',
                 activo: true,
-                requiere_cambio_password: true
+                requiere_cambio_password: true,
+                jefe_id: jefe_id || null,
+                nombre_jefe: nombre_jefe || null
             };
 
             const perfilInsert = await fetch(`${SUPABASE_URL}/rest/v1/perfiles`, {
