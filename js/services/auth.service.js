@@ -157,12 +157,35 @@ export async function protegerRuta() {
 }
 
 /**
- * Verificar si el usuario actual es administrador
+ * Verificar si el usuario actual es super administrador
  * @param {Object} perfil - Perfil del usuario
  * @returns {boolean}
  */
 export function esAdministrador(perfil) {
-    return perfil && perfil.rol === 'administrador';
+    return perfil && (perfil.rol === 'super_admin' || perfil.rol === 'administrador');
+}
+
+/**
+ * Verificar si el usuario puede gestionar usuarios (super_admin o admin_compras)
+ */
+export function puedeGestionarUsuarios(perfil) {
+    if (!perfil) return false;
+    return perfil.rol === 'super_admin' || perfil.rol === 'admin_compras' || perfil.rol === 'administrador';
+}
+
+/**
+ * Obtener etiqueta legible del rol
+ */
+export function etiquetaRol(rol) {
+    const map = {
+        'super_admin': 'Super Administrador',
+        'director': 'Director',
+        'jefe': 'Jefe',
+        'admin_compras': 'Administrador de Compras',
+        'usuario': 'Usuario',
+        'administrador': 'Administrador'
+    };
+    return map[rol] || rol;
 }
 
 /**

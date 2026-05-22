@@ -65,12 +65,14 @@ export default async function handler(req, res) {
         );
 
         const perfiles = await perfilResponse.json();
-        if (!perfiles.length || perfiles[0].rol !== 'administrador') {
-            return res.status(403).json({ error: 'Solo los administradores pueden crear usuarios.' });
+        const rolUsuario = perfiles[0]?.rol;
+        const puedeGestionar = rolUsuario === 'super_admin' || rolUsuario === 'admin_compras' || rolUsuario === 'administrador';
+        if (!perfiles.length || !puedeGestionar) {
+            return res.status(403).json({ error: 'Solo super admin o admin de compras pueden gestionar usuarios.' });
         }
 
         // Parsear datos
-        const { action, email, password, nombre_completo, proceso, rol, user_id, nuevo_password, jefe_id, nombre_jefe } = req.body;
+        const { action, email, password, nombre_completo, proceso, rol, user_id, nuevo_password, jefe_id, nombre_jefe, director_id, nombre_director } = req.body;
 
         // ─── CREAR USUARIO ───
         if (action === 'crear') {
@@ -112,7 +114,9 @@ export default async function handler(req, res) {
                 activo: true,
                 requiere_cambio_password: true,
                 jefe_id: jefe_id || null,
-                nombre_jefe: nombre_jefe || null
+                nombre_jefe: nombre_jefe || null,
+                director_id: director_id || null,
+                nombre_director: nombre_director || null
             };
 
             const perfilInsert = await fetch(`${SUPABASE_URL}/rest/v1/perfiles`, {
