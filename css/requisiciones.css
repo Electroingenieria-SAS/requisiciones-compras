@@ -157,30 +157,19 @@
     transition: all 0.25s ease;
 }
 
-/* ─── ANIMACIÓN DE FILAS AL HACER HOVER ─── */
+/* ─── HOVER SUAVE EN FILAS ─── */
 .tabla-req tbody tr {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    transition: all 0.2s ease;
 }
 .tabla-req tbody tr:hover {
-    background-color: #F0F7FF;
-    transform: translateX(4px);
-    box-shadow: -4px 0 0 0 var(--color-azul), 0 2px 8px rgba(0, 54, 156, 0.08);
+    background-color: #FAFBFC;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
-.tabla-req tbody tr:hover .col-id {
-    color: var(--color-azul);
-    letter-spacing: 0.5px;
-}
-.tabla-req tbody tr:hover .badge-estado {
-    transform: scale(1.05);
-}
-
 .tabla-req tbody tr.fila-eliminada {
     opacity: 0.5;
     background-color: var(--color-eliminado-bg);
 }
 .tabla-req tbody tr.fila-eliminada:hover {
-    transform: none;
     box-shadow: none;
 }
 
