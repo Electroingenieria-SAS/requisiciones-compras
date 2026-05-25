@@ -322,6 +322,19 @@
             }
 
             configurarEventos();
+
+            // Aplicar filtro desde la URL (cuando vienen de tarjeta del dashboard)
+            const params = new URLSearchParams(window.location.search);
+            const filtroURL = params.get('filtro');
+            if (filtroURL) {
+                const selectFiltro = document.getElementById('filtro-estado');
+                // Verificar que el valor exista en las opciones
+                const opcionExiste = Array.from(selectFiltro.options).some(o => o.value === filtroURL);
+                if (opcionExiste) {
+                    selectFiltro.value = filtroURL;
+                }
+            }
+
             await cargarRequisiciones();
             Loader.ocultar();
         }

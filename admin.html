@@ -163,8 +163,6 @@
                                     <option>Servicios generales</option>
                                     <option>Cierre</option>
                                     <option>Ejecución</option>
-                                    <option>Mantenimiento</option>
-                                    <option>Sistemas</option>
                                     <option>Administración</option>
                                 </select>
                             </div>
@@ -175,7 +173,6 @@
                                     <option value="jefe">Jefe</option>
                                     <option value="director">Director / Gerente</option>
                                     <option value="admin_compras">Administrador de Compras</option>
-                                    <option value="super_admin">Super Administrador</option>
                                 </select>
                             </div>
                             <div class="input-grupo" id="grupo-jefe" style="grid-column: 1 / -1;">
@@ -512,7 +509,7 @@
             const procesos = ['Gestión documental','Atención al usuario','Iluminación','SIG','Medio ambiente','Contabilidad',
                 'Cumplimiento','Direccionamiento estratégico','Finanzas','Gestión humana','Seguridad y salud en el trabajo',
                 'Jurídico','Calidad','Auditoría','Planeación','Logística suministros','Cartera','Ventas','Compras',
-                'Activos Fijos','Nómina','AOM','Logística AP','Servicios generales','Cierre','Ejecución','Mantenimiento','Sistemas','Administración'];
+                'Activos Fijos','Nómina','AOM','Logística AP','Servicios generales','Cierre','Ejecución','Administración'];
 
             const opcionesProcesos = procesos.map(p =>
                 `<option value="${p}" ${p === perfil.proceso ? 'selected' : ''}>${p}</option>`

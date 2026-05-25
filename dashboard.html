@@ -18,7 +18,11 @@
             background: white; border-radius: var(--radio-lg); padding: 1.25rem;
             box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); transition: var(--transicion);
         }
-        .dash-card:hover { box-shadow: var(--sombra-md); }
+        .dash-card.clickeable { cursor: pointer; }
+        .dash-card.clickeable:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+        }
         .dash-card-label { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
         .dash-card-valor { font-size: var(--texto-3xl); font-weight: 700; }
         .dash-card-borde { border-left: 4px solid; }
@@ -119,31 +123,31 @@
 
         <!-- Métricas -->
         <div class="dash-grid">
-            <div class="dash-card">
+            <div class="dash-card clickeable" onclick="window.location.href='/requisiciones.html'">
                 <div class="dash-card-label">Total requisiciones</div>
                 <div class="dash-card-valor" style="color:var(--color-azul);" id="m-total">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:#B91C1C;">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:#B91C1C;" onclick="window.location.href='/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n'">
                 <div class="dash-card-label">Pendientes aprobación</div>
                 <div class="dash-card-valor" style="color:#B91C1C;" id="m-pendientes-aprobacion">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:#991B1B;">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:#991B1B;" onclick="window.location.href='/requisiciones.html?filtro=Rechazada'">
                 <div class="dash-card-label">Rechazadas</div>
                 <div class="dash-card-valor" style="color:#991B1B;" id="m-rechazadas">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-pendiente);">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:var(--color-pendiente);" onclick="window.location.href='/requisiciones.html?filtro=Pendiente'">
                 <div class="dash-card-label">Pendientes</div>
                 <div class="dash-card-valor" style="color:var(--color-pendiente);" id="m-pendientes">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:#8B5CF6;">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:#8B5CF6;" onclick="window.location.href='/requisiciones.html?filtro=En%20cotizaci%C3%B3n'">
                 <div class="dash-card-label">En cotización</div>
                 <div class="dash-card-valor" style="color:#8B5CF6;" id="m-en-cotizacion">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-en-proceso);">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:var(--color-en-proceso);" onclick="window.location.href='/requisiciones.html?filtro=En%20proceso'">
                 <div class="dash-card-label">En proceso</div>
                 <div class="dash-card-valor" style="color:var(--color-en-proceso);" id="m-en-proceso">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-cumplido);">
+            <div class="dash-card dash-card-borde clickeable" style="border-left-color:var(--color-cumplido);" onclick="window.location.href='/requisiciones.html?filtro=Cumplido'">
                 <div class="dash-card-label">Cumplidas</div>
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
@@ -152,8 +156,12 @@
                 <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor">$0</div>
             </div>
             <div class="dash-card">
-                <div class="dash-card-label">Tiempo promedio</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-promedio">- días</div>
+                <div class="dash-card-label">Tiempo promedio Compras</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-compras">- días</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Tiempo promedio P. Autónomo</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-autonomo">- días</div>
             </div>
         </div>
 
@@ -243,14 +251,18 @@
             const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
                 .reduce((s, r) => s + Number(r.valor_real_compra), 0);
 
-            const cumplicoConTiempo = activas.filter(r => r.estado === 'Cumplido');
-            let promedioDias = '-';
-            if (cumplicoConTiempo.length > 0) {
-                const totalDias = cumplicoConTiempo.reduce((s, r) => {
-                    return s + ((new Date(r.updated_at) - new Date(r.created_at)) / 86400000);
-                }, 0);
-                promedioDias = (totalDias / cumplicoConTiempo.length).toFixed(1);
-            }
+            // Tiempo promedio SEPARADO por quien ejecuta
+            const cumplidasCompras = activas.filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Compras');
+            const cumplidasAutonomo = activas.filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Proceso Autónomo');
+
+            const calcularPromedio = (lista) => {
+                if (lista.length === 0) return '-';
+                const totalDias = lista.reduce((s, r) => s + ((new Date(r.updated_at) - new Date(r.created_at)) / 86400000), 0);
+                return (totalDias / lista.length).toFixed(1);
+            };
+
+            const tiempoCompras = calcularPromedio(cumplidasCompras);
+            const tiempoAutonomo = calcularPromedio(cumplidasAutonomo);
 
             document.getElementById('m-total').textContent = activas.length;
             document.getElementById('m-pendientes-aprobacion').textContent = pendientesAprobacion;
@@ -260,7 +272,8 @@
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
             document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
-            document.getElementById('m-promedio').textContent = `${promedioDias} días`;
+            document.getElementById('m-tiempo-compras').textContent = tiempoCompras === '-' ? '- días' : `${tiempoCompras} días`;
+            document.getElementById('m-tiempo-autonomo').textContent = tiempoAutonomo === '-' ? '- días' : `${tiempoAutonomo} días`;
 
             // Gráficos
             if (activas.length > 0) {
@@ -280,12 +293,17 @@
 
         // ─── NOTIFICACIONES INTERNAS ───
 
-        // Notificaciones para ADMIN DE COMPRAS (requisiciones aprobadas listas para gestionar)
+        // Notificaciones para ADMIN DE COMPRAS (solo requisiciones que ejecuta Compras)
         function mostrarNotificacionesAdminCompras(requisiciones) {
             const container = document.getElementById('notif-container');
 
-            const listas = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
-            const enCotizacion = requisiciones.filter(r => !r.eliminado && r.estado === 'En cotización');
+            // SOLO requisiciones donde Compras es el ejecutor (no las autónomas)
+            const listas = requisiciones.filter(r =>
+                !r.eliminado && r.estado === 'Pendiente' && r.quien_ejecuta === 'Compras'
+            );
+            const enCotizacion = requisiciones.filter(r =>
+                !r.eliminado && r.estado === 'En cotización' && r.quien_ejecuta === 'Compras'
+            );
 
             if (listas.length === 0 && enCotizacion.length === 0) {
                 container.innerHTML = `
@@ -383,10 +401,14 @@
                 nuevas = requisiciones.filter(r => !r.eliminado && new Date(r.created_at) > new Date(ultimaVisita));
             }
 
-            const pendientes = requisiciones.filter(r => !r.eliminado && r.estado === 'Pendiente');
+            // Solo se notifican como "pendientes urgentes" las de Compras
+            // Las de Proceso Autónomo NO generan banner porque son responsabilidad del solicitante
+            const pendientesCompras = requisiciones.filter(r =>
+                !r.eliminado && r.estado === 'Pendiente' && r.quien_ejecuta === 'Compras'
+            );
             localStorage.setItem('admin_ultima_visita', ahora);
 
-            if (nuevas.length === 0 && pendientes.length === 0) return;
+            if (nuevas.length === 0 && pendientesCompras.length === 0) return;
 
             let html = '';
 
@@ -417,16 +439,16 @@
                     </div>`;
             }
 
-            if (pendientes.length > 0 && nuevas.length === 0) {
+            if (pendientesCompras.length > 0 && nuevas.length === 0) {
                 html += `
                     <div class="notif-banner" style="background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border-color:var(--color-pendiente);">
                         <div class="notif-banner-icono">⏳</div>
                         <div class="notif-banner-texto">
-                            <div class="notif-banner-titulo" style="color:var(--color-pendiente);">Hay ${pendientes.length} requisición(es) pendiente(s)</div>
-                            <div class="notif-banner-detalle">Estas requisiciones están esperando ser procesadas.</div>
+                            <div class="notif-banner-titulo" style="color:var(--color-pendiente);">Hay ${pendientesCompras.length} requisición(es) de Compras pendiente(s)</div>
+                            <div class="notif-banner-detalle">Estas requisiciones están esperando que el área de Compras las gestione.</div>
                         </div>
                         <div class="notif-banner-acciones">
-                            <a href="/requisiciones.html" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
+                            <a href="/requisiciones.html?filtro=Pendiente" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar</a>
                         </div>
                     </div>`;
             }
