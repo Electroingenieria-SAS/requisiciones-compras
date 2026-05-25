@@ -183,7 +183,17 @@
                             <div class="input-grupo"><label class="input-label">Dimensiones</label><input type="text" id="campo-dimensiones" class="input-campo" placeholder="Ej: 30x20 cm"></div>
                             <div class="input-grupo"><label class="input-label">Marca sugerida</label><input type="text" id="campo-marca" class="input-campo" placeholder="Marca"></div>
                             <div class="input-grupo"><label class="input-label">Proveedor sugerido</label><input type="text" id="campo-proveedor" class="input-campo" placeholder="Proveedor"></div>
-                            <div class="input-grupo"><label class="input-label">Rango de precios</label><input type="text" id="campo-rango-precios" class="input-campo" placeholder="Ej: 100.000 - 500.000"></div>
+                            <div class="input-grupo">
+                                <label class="input-label">Valor estimado (COP) <span style="color:var(--color-error);">*</span></label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:0.875rem;top:50%;transform:translateY(-50%);color:var(--color-texto-secundario);font-weight:600;pointer-events:none;">$</span>
+                                    <input type="text" id="campo-valor-estimado" class="input-campo" placeholder="Ej: 1500000" style="padding-left:1.75rem;" inputmode="numeric">
+                                </div>
+                                <small style="color:var(--color-gris);font-size:0.75rem;margin-top:0.25rem;display:block;">
+                                    Ingrese el valor estimado de la compra. Se mostrará con formato de miles automáticamente.
+                                </small>
+                                <div id="valor-en-letras" style="font-size:0.8rem;color:var(--color-azul);margin-top:0.375rem;font-style:italic;min-height:1rem;"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-seccion">
@@ -395,6 +405,78 @@
                     Toast.error(err.message || 'Error al exportar.');
                 }
             });
+
+            // ─── FORMATO MONETARIO Y CONVERSIÓN A LETRAS ───
+            const inputValor = document.getElementById('campo-valor-estimado');
+            const labelLetras = document.getElementById('valor-en-letras');
+
+            if (inputValor) {
+                inputValor.addEventListener('input', (e) => {
+                    // Quitar todo lo que no sea número
+                    let numStr = e.target.value.replace(/[^0-9]/g, '');
+
+                    if (numStr === '') {
+                        e.target.value = '';
+                        labelLetras.textContent = '';
+                        return;
+                    }
+
+                    const num = parseInt(numStr, 10);
+
+                    // Formatear con separadores de miles
+                    e.target.value = num.toLocaleString('es-CO');
+
+                    // Convertir a letras
+                    labelLetras.textContent = numeroALetras(num) + ' pesos';
+                });
+            }
+        }
+
+        // ─── CONVERSIÓN DE NÚMERO A LETRAS ───
+        function numeroALetras(num) {
+            if (num === 0) return 'Cero';
+            if (num < 0) return 'Menos ' + numeroALetras(Math.abs(num));
+
+            const unidades = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez',
+                'once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte'];
+            const decenas = ['','','','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+            const centenas = ['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos'];
+
+            function convertir(n) {
+                if (n === 0) return '';
+                if (n <= 20) return unidades[n];
+                if (n < 30) return 'veinti' + unidades[n - 20];
+                if (n < 100) {
+                    const d = Math.floor(n / 10);
+                    const u = n % 10;
+                    return decenas[d] + (u ? ' y ' + unidades[u] : '');
+                }
+                if (n === 100) return 'cien';
+                if (n < 1000) {
+                    const c = Math.floor(n / 100);
+                    const r = n % 100;
+                    return centenas[c] + (r ? ' ' + convertir(r) : '');
+                }
+                if (n < 1000000) {
+                    const miles = Math.floor(n / 1000);
+                    const r = n % 1000;
+                    const milesTexto = miles === 1 ? 'mil' : convertir(miles) + ' mil';
+                    return milesTexto + (r ? ' ' + convertir(r) : '');
+                }
+                if (n < 1000000000) {
+                    const millones = Math.floor(n / 1000000);
+                    const r = n % 1000000;
+                    const millonesTexto = millones === 1 ? 'un millón' : convertir(millones) + ' millones';
+                    return millonesTexto + (r ? ' ' + convertir(r) : '');
+                }
+                const billones = Math.floor(n / 1000000000);
+                const r = n % 1000000000;
+                const billonesTexto = billones === 1 ? 'mil millones' : convertir(billones) + ' mil millones';
+                return billonesTexto + (r ? ' ' + convertir(r) : '');
+            }
+
+            const texto = convertir(num);
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
         }
 
         // ─── FORMULARIO ───
@@ -416,11 +498,13 @@
             document.getElementById('campo-fecha').value = formatearFecha(new Date());
             ['campo-unidad-negocio','campo-centro-costo','campo-lugar-entrega','campo-objeto-compra',
              'campo-cantidad','campo-color','campo-dimensiones','campo-marca','campo-proveedor',
-             'campo-rango-precios','campo-url','campo-observaciones'].forEach(id => {
+             'campo-valor-estimado','campo-url','campo-observaciones'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
             document.querySelectorAll('input[name="quien-ejecuta"]').forEach(r => r.checked = false);
+            const letras = document.getElementById('valor-en-letras');
+            if (letras) letras.textContent = '';
         }
 
         async function guardarRequisicion() {
@@ -469,6 +553,18 @@
             const aprobadorId = requiereAprobacion ? aprobadorInfo.aprobador_id : null;
             const nombreAprobador = requiereAprobacion ? aprobadorInfo.nombre_aprobador : null;
 
+            // Extraer valor numérico del campo formateado
+            const valorTexto = document.getElementById('campo-valor-estimado').value.trim();
+            const valorNumerico = valorTexto ? parseFloat(valorTexto.replace(/[^0-9]/g, '')) : null;
+            const valorFormateado = valorNumerico ? '$' + valorNumerico.toLocaleString('es-CO') : '';
+
+            // Validar que se haya ingresado el valor estimado
+            if (!valorNumerico || valorNumerico <= 0) {
+                Toast.advertencia('Debe ingresar el valor estimado de la compra.');
+                btn.disabled = false; btn.textContent = 'Guardar Requisición';
+                return;
+            }
+
             const { requisicion, error } = await crearRequisicion({
                 user_id: usuarioActual.id, solicitante: perfilActual.nombre_completo, proceso: perfilActual.proceso,
                 unidad_negocio: un, centro_costo: cc, lugar_entrega: le, objeto_compra: oc, cantidad: cant,
@@ -476,7 +572,8 @@
                 dimensiones: document.getElementById('campo-dimensiones').value.trim(),
                 marca_sugerida: document.getElementById('campo-marca').value.trim(),
                 proveedor_sugerido: document.getElementById('campo-proveedor').value.trim(),
-                rango_precios: document.getElementById('campo-rango-precios').value.trim(),
+                valor_estimado: valorNumerico,
+                rango_precios: valorFormateado,
                 url_referencia: document.getElementById('campo-url').value.trim(),
                 observaciones: document.getElementById('campo-observaciones').value.trim(),
                 quien_ejecuta: qe.value,
@@ -514,7 +611,7 @@
                         proceso: perfilActual.proceso,
                         objeto_compra: oc,
                         cantidad: cant,
-                        rango_precios: document.getElementById('campo-rango-precios').value.trim(),
+                        rango_precios: valorFormateado,
                         lugar_entrega: le,
                         unidad_negocio: un,
                         centro_costo: cc,
