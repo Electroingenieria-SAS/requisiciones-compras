@@ -132,7 +132,7 @@ export default async function handler(req, res) {
             </div>
             ${rango_precios ? `
             <div class="info-row">
-                <span class="info-label">Rango de precios</span>
+                <span class="info-label">Valor estimado</span>
                 <span class="info-value">${rango_precios}</span>
             </div>` : ''}
             ${lugar_entrega ? `
