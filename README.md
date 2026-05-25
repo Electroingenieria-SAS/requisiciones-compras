@@ -1,6 +1,5 @@
 # Requisiciones de Compras Administrativas
 
-## Electroingeniería S.A.S.
 
 Sistema web empresarial para la gestión de requisiciones de compras administrativas.
 
