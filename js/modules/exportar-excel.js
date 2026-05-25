@@ -46,7 +46,7 @@ export function exportarRequisicionesExcel(requisiciones, info = {}) {
         'Dimensiones': req.dimensiones || '',
         'Marca Sugerida': req.marca_sugerida || '',
         'Proveedor Sugerido': req.proveedor_sugerido || '',
-        'Rango Precios': req.rango_precios || '',
+        'Valor Estimado': req.valor_estimado ? Number(req.valor_estimado) : (req.rango_precios || ''),
         'URL Referencia': req.url_referencia || '',
         'Observaciones': req.observaciones || '',
         'Quién Ejecuta': req.quien_ejecuta,

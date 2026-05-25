@@ -150,8 +150,8 @@ export function verDetalle(req) {
             </div>
 
             <div>
-                <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Rango de precios</div>
-                <div style="font-weight: 500;">${req.rango_precios || '-'}</div>
+                <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Valor estimado</div>
+                <div style="font-weight: 500;">${req.valor_estimado ? '$' + Number(req.valor_estimado).toLocaleString('es-CO') : (req.rango_precios || '-')}</div>
             </div>
 
             ${req.url_referencia ? `
@@ -612,7 +612,7 @@ export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
                 <div style="font-size:var(--texto-sm);color:var(--color-texto);margin-top:0.5rem;">${req.objeto_compra}</div>
                 <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);margin-top:0.5rem;">
                     Solicitante: <strong>${req.solicitante}</strong> · Cantidad: <strong>${req.cantidad}</strong>
-                    ${req.rango_precios ? ` · Rango: <strong>${req.rango_precios}</strong>` : ''}
+                    ${req.valor_estimado ? ` · Valor estimado: <strong>$${Number(req.valor_estimado).toLocaleString('es-CO')}</strong>` : (req.rango_precios ? ` · Rango: <strong>${req.rango_precios}</strong>` : '')}
                 </div>
             </div>
             <div class="input-grupo">
