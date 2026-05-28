@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiquetes Aéreos - Electroingeniería S.A.S.</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/requisiciones.css">
+    <style>
+        /* ─── Filtros ─── */
+        .filtros-barra {
+            display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;
+            background: white; padding: 1rem 1.25rem; border-radius: var(--radio-lg);
+            box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); margin-bottom: 1.25rem;
+        }
+        .btn-limpiar-filtros { font-size: var(--texto-sm); padding: 0.5rem 1rem; }
+
+        /* ─── Upload de archivos ─── */
+        .upload-area {
+            border: 2px dashed var(--color-borde); border-radius: var(--radio-md);
+            padding: 1.1rem; text-align: center; cursor: pointer;
+            transition: all 0.2s ease; background: var(--color-gris-light); display: block;
+        }
+        .upload-area:hover { border-color: var(--color-azul); background: var(--color-azul-light); }
+        .upload-area.tiene-archivo { border-color: var(--color-cumplido); background: var(--color-cumplido-bg); }
+        .upload-area input[type="file"] { display: none; }
+        .upload-icono { font-size: 1.6rem; margin-bottom: 0.25rem; }
+        .upload-texto { font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+        .upload-nombre { font-size: var(--texto-xs); color: var(--color-cumplido); font-weight: 600; margin-top: 0.25rem; }
+
+        /* ─── Toggle switch ─── */
+        .toggle-switch { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .toggle-switch input[type="checkbox"] {
+            width: 44px; height: 22px; -webkit-appearance: none; appearance: none;
+            background: var(--color-gris); border-radius: 22px; position: relative;
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        .toggle-switch input[type="checkbox"]::before {
+            content: ''; position: absolute; width: 18px; height: 18px;
+            border-radius: 50%; background: white; top: 2px; left: 2px; transition: all 0.2s;
+        }
+        .toggle-switch input[type="checkbox"]:checked { background: var(--color-azul); }
+        .toggle-switch input[type="checkbox"]:checked::before { left: 24px; }
+
+        /* ─── Sección hotel ─── */
+        .seccion-hotel {
+            background: #FEF9E7; border: 1px solid #FCD34D; border-radius: var(--radio-md);
+            padding: 1rem; margin-top: 0.75rem;
+        }
+
+        /* ─── Badges de estado ─── */
+        .badge-tiq-pendiente-aprob { background: #FEE2E2; color: #B91C1C; }
+        .badge-tiq-rechazada { background: #FECACA; color: #991B1B; }
+        .badge-tiq-pendiente { background: var(--color-pendiente-bg); color: var(--color-pendiente); }
+        .badge-tiq-gestion { background: #DBEAFE; color: #1D4ED8; }
+        .badge-tiq-cumplido { background: var(--color-cumplido-bg); color: var(--color-cumplido); }
+
+        @media (max-width: 768px) {
+            .filtros-barra { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-izquierda"><img src="/assets/logo-header.png" alt="Electroingeniería" style="height:40px;border-radius:4px;"></div>
+        <div class="header-centro">TIQUETES AÉREOS</div>
+        <div class="header-derecha">
+            <div class="header-info">
+                <div class="header-info-codigo">S-FT-39 v1</div>
+                <div class="header-info-proceso" id="header-proceso">-</div>
+            </div>
+            <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <nav class="nav-bar">
+        <div class="nav-links">
+            <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            <a href="/requisiciones.html" class="nav-link">Requisiciones</a>
+            <a href="/tiquetes.html" class="nav-link activo">Tiquetes Aéreos</a>
+            <a href="/admin.html" class="nav-link oculto" id="nav-admin">Administración</a>
+        </div>
+        <div class="nav-acciones">
+            <button class="btn btn-primario" id="btn-nuevo-tiquete">+ Nueva Solicitud</button>
+        </div>
+    </nav>
+
+    <main class="contenido-principal" id="contenido-principal" style="display:none;">
+
+        <!-- FORMULARIO -->
+        <div id="seccion-formulario" class="oculto">
+            <div class="form-requisicion">
+                <div class="form-header">
+                    <span class="form-header-titulo">Nueva Solicitud de Tiquete Aéreo</span>
+                    <span class="form-header-id">El ID se asignará al guardar</span>
+                </div>
+                <div class="form-body">
+
+                    <!-- Asignación corporativa -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Información corporativa</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Solicitante <span class="campo-auto-badge">Automático</span></label>
+                                <input type="text" id="tiq-solicitante" class="input-campo" disabled>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Proceso <span class="campo-auto-badge">Automático</span></label>
+                                <input type="text" id="tiq-proceso" class="input-campo" disabled>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Unidad de negocio <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-unidad" class="input-campo" placeholder="Ej: Administración">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Centro de costos <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-centro" class="input-campo" placeholder="Ej: CC-001">
+                            </div>
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label">Actividad a desarrollar <span class="requerido">*</span></label>
+                                <textarea id="tiq-actividad" class="input-campo input-textarea" placeholder="Describa el motivo del viaje y la actividad a realizar"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pasajero -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Datos del pasajero</h3>
+                        <label class="toggle-switch" style="margin-bottom: 1rem;">
+                            <input type="checkbox" id="tiq-es-para-mi" checked>
+                            <span style="font-size: var(--texto-sm);">El tiquete es para mí</span>
+                        </label>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Nombre completo del pasajero <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-pasajero-nombre" class="input-campo">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Cédula del pasajero <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-pasajero-cedula" class="input-campo" placeholder="Solo números" inputmode="numeric">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Cédula - Lado frontal <span class="requerido">*</span></label>
+                                <label class="upload-area" id="upload-frente">
+                                    <input type="file" id="file-cedula-frente" accept="image/*,application/pdf">
+                                    <div class="upload-icono">📷</div>
+                                    <div class="upload-texto">Subir foto del frente</div>
+                                    <div class="upload-nombre" id="nombre-frente"></div>
+                                </label>
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Cédula - Lado reverso <span class="requerido">*</span></label>
+                                <label class="upload-area" id="upload-reverso">
+                                    <input type="file" id="file-cedula-reverso" accept="image/*,application/pdf">
+                                    <div class="upload-icono">📷</div>
+                                    <div class="upload-texto">Subir foto del reverso</div>
+                                    <div class="upload-nombre" id="nombre-reverso"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Viaje -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Detalles del viaje</h3>
+                        <div class="form-grid">
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label">Destino <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-destino" class="input-campo" placeholder="Ej: Bogotá, Cartagena, Medellín...">
+                            </div>
+                        </div>
+                        <label class="toggle-switch" style="margin: 0.5rem 0 1rem;">
+                            <input type="checkbox" id="tiq-solo-ida">
+                            <span style="font-size: var(--texto-sm);">Solo ida (sin regreso)</span>
+                        </label>
+                        <div class="form-grid">
+                            <div class="input-grupo">
+                                <label class="input-label">Fecha de ida <span class="requerido">*</span></label>
+                                <input type="date" id="tiq-fecha-ida" class="input-campo">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Hora preferida ida</label>
+                                <input type="time" id="tiq-hora-ida" class="input-campo">
+                            </div>
+                        </div>
+                        <div class="form-grid" id="campos-regreso">
+                            <div class="input-grupo">
+                                <label class="input-label">Fecha de regreso <span class="requerido">*</span></label>
+                                <input type="date" id="tiq-fecha-regreso" class="input-campo">
+                            </div>
+                            <div class="input-grupo">
+                                <label class="input-label">Hora preferida regreso</label>
+                                <input type="time" id="tiq-hora-regreso" class="input-campo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotel -->
+                    <div class="form-seccion">
+                        <h3 class="form-seccion-titulo">Hospedaje</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tiq-requiere-hotel">
+                            <span style="font-size: var(--texto-sm); font-weight: 600;">¿Requiere hotel?</span>
+                        </label>
+                        <div class="seccion-hotel" id="seccion-hotel" style="display:none;">
+                            <div class="form-grid">
+                                <div class="input-grupo form-campo-full">
+                                    <label class="input-label">Ciudad del hotel</label>
+                                    <input type="text" id="hotel-ciudad" class="input-campo" placeholder="Si es distinta al destino del viaje">
+                                </div>
+                                <div class="input-grupo">
+                                    <label class="input-label">Check-in</label>
+                                    <input type="date" id="hotel-checkin" class="input-campo">
+                                </div>
+                                <div class="input-grupo">
+                                    <label class="input-label">Check-out</label>
+                                    <input type="date" id="hotel-checkout" class="input-campo">
+                                </div>
+                                <div class="input-grupo form-campo-full">
+                                    <label class="input-label">Observaciones del hotel</label>
+                                    <textarea id="hotel-observaciones" class="input-campo input-textarea" placeholder="Tipo de habitación, preferencias..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-seccion">
+                        <div class="input-grupo">
+                            <label class="input-label">Observaciones generales</label>
+                            <textarea id="tiq-observaciones" class="input-campo input-textarea" placeholder="Información adicional para Compras"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-footer">
+                        <button class="btn btn-secundario" id="btn-cancelar-tiquete">Cancelar</button>
+                        <button class="btn btn-primario" id="btn-guardar-tiquete">Solicitar tiquete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div id="seccion-filtros" class="oculto">
+            <div class="filtros-barra">
+                <div class="filtro-grupo filtro-busqueda">
+                    <label>Buscar</label>
+                    <input type="text" id="filtro-busqueda" placeholder="ID, destino, solicitante o pasajero...">
+                </div>
+                <div class="filtro-grupo">
+                    <label>Estado</label>
+                    <select id="filtro-estado">
+                        <option value="todos">Todos</option>
+                        <option value="Pendiente aprobación">Pendiente aprobación</option>
+                        <option value="Rechazada">Rechazada</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En gestión">En gestión</option>
+                        <option value="Cumplido">Cumplido</option>
+                    </select>
+                </div>
+                <div class="filtro-grupo">
+                    <label>Desde</label>
+                    <input type="date" id="filtro-desde">
+                </div>
+                <div class="filtro-grupo">
+                    <label>Hasta</label>
+                    <input type="date" id="filtro-hasta">
+                </div>
+                <button class="btn btn-secundario btn-limpiar-filtros" id="btn-limpiar-filtros">Limpiar</button>
+            </div>
+        </div>
+
+        <!-- TABLA -->
+        <div id="seccion-lista" class="oculto">
+            <div class="tabla-contenedor">
+                <div class="tabla-header">
+                    <h2 id="tabla-titulo">Tiquetes (0)</h2>
+                </div>
+                <div class="tabla-scroll">
+                    <table class="tabla-req">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha Sol.</th>
+                                <th>Solicitante</th>
+                                <th>Pasajero</th>
+                                <th>Destino</th>
+                                <th>Fecha Viaje</th>
+                                <th>Hotel</th>
+                                <th>Estado</th>
+                                <th style="text-align:center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTADO VACÍO -->
+        <div id="seccion-vacio">
+            <div class="estado-vacio">
+                <div class="estado-vacio-icono">✈️</div>
+                <h2 class="estado-vacio-titulo">Sin solicitudes de tiquetes aún</h2>
+                <p class="estado-vacio-mensaje">Haz clic en "Nueva Solicitud" para crear tu primera solicitud de tiquete aéreo.</p>
+                <button class="btn btn-primario" id="btn-nuevo-vacio">+ Nueva Solicitud</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { supabase } from '/js/config/supabase.js';
+        import { protegerRuta, cerrarSesion, puedeGestionarUsuarios } from '/js/services/auth.service.js';
+        import { crearTiquete, obtenerTiquetes, subirArchivo, obtenerUrlFirmada, registrarHistorialTiquete, obtenerHistorialTiquete } from '/js/services/tiquetes.service.js';
+        import { formatearFecha, formatearFechaHora } from '/js/utils/formatters.js';
+        import { Loader } from '/js/components/loader.js';
+        import { Toast } from '/js/components/toast.js';
+        import { Modal } from '/js/components/modal.js';
+
+        let usuarioActual = null;
+        let perfilActual = null;
+        let tiquetesCache = [];
+
+        async function inicializar() {
+            Loader.mostrar('Cargando tiquetes...');
+            const { usuario, perfil } = await protegerRuta();
+            if (!usuario || !perfil) return;
+
+            usuarioActual = usuario;
+            perfilActual = perfil;
+
+            document.getElementById('header-proceso').textContent = perfil.proceso;
+            if (puedeGestionarUsuarios(perfil)) document.getElementById('nav-admin').classList.remove('oculto');
+
+            configurarEventos();
+            await cargarTiquetes();
+            document.getElementById('contenido-principal').style.display = 'block';
+            Loader.ocultar();
+        }
+
+        function configurarEventos() {
+            document.getElementById('btn-nuevo-tiquete').addEventListener('click', mostrarFormulario);
+            document.getElementById('btn-nuevo-vacio').addEventListener('click', mostrarFormulario);
+            document.getElementById('btn-cancelar-tiquete').addEventListener('click', ocultarFormulario);
+            document.getElementById('btn-guardar-tiquete').addEventListener('click', guardarTiquete);
+            document.getElementById('btn-logout').addEventListener('click', async () => { Loader.mostrar('Cerrando sesión...'); await cerrarSesion(); });
+            document.getElementById('btn-limpiar-filtros').addEventListener('click', limpiarFiltros);
+
+            document.getElementById('tiq-es-para-mi').addEventListener('change', (e) => {
+                document.getElementById('tiq-pasajero-nombre').value = e.target.checked ? perfilActual.nombre_completo : '';
+                document.getElementById('tiq-pasajero-cedula').value = '';
+            });
+
+            document.getElementById('tiq-solo-ida').addEventListener('change', (e) => {
+                document.getElementById('campos-regreso').style.display = e.target.checked ? 'none' : 'grid';
+                if (e.target.checked) {
+                    document.getElementById('tiq-fecha-regreso').value = '';
+                    document.getElementById('tiq-hora-regreso').value = '';
+                }
+            });
+
+            document.getElementById('tiq-requiere-hotel').addEventListener('change', (e) => {
+                document.getElementById('seccion-hotel').style.display = e.target.checked ? 'block' : 'none';
+            });
+
+            ['frente', 'reverso'].forEach(lado => {
+                document.getElementById(`file-cedula-${lado}`).addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        document.getElementById(`upload-${lado}`).classList.add('tiene-archivo');
+                        document.getElementById(`nombre-${lado}`).textContent = '✓ ' + file.name;
+                    }
+                });
+            });
+
+            let timerBusqueda;
+            document.getElementById('filtro-busqueda').addEventListener('input', () => {
+                clearTimeout(timerBusqueda);
+                timerBusqueda = setTimeout(cargarTiquetes, 400);
+            });
+            ['filtro-estado', 'filtro-desde', 'filtro-hasta'].forEach(id => {
+                document.getElementById(id).addEventListener('change', cargarTiquetes);
+            });
+        }
+
+        function mostrarFormulario() {
+            document.getElementById('tiq-solicitante').value = perfilActual.nombre_completo;
+            document.getElementById('tiq-proceso').value = perfilActual.proceso;
+            document.getElementById('tiq-pasajero-nombre').value = perfilActual.nombre_completo;
+            document.getElementById('seccion-formulario').classList.remove('oculto');
+            document.getElementById('seccion-filtros').classList.add('oculto');
+            document.getElementById('seccion-lista').classList.add('oculto');
+            document.getElementById('seccion-vacio').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function ocultarFormulario() {
+            limpiarFormulario();
+            document.getElementById('seccion-formulario').classList.add('oculto');
+            cargarTiquetes();
+        }
+
+        function limpiarFormulario() {
+            ['tiq-unidad','tiq-centro','tiq-actividad','tiq-pasajero-nombre','tiq-pasajero-cedula',
+             'tiq-destino','tiq-fecha-ida','tiq-hora-ida','tiq-fecha-regreso','tiq-hora-regreso',
+             'hotel-ciudad','hotel-checkin','hotel-checkout','hotel-observaciones','tiq-observaciones'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('tiq-es-para-mi').checked = true;
+            document.getElementById('tiq-solo-ida').checked = false;
+            document.getElementById('tiq-requiere-hotel').checked = false;
+            document.getElementById('campos-regreso').style.display = 'grid';
+            document.getElementById('seccion-hotel').style.display = 'none';
+            ['frente','reverso'].forEach(lado => {
+                document.getElementById(`file-cedula-${lado}`).value = '';
+                document.getElementById(`upload-${lado}`).classList.remove('tiene-archivo');
+                document.getElementById(`nombre-${lado}`).textContent = '';
+            });
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtro-busqueda').value = '';
+            document.getElementById('filtro-estado').value = 'todos';
+            document.getElementById('filtro-desde').value = '';
+            document.getElementById('filtro-hasta').value = '';
+            cargarTiquetes();
+        }
+
+        async function guardarTiquete() {
+            const btn = document.getElementById('btn-guardar-tiquete');
+
+            const unidad = document.getElementById('tiq-unidad').value.trim();
+            const centro = document.getElementById('tiq-centro').value.trim();
+            const actividad = document.getElementById('tiq-actividad').value.trim();
+            const nombrePasajero = document.getElementById('tiq-pasajero-nombre').value.trim();
+            const cedulaPasajero = document.getElementById('tiq-pasajero-cedula').value.trim();
+            const destino = document.getElementById('tiq-destino').value.trim();
+            const fechaIda = document.getElementById('tiq-fecha-ida').value;
+            const soloIda = document.getElementById('tiq-solo-ida').checked;
+            const fechaRegreso = document.getElementById('tiq-fecha-regreso').value;
+            const requiereHotel = document.getElementById('tiq-requiere-hotel').checked;
+            const fileFrente = document.getElementById('file-cedula-frente').files[0];
+            const fileReverso = document.getElementById('file-cedula-reverso').files[0];
+
+            if (!unidad) { Toast.advertencia('Ingrese la unidad de negocio.'); return; }
+            if (!centro) { Toast.advertencia('Ingrese el centro de costos.'); return; }
+            if (!actividad) { Toast.advertencia('Ingrese la actividad a desarrollar.'); return; }
+            if (!nombrePasajero) { Toast.advertencia('Ingrese el nombre del pasajero.'); return; }
+            if (!cedulaPasajero) { Toast.advertencia('Ingrese la cédula del pasajero.'); return; }
+            if (!destino) { Toast.advertencia('Ingrese el destino.'); return; }
+            if (!fechaIda) { Toast.advertencia('Seleccione la fecha de ida.'); return; }
+            if (!soloIda && !fechaRegreso) { Toast.advertencia('Seleccione la fecha de regreso (o marque "Solo ida").'); return; }
+            if (!fileFrente) { Toast.advertencia('Suba la imagen del frente de la cédula.'); return; }
+            if (!fileReverso) { Toast.advertencia('Suba la imagen del reverso de la cédula.'); return; }
+
+            btn.disabled = true; btn.textContent = 'Subiendo documentos...';
+
+            try {
+                const upFrente = await subirArchivo(fileFrente, 'cedulas', `${cedulaPasajero}_frente`);
+                if (upFrente.error) { Toast.error('Error subiendo frente: ' + upFrente.error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                const upReverso = await subirArchivo(fileReverso, 'cedulas', `${cedulaPasajero}_reverso`);
+                if (upReverso.error) { Toast.error('Error subiendo reverso: ' + upReverso.error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                btn.textContent = 'Guardando solicitud...';
+
+                const { data: aprobadorInfo } = await supabase.rpc('detectar_aprobador_tiquete', { p_user_id: usuarioActual.id });
+                const requiereAprobacion = aprobadorInfo?.requiere_aprobacion === true;
+                const estadoInicial = requiereAprobacion ? 'Pendiente aprobación' : 'Pendiente';
+
+                const datos = {
+                    user_id: usuarioActual.id,
+                    solicitante: perfilActual.nombre_completo,
+                    proceso: perfilActual.proceso,
+                    unidad_negocio: unidad,
+                    centro_costo: centro,
+                    actividad: actividad,
+                    pasajero_es_solicitante: document.getElementById('tiq-es-para-mi').checked,
+                    pasajero_nombre: nombrePasajero,
+                    pasajero_cedula: cedulaPasajero,
+                    pasajero_cedula_frente_url: upFrente.path,
+                    pasajero_cedula_reverso_url: upReverso.path,
+                    destino: destino,
+                    fecha_ida: fechaIda,
+                    hora_ida: document.getElementById('tiq-hora-ida').value || null,
+                    fecha_regreso: soloIda ? null : fechaRegreso,
+                    hora_regreso: soloIda ? null : (document.getElementById('tiq-hora-regreso').value || null),
+                    solo_ida: soloIda,
+                    requiere_hotel: requiereHotel,
+                    hotel_ciudad: requiereHotel ? document.getElementById('hotel-ciudad').value.trim() : null,
+                    hotel_fecha_checkin: requiereHotel ? (document.getElementById('hotel-checkin').value || null) : null,
+                    hotel_fecha_checkout: requiereHotel ? (document.getElementById('hotel-checkout').value || null) : null,
+                    hotel_observaciones: requiereHotel ? document.getElementById('hotel-observaciones').value.trim() : null,
+                    observaciones: document.getElementById('tiq-observaciones').value.trim(),
+                    estado: estadoInicial,
+                    requiere_aprobacion: requiereAprobacion,
+                    aprobador_id: requiereAprobacion ? aprobadorInfo.aprobador_id : null,
+                    nombre_aprobador: requiereAprobacion ? aprobadorInfo.nombre_aprobador : null
+                };
+
+                const { tiquete, error } = await crearTiquete(datos);
+                if (error) { Toast.error(error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                await registrarHistorialTiquete({
+                    tiquete_id: tiquete.id,
+                    id_tiquete: tiquete.id_tiquete,
+                    user_id: usuarioActual.id,
+                    nombre_usuario: perfilActual.nombre_completo,
+                    accion: 'creacion',
+                    detalle: requiereAprobacion
+                        ? `Tiquete creado y enviado a aprobación de ${aprobadorInfo.nombre_aprobador}`
+                        : `Tiquete creado (sin aprobación requerida)`
+                });
+
+                Toast.exito(`Tiquete ${tiquete.id_tiquete} creado${requiereAprobacion ? '. Enviado a aprobación de ' + aprobadorInfo.nombre_aprobador + '.' : '.'}`);
+                btn.disabled = false; btn.textContent = 'Solicitar tiquete';
+                ocultarFormulario();
+            } catch (err) {
+                console.error(err);
+                Toast.error('Error al guardar el tiquete.');
+                btn.disabled = false; btn.textContent = 'Solicitar tiquete';
+            }
+        }
+
+        async function cargarTiquetes() {
+            const filtros = {
+                busqueda: document.getElementById('filtro-busqueda').value.trim(),
+                estado: document.getElementById('filtro-estado').value,
+                desde: document.getElementById('filtro-desde').value || null,
+                hasta: document.getElementById('filtro-hasta').value || null
+            };
+
+            const { tiquetes, error } = await obtenerTiquetes(filtros);
+            if (error) { Toast.error(error); return; }
+
+            tiquetesCache = tiquetes;
+            renderizarTiquetes(tiquetes);
+        }
+
+        function renderizarTiquetes(tiquetes) {
+            const tbody = document.getElementById('tabla-body');
+            const seccionLista = document.getElementById('seccion-lista');
+            const seccionFiltros = document.getElementById('seccion-filtros');
+            const seccionVacio = document.getElementById('seccion-vacio');
+            const formAbierto = !document.getElementById('seccion-formulario').classList.contains('oculto');
+
+            document.getElementById('tabla-titulo').textContent = `Tiquetes (${tiquetes.length})`;
+
+            if (tiquetes.length === 0) {
+                tbody.innerHTML = '';
+                seccionLista.classList.add('oculto');
+                seccionFiltros.classList.add('oculto');
+                if (!formAbierto) seccionVacio.style.display = 'block';
+                return;
+            }
+
+            seccionVacio.style.display = 'none';
+            if (!formAbierto) {
+                seccionLista.classList.remove('oculto');
+                seccionFiltros.classList.remove('oculto');
+            }
+
+            const badgeClase = {
+                'Pendiente aprobación': 'badge-tiq-pendiente-aprob',
+                'Rechazada': 'badge-tiq-rechazada',
+                'Pendiente': 'badge-tiq-pendiente',
+                'En gestión': 'badge-tiq-gestion',
+                'Cumplido': 'badge-tiq-cumplido'
+            };
+
+            tbody.innerHTML = tiquetes.map(t => `
+                <tr>
+                    <td class="col-id">${t.id_tiquete}</td>
+                    <td>${formatearFecha(t.created_at)}</td>
+                    <td>${t.solicitante}</td>
+                    <td>${t.pasajero_nombre}${t.pasajero_es_solicitante ? '' : ' <small style="color:#7C3AED;">(3°)</small>'}</td>
+                    <td>${t.destino}</td>
+                    <td>${formatearFecha(t.fecha_ida)}${t.solo_ida ? ' <small style="color:var(--color-gris);">(solo ida)</small>' : ''}</td>
+                    <td style="text-align:center;">${t.requiere_hotel ? '🏨' : '—'}</td>
+                    <td><span class="badge-estado ${badgeClase[t.estado] || ''}">${t.estado}</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn-accion btn-accion-ver" onclick="window._verTiquete(${t.id})">Ver</button>
+                        <button class="btn-accion" style="color:#7C3AED;border-color:#7C3AED;" onclick="window._historialTiquete(${t.id})">Historial</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window._verTiquete = async (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+
+            // Generar URLs firmadas para ver las cédulas
+            const urlFrente = await obtenerUrlFirmada(t.pasajero_cedula_frente_url);
+            const urlReverso = await obtenerUrlFirmada(t.pasajero_cedula_reverso_url);
+
+            const html = `
+                <div style="display:grid; gap:0.6rem; font-size: var(--texto-sm);">
+                    <div><strong>Solicitante:</strong> ${t.solicitante} (${t.proceso})</div>
+                    <div><strong>Pasajero:</strong> ${t.pasajero_nombre} — CC ${t.pasajero_cedula}</div>
+                    <div><strong>Actividad:</strong> ${t.actividad}</div>
+                    <div><strong>Unidad / CC:</strong> ${t.unidad_negocio} / ${t.centro_costo}</div>
+                    <div><strong>Destino:</strong> ${t.destino}</div>
+                    <div><strong>Ida:</strong> ${formatearFecha(t.fecha_ida)}${t.hora_ida ? ' a las ' + t.hora_ida : ''}</div>
+                    ${t.solo_ida ? '<div><strong>Tipo:</strong> Solo ida</div>' : `<div><strong>Regreso:</strong> ${formatearFecha(t.fecha_regreso)}${t.hora_regreso ? ' a las ' + t.hora_regreso : ''}</div>`}
+                    <div><strong>Hotel:</strong> ${t.requiere_hotel ? `Sí — ${t.hotel_ciudad || t.destino}${t.hotel_fecha_checkin ? ' (' + formatearFecha(t.hotel_fecha_checkin) + ' → ' + formatearFecha(t.hotel_fecha_checkout) + ')' : ''}` : 'No requiere'}</div>
+                    ${t.hotel_observaciones ? `<div><strong>Obs. hotel:</strong> ${t.hotel_observaciones}</div>` : ''}
+                    ${t.observaciones ? `<div><strong>Observaciones:</strong> ${t.observaciones}</div>` : ''}
+                    <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                        ${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula frente</a>` : ''}
+                        ${urlReverso ? `<a href="${urlReverso}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula reverso</a>` : ''}
+                    </div>
+                    ${t.motivo_rechazo ? `<div style="background:#FEE2E2;padding:0.6rem;border-radius:6px;color:#991B1B;"><strong>Motivo de rechazo:</strong> ${t.motivo_rechazo}</div>` : ''}
+                    ${t.codigo_reserva ? `<div style="background:#D1FAE5;padding:0.6rem;border-radius:6px;"><strong>Código de reserva:</strong> ${t.codigo_reserva}</div>` : ''}
+                </div>
+            `;
+
+            Modal.crear({
+                titulo: `Tiquete ${t.id_tiquete} — ${t.estado}`,
+                contenido: html,
+                botones: [{ texto: 'Cerrar', clase: 'btn-secundario', onClick: Modal.cerrar }]
+            });
+        };
+
+        window._historialTiquete = async (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+            const { historial } = await obtenerHistorialTiquete(id);
+
+            const html = historial.length === 0
+                ? '<p style="color:var(--color-texto-secundario);">Sin movimientos registrados.</p>'
+                : `<div style="display:grid; gap:0.5rem;">${historial.map(h => `
+                    <div style="border-left:3px solid var(--color-azul); padding-left:0.75rem; padding-bottom:0.5rem;">
+                        <div style="font-size:var(--texto-xs); color:var(--color-texto-secundario);">${formatearFechaHora(h.fecha)}</div>
+                        <div style="font-size:var(--texto-sm);"><strong>${h.nombre_usuario}</strong> — ${h.detalle || h.accion}</div>
+                    </div>`).join('')}</div>`;
+
+            Modal.crear({
+                titulo: `Historial — ${t.id_tiquete}`,
+                contenido: html,
+                botones: [{ texto: 'Cerrar', clase: 'btn-secundario', onClick: Modal.cerrar }]
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+
+</body>
+</html>
