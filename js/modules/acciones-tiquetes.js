@@ -7,7 +7,7 @@
  * ============================================================
  */
 
-import { actualizarTiquete, registrarHistorialTiquete, obtenerHistorialTiquete, obtenerUrlFirmada } from '../services/tiquetes.service.js';
+import { actualizarTiquete, registrarHistorialTiquete, obtenerHistorialTiquete, obtenerUrlFirmada, subirArchivo } from '../services/tiquetes.service.js';
 import { formatearFecha, formatearFechaHora } from '../utils/formatters.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
@@ -197,6 +197,219 @@ export function reenviarTiquete(tiq, usuario, perfil, onReenviado) {
             }}
         ]
     });
+}
+
+/**
+ * ─── INICIAR GESTIÓN (Pendiente → En gestión) ───
+ * Solo admin_compras puede usar esto.
+ */
+export function iniciarGestionTiquete(tiq, usuario, perfil, onCambiado) {
+    Modal.crear({
+        titulo: 'Iniciar gestión del tiquete',
+        contenido: `<p>¿Confirmas que vas a empezar a gestionar el tiquete <strong>${tiq.id_tiquete}</strong>? El solicitante verá que ya está en proceso.</p>`,
+        botones: [
+            { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+            { texto: 'Iniciar gestión', clase: 'btn-primario', onClick: async () => {
+                const { error } = await actualizarTiquete(tiq.id, { estado: 'En gestión' });
+                if (error) { Toast.error(error); return; }
+
+                await registrarHistorialTiquete({
+                    tiquete_id: tiq.id,
+                    id_tiquete: tiq.id_tiquete,
+                    user_id: usuario.id,
+                    nombre_usuario: perfil.nombre_completo,
+                    accion: 'cambio_estado',
+                    campo_modificado: 'estado',
+                    valor_anterior: 'Pendiente',
+                    valor_nuevo: 'En gestión',
+                    detalle: 'Compras inició la gestión del tiquete'
+                });
+
+                Toast.exito('Tiquete en gestión.');
+                Modal.cerrar();
+                if (onCambiado) onCambiado();
+            }}
+        ]
+    });
+}
+
+/**
+ * ─── CUMPLIR TIQUETE (sube PDFs, código y envía correo al solicitante) ───
+ */
+export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
+    const html = `
+        <div style="display:grid;gap:1rem;">
+            <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:0.875rem;border-radius:6px;">
+                <div style="font-size:var(--texto-xs);color:#065F46;font-weight:600;margin-bottom:0.25rem;">TIQUETE A CUMPLIR</div>
+                <div style="font-weight:600;color:#065F46;">${tiq.id_tiquete} — ${tiq.destino}</div>
+                <div style="font-size:var(--texto-xs);color:#1F2937;margin-top:0.25rem;">
+                    Pasajero: ${tiq.pasajero_nombre}${tiq.requiere_hotel ? ' · Con hotel' : ''}
+                </div>
+            </div>
+
+            <div class="input-grupo">
+                <label class="input-label">Código de reserva (PNR) <span class="requerido">*</span></label>
+                <input type="text" id="cumplir-codigo" class="input-campo" placeholder="Ej: ABC123, XYZ456" style="text-transform:uppercase;font-family:'Courier New',monospace;letter-spacing:1px;">
+            </div>
+
+            <div class="input-grupo">
+                <label class="input-label">PDF del tiquete aéreo <span class="requerido">*</span></label>
+                <label class="upload-area" id="up-tiquete-pdf">
+                    <input type="file" id="file-tiquete-pdf" accept="application/pdf,image/*" style="display:none;">
+                    <div class="upload-icono">📄</div>
+                    <div class="upload-texto">Click para subir PDF del tiquete</div>
+                    <div class="upload-nombre" id="nombre-tiquete-pdf"></div>
+                </label>
+            </div>
+
+            ${tiq.requiere_hotel ? `
+            <div class="input-grupo">
+                <label class="input-label">Confirmación del hotel (PDF) <span class="requerido">*</span></label>
+                <label class="upload-area" id="up-hotel-pdf">
+                    <input type="file" id="file-hotel-pdf" accept="application/pdf,image/*" style="display:none;">
+                    <div class="upload-icono">🏨</div>
+                    <div class="upload-texto">Click para subir confirmación del hotel</div>
+                    <div class="upload-nombre" id="nombre-hotel-pdf"></div>
+                </label>
+            </div>` : ''}
+
+            <div class="input-grupo">
+                <label class="input-label">Observaciones para el solicitante (opcional)</label>
+                <textarea id="cumplir-observaciones" class="input-campo input-textarea" placeholder="Detalles sobre la aerolínea, escalas, notas importantes..."></textarea>
+            </div>
+        </div>
+    `;
+
+    Modal.crear({
+        titulo: `Cumplir tiquete - ${tiq.id_tiquete}`,
+        contenido: html,
+        ancho: '600px',
+        botones: [
+            { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+            { texto: '✓ Marcar como Cumplido', clase: 'btn-primario', onClick: async () => {
+                const codigo = document.getElementById('cumplir-codigo').value.trim().toUpperCase();
+                const observaciones = document.getElementById('cumplir-observaciones').value.trim();
+                const fileTiquete = document.getElementById('file-tiquete-pdf').files[0];
+                const fileHotel = tiq.requiere_hotel ? document.getElementById('file-hotel-pdf').files[0] : null;
+
+                if (!codigo) { Toast.advertencia('Ingrese el código de reserva.'); return; }
+                if (!fileTiquete) { Toast.advertencia('Suba el PDF del tiquete.'); return; }
+                if (tiq.requiere_hotel && !fileHotel) { Toast.advertencia('Suba la confirmación del hotel.'); return; }
+
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = 'Subiendo archivos...';
+
+                try {
+                    // Subir PDF del tiquete
+                    const upTiquete = await subirArchivo(fileTiquete, 'tiquetes', `${tiq.id_tiquete}_tiquete`);
+                    if (upTiquete.error) { Toast.error('Error subiendo tiquete: ' + upTiquete.error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
+
+                    let upHotel = { path: null };
+                    if (tiq.requiere_hotel && fileHotel) {
+                        upHotel = await subirArchivo(fileHotel, 'hoteles', `${tiq.id_tiquete}_hotel`);
+                        if (upHotel.error) { Toast.error('Error subiendo hotel: ' + upHotel.error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
+                    }
+
+                    btn.textContent = 'Guardando...';
+
+                    // Actualizar el tiquete
+                    const cambios = {
+                        estado: 'Cumplido',
+                        codigo_reserva: codigo,
+                        tiquete_pdf_url: upTiquete.path,
+                        hotel_confirmacion_url: upHotel.path,
+                        fecha_entrega: new Date().toISOString(),
+                        entregado_por: usuario.id
+                    };
+
+                    const { error } = await actualizarTiquete(tiq.id, cambios);
+                    if (error) { Toast.error(error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
+
+                    // Registrar en historial
+                    await registrarHistorialTiquete({
+                        tiquete_id: tiq.id,
+                        id_tiquete: tiq.id_tiquete,
+                        user_id: usuario.id,
+                        nombre_usuario: perfil.nombre_completo,
+                        accion: 'cumplimiento',
+                        campo_modificado: 'estado',
+                        valor_anterior: tiq.estado,
+                        valor_nuevo: 'Cumplido',
+                        detalle: `Tiquete cumplido. Código: ${codigo}${observaciones ? ' · Notas: ' + observaciones : ''}`
+                    });
+
+                    btn.textContent = 'Enviando correo al solicitante...';
+
+                    // Enviar correo al solicitante (sin bloquear si falla)
+                    fetch('/api/notificar-tiquete-cumplido', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id_tiquete: tiq.id_tiquete,
+                            user_id: tiq.user_id,
+                            solicitante: tiq.solicitante,
+                            pasajero_nombre: tiq.pasajero_nombre,
+                            pasajero_cedula: tiq.pasajero_cedula,
+                            destino: tiq.destino,
+                            fecha_ida: tiq.fecha_ida,
+                            hora_ida: tiq.hora_ida,
+                            fecha_regreso: tiq.fecha_regreso,
+                            hora_regreso: tiq.hora_regreso,
+                            origen_regreso: tiq.origen_regreso,
+                            solo_ida: tiq.solo_ida,
+                            requiere_hotel: tiq.requiere_hotel,
+                            hotel_ciudad: tiq.hotel_ciudad,
+                            hotel_fecha_checkin: tiq.hotel_fecha_checkin,
+                            hotel_fecha_checkout: tiq.hotel_fecha_checkout,
+                            codigo_reserva: codigo,
+                            tiquete_pdf_path: upTiquete.path,
+                            hotel_confirmacion_path: upHotel.path,
+                            observaciones_entrega: observaciones
+                        })
+                    }).catch(err => console.error('Error correo tiquete cumplido:', err));
+
+                    Toast.exito('Tiquete cumplido. Se envió un correo al solicitante.');
+                    Modal.cerrar();
+                    if (onCumplido) onCumplido();
+                } catch (err) {
+                    console.error(err);
+                    Toast.error('Error al cumplir el tiquete.');
+                    btn.disabled = false;
+                    btn.textContent = '✓ Marcar como Cumplido';
+                }
+            }}
+        ]
+    });
+
+    // Configurar feedback visual de los uploads (después de que el modal esté en el DOM)
+    setTimeout(() => {
+        ['tiquete-pdf', 'hotel-pdf'].forEach(id => {
+            const input = document.getElementById(`file-${id}`);
+            if (!input) return;
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById(`up-${id}`).classList.add('tiene-archivo');
+                    document.getElementById(`nombre-${id}`).textContent = '✓ ' + file.name;
+                }
+            });
+        });
+    }, 100);
+}
+
+/**
+ * ─── PUEDE INICIAR GESTIÓN / CUMPLIR (solo admin_compras y super_admin) ───
+ */
+export function puedeIniciarGestion(tiq, perfil) {
+    if (tiq.eliminado || tiq.estado !== 'Pendiente') return false;
+    return perfil.rol === 'admin_compras' || perfil.rol === 'super_admin';
+}
+
+export function puedeCumplir(tiq, perfil) {
+    if (tiq.eliminado) return false;
+    if (tiq.estado !== 'Pendiente' && tiq.estado !== 'En gestión') return false;
+    return perfil.rol === 'admin_compras' || perfil.rol === 'super_admin';
 }
 
 /**
