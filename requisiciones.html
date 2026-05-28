@@ -295,6 +295,7 @@
     </main>
 
     <script type="module">
+        import { supabase } from '/js/config/supabase.js';
         import { protegerRuta, cerrarSesion, esAdministrador, puedeGestionarUsuarios } from '/js/services/auth.service.js';
         import { crearRequisicion, obtenerRequisiciones, registrarHistorial } from '/js/services/requisiciones.service.js';
         import { formatearFecha } from '/js/utils/formatters.js';
@@ -317,6 +318,14 @@
 
             usuarioActual = usuario;
             perfilActual = perfil;
+
+            // Cargar IDs de usuarios que este usuario puede gestionar por delegación
+            try {
+                const { data: idsDeleg } = await supabase.rpc('obtener_ids_delegados');
+                perfilActual.idsDelegados = idsDeleg || [];
+            } catch (e) {
+                perfilActual.idsDelegados = [];
+            }
 
             document.getElementById('header-proceso').textContent = perfil.proceso;
             document.getElementById('campo-fecha').value = formatearFecha(new Date());

@@ -207,6 +207,64 @@
 
             <!-- Lista de usuarios -->
             <div class="usuarios-grid" id="lista-usuarios"></div>
+
+            <!-- ═══════════ SECCIÓN DELEGACIONES ═══════════ -->
+            <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 2px solid var(--color-borde);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <div>
+                        <h2 style="margin:0; font-size: var(--texto-lg); color: var(--color-texto);">Delegaciones de gestión</h2>
+                        <p style="margin:0.25rem 0 0; font-size: var(--texto-sm); color: var(--color-texto-secundario);">
+                            Permite que un usuario vea y gestione las requisiciones de otros usuarios (mantiene trazabilidad).
+                        </p>
+                    </div>
+                    <button class="btn btn-primario" id="btn-nueva-delegacion">+ Nueva Delegación</button>
+                </div>
+
+                <!-- Formulario nueva delegación -->
+                <div id="seccion-delegacion" class="oculto" style="background: var(--color-azul-light); border-radius: var(--radio-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-grupo">
+                            <label class="input-label">¿Quién recibe el permiso? (delegado)</label>
+                            <select id="deleg-delegado" class="input-campo input-select">
+                                <option value="">Seleccione un usuario...</option>
+                            </select>
+                        </div>
+                        <div class="input-grupo">
+                            <label class="input-label">¿De quién podrá gestionar requisiciones? (origen)</label>
+                            <select id="deleg-origen" class="input-campo input-select">
+                                <option value="">Seleccione un usuario...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.75rem;">
+                        <button class="btn btn-secundario" id="btn-cancelar-delegacion">Cancelar</button>
+                        <button class="btn btn-primario" id="btn-guardar-delegacion">Crear Delegación</button>
+                    </div>
+                </div>
+
+                <!-- Tabla de delegaciones activas -->
+                <div class="tarjeta-tabla">
+                    <div style="overflow-x:auto;">
+                        <table class="tabla-req">
+                            <thead>
+                                <tr>
+                                    <th>DELEGADO (recibe permiso)</th>
+                                    <th>PUEDE GESTIONAR A</th>
+                                    <th>CREADA POR</th>
+                                    <th>FECHA</th>
+                                    <th style="text-align:center;">ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-delegaciones"></tbody>
+                        </table>
+                    </div>
+                    <div id="delegaciones-vacio" style="display:none; padding:2rem; text-align:center; color:var(--color-texto-secundario);">
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">🤝</div>
+                        <p>No hay delegaciones activas. Crea una con el botón "+ Nueva Delegación".</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </main>
@@ -257,6 +315,7 @@
             document.getElementById('panel-admin').classList.remove('oculto');
             configurarEventos();
             await cargarUsuarios();
+            await cargarDelegaciones();
             Loader.ocultar();
         }
 
@@ -266,6 +325,18 @@
             document.getElementById('btn-cerrar-crear').addEventListener('click', () => document.getElementById('seccion-crear').classList.add('oculto'));
             document.getElementById('btn-cancelar-crear').addEventListener('click', () => document.getElementById('seccion-crear').classList.add('oculto'));
             document.getElementById('btn-guardar-usuario').addEventListener('click', crearUsuario);
+
+            // Delegaciones
+            document.getElementById('btn-nueva-delegacion').addEventListener('click', () => {
+                document.getElementById('seccion-delegacion').classList.remove('oculto');
+                poblarDropdownsDelegacion();
+            });
+            document.getElementById('btn-cancelar-delegacion').addEventListener('click', () => {
+                document.getElementById('seccion-delegacion').classList.add('oculto');
+                document.getElementById('deleg-delegado').value = '';
+                document.getElementById('deleg-origen').value = '';
+            });
+            document.getElementById('btn-guardar-delegacion').addEventListener('click', crearDelegacion);
         }
 
         // ─── CARGAR USUARIOS ───
@@ -279,6 +350,124 @@
             renderizarUsuarios();
             poblarDropdownJefes();
         }
+
+        // ─── DELEGACIONES ───
+        let delegacionesCache = [];
+
+        function poblarDropdownsDelegacion() {
+            const activos = todosLosPerfiles.filter(p => p.activo);
+            const opciones = activos.map(p =>
+                `<option value="${p.id}|${p.nombre_completo}">${p.nombre_completo} — ${p.proceso}</option>`
+            ).join('');
+            document.getElementById('deleg-delegado').innerHTML =
+                '<option value="">Seleccione un usuario...</option>' + opciones;
+            document.getElementById('deleg-origen').innerHTML =
+                '<option value="">Seleccione un usuario...</option>' + opciones;
+        }
+
+        async function cargarDelegaciones() {
+            const { data, error } = await supabase
+                .from('delegaciones')
+                .select('*')
+                .eq('activo', true)
+                .order('created_at', { ascending: false });
+
+            if (error) { console.error('Error cargando delegaciones:', error); return; }
+
+            delegacionesCache = data || [];
+            renderizarDelegaciones();
+        }
+
+        function renderizarDelegaciones() {
+            const tbody = document.getElementById('tbody-delegaciones');
+            const vacio = document.getElementById('delegaciones-vacio');
+
+            if (delegacionesCache.length === 0) {
+                tbody.innerHTML = '';
+                vacio.style.display = 'block';
+                return;
+            }
+            vacio.style.display = 'none';
+
+            tbody.innerHTML = delegacionesCache.map(d => `
+                <tr>
+                    <td style="font-weight:600; color:var(--color-azul);">${d.nombre_delegado}</td>
+                    <td>${d.nombre_origen}</td>
+                    <td>${d.nombre_creador || '-'}</td>
+                    <td>${new Date(d.created_at).toLocaleDateString('es-CO')}</td>
+                    <td style="text-align:center;">
+                        <button class="btn-accion btn-accion-eliminar" onclick="window._quitarDelegacion(${d.id}, '${d.nombre_delegado}', '${d.nombre_origen}')">Quitar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function crearDelegacion() {
+            const delegadoVal = document.getElementById('deleg-delegado').value;
+            const origenVal = document.getElementById('deleg-origen').value;
+
+            if (!delegadoVal) { Toast.advertencia('Seleccione quién recibe el permiso.'); return; }
+            if (!origenVal) { Toast.advertencia('Seleccione de quién gestionará requisiciones.'); return; }
+
+            const [delegadoId, delegadoNombre] = delegadoVal.split('|');
+            const [origenId, origenNombre] = origenVal.split('|');
+
+            if (delegadoId === origenId) {
+                Toast.advertencia('Un usuario no puede ser delegado de sí mismo.'); return;
+            }
+
+            // Verificar duplicado
+            const existe = delegacionesCache.some(d =>
+                d.usuario_delegado_id === delegadoId && d.usuario_origen_id === origenId
+            );
+            if (existe) {
+                Toast.advertencia(`${delegadoNombre} ya puede gestionar las requisiciones de ${origenNombre}.`); return;
+            }
+
+            const btn = document.getElementById('btn-guardar-delegacion');
+            btn.disabled = true; btn.textContent = 'Creando...';
+
+            const { error } = await supabase.from('delegaciones').insert([{
+                usuario_delegado_id: delegadoId,
+                nombre_delegado: delegadoNombre,
+                usuario_origen_id: origenId,
+                nombre_origen: origenNombre,
+                creado_por: usuarioActual.id,
+                nombre_creador: perfilActual.nombre_completo,
+                activo: true
+            }]);
+
+            btn.disabled = false; btn.textContent = 'Crear Delegación';
+
+            if (error) {
+                Toast.error('Error al crear la delegación.');
+                console.error(error);
+                return;
+            }
+
+            Toast.exito(`${delegadoNombre} ahora puede gestionar las requisiciones de ${origenNombre}.`);
+            document.getElementById('seccion-delegacion').classList.add('oculto');
+            document.getElementById('deleg-delegado').value = '';
+            document.getElementById('deleg-origen').value = '';
+            await cargarDelegaciones();
+        }
+
+        window._quitarDelegacion = (id, delegado, origen) => {
+            Modal.crear({
+                titulo: 'Quitar delegación',
+                contenido: `<p>¿Seguro que desea quitar el permiso de <strong>${delegado}</strong> para gestionar las requisiciones de <strong>${origen}</strong>?</p>`,
+                botones: [
+                    { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+                    { texto: 'Quitar', clase: 'btn-peligro', onClick: async () => {
+                        const { error } = await supabase.from('delegaciones').delete().eq('id', id);
+                        if (error) { Toast.error('Error al quitar la delegación.'); return; }
+                        Toast.exito('Delegación eliminada.');
+                        Modal.cerrar();
+                        await cargarDelegaciones();
+                    }}
+                ]
+            });
+        };
 
         function poblarDropdownJefes() {
             const selectJefe = document.getElementById('crear-jefe');
