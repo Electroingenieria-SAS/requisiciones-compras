@@ -328,6 +328,7 @@
         import { supabase } from '/js/config/supabase.js';
         import { protegerRuta, cerrarSesion, puedeGestionarUsuarios } from '/js/services/auth.service.js';
         import { crearTiquete, obtenerTiquetes, subirArchivo, obtenerUrlFirmada, registrarHistorialTiquete, obtenerHistorialTiquete } from '/js/services/tiquetes.service.js';
+        import { aprobarTiquete, reenviarTiquete, puedeAprobarTiquete, puedeReenviarTiquete, puedeEditarTiquete, puedeCambiarEstadoTiquete, puedeEliminarTiquete, badgeClaseTiquete } from '/js/modules/acciones-tiquetes.js';
         import { formatearFecha, formatearFechaHora } from '/js/utils/formatters.js';
         import { Loader } from '/js/components/loader.js';
         import { Toast } from '/js/components/toast.js';
@@ -349,6 +350,16 @@
             if (puedeGestionarUsuarios(perfil)) document.getElementById('nav-admin').classList.remove('oculto');
 
             configurarEventos();
+
+            // Aplicar filtro desde la URL (cuando vienen del banner del dashboard)
+            const params = new URLSearchParams(window.location.search);
+            const filtroURL = params.get('filtro');
+            if (filtroURL) {
+                const selectFiltro = document.getElementById('filtro-estado');
+                const opcionExiste = Array.from(selectFiltro.options).some(o => o.value === filtroURL);
+                if (opcionExiste) selectFiltro.value = filtroURL;
+            }
+
             await cargarTiquetes();
             document.getElementById('contenido-principal').style.display = 'block';
             Loader.ocultar();
@@ -589,23 +600,45 @@
                 'Cumplido': 'badge-tiq-cumplido'
             };
 
-            tbody.innerHTML = tiquetes.map(t => `
-                <tr>
-                    <td class="col-id">${t.id_tiquete}</td>
-                    <td>${formatearFecha(t.created_at)}</td>
-                    <td>${t.solicitante}</td>
-                    <td>${t.pasajero_nombre}${t.pasajero_es_solicitante ? '' : ' <small style="color:#7C3AED;">(3°)</small>'}</td>
-                    <td>${t.destino}</td>
-                    <td>${formatearFecha(t.fecha_ida)}${t.solo_ida ? ' <small style="color:var(--color-gris);">(solo ida)</small>' : ''}</td>
-                    <td style="text-align:center;">${t.requiere_hotel ? '🏨' : '—'}</td>
-                    <td><span class="badge-estado ${badgeClase[t.estado] || ''}">${t.estado}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn-accion btn-accion-ver" onclick="window._verTiquete(${t.id})">Ver</button>
-                        <button class="btn-accion" style="color:#7C3AED;border-color:#7C3AED;" onclick="window._historialTiquete(${t.id})">Historial</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = tiquetes.map(t => {
+                let acciones = `<button class="btn-accion btn-accion-ver" onclick="window._verTiquete(${t.id})">Ver</button>`;
+                acciones += `<button class="btn-accion" style="color:#7C3AED;border-color:#7C3AED;" onclick="window._historialTiquete(${t.id})">Historial</button>`;
+
+                if (puedeAprobarTiquete(t, perfilActual)) {
+                    acciones += `<button class="btn-accion" style="color:#10B981;border-color:#10B981;font-weight:600;" onclick="window._aprobarTiquete(${t.id})">✓ Aprobar</button>`;
+                }
+                if (puedeReenviarTiquete(t, perfilActual)) {
+                    acciones += `<button class="btn-accion" style="color:#3B82F6;border-color:#3B82F6;" onclick="window._reenviarTiquete(${t.id})">Reenviar</button>`;
+                }
+
+                return `
+                    <tr>
+                        <td class="col-id">${t.id_tiquete}</td>
+                        <td>${formatearFecha(t.created_at)}</td>
+                        <td>${t.solicitante}</td>
+                        <td>${t.pasajero_nombre}${t.pasajero_es_solicitante ? '' : ' <small style="color:#7C3AED;">(3°)</small>'}</td>
+                        <td>${t.destino}</td>
+                        <td>${formatearFecha(t.fecha_ida)}${t.solo_ida ? ' <small style="color:var(--color-gris);">(solo ida)</small>' : ''}</td>
+                        <td style="text-align:center;">${t.requiere_hotel ? '🏨' : '—'}</td>
+                        <td><span class="badge-estado ${badgeClase[t.estado] || ''}">${t.estado}</span></td>
+                        <td style="text-align:center;">${acciones}</td>
+                    </tr>
+                `;
+            }).join('');
         }
+
+        // ─── HANDLERS DE ACCIONES ───
+        window._aprobarTiquete = (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+            aprobarTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
+        };
+
+        window._reenviarTiquete = (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+            reenviarTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
+        };
 
         window._verTiquete = async (id) => {
             const t = tiquetesCache.find(x => x.id === id);

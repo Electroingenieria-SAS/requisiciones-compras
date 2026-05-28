@@ -236,6 +236,7 @@
                 mostrarNotificacionesAdminCompras(requisiciones);
             } else if (perfil.rol === 'jefe' || perfil.rol === 'director') {
                 await mostrarAprobacionesPendientes(perfil);
+                await mostrarAprobacionesTiquetesPendientes(perfil);
             } else if (esAdministrador(perfil)) {
                 mostrarNotificacionesAdmin(requisiciones);
             } else {
@@ -385,6 +386,37 @@
                     </div>
                     <div class="notif-banner-acciones">
                         <a href="/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Revisar aprobaciones</a>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        }
+
+        // Banner de TIQUETES AÉREOS pendientes (separado del de requisiciones)
+        async function mostrarAprobacionesTiquetesPendientes(perfil) {
+            const container = document.getElementById('notif-container');
+            const { data, error } = await supabase.rpc('obtener_aprobaciones_pendientes_tiquetes');
+
+            if (error || !data || data.length === 0) return;
+
+            const html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg,#DBEAFE,#E0E7FF);border-color:#3B82F6;">
+                    <div class="notif-banner-icono">✈️</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo" style="color:#1E40AF;">${data.length} tiquete(s) aéreo(s) esperando tu aprobación</div>
+                        <div class="notif-banner-detalle">Solicitudes de viaje pendientes. Revísalas para que Compras pueda gestionar la compra de los tiquetes.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 5).map(t => `
+                                <div class="notif-item">
+                                    <span class="notif-item-id">${t.id_tiquete}</span>
+                                    <span class="notif-item-info">${t.destino} — <em>${t.pasajero_nombre}</em> (${formatearFecha(t.fecha_ida)})</span>
+                                </div>
+                            `).join('')}
+                            ${data.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${data.length - 5} más...</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/tiquetes.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Revisar tiquetes</a>
                     </div>
                 </div>
             `;
