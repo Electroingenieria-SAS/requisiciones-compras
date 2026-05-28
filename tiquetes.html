@@ -195,6 +195,10 @@
                             </div>
                         </div>
                         <div class="form-grid" id="campos-regreso">
+                            <div class="input-grupo form-campo-full">
+                                <label class="input-label">Lugar desde donde regresa <span class="requerido">*</span></label>
+                                <input type="text" id="tiq-origen-regreso" class="input-campo" placeholder="Ciudad de donde sale el vuelo de regreso">
+                            </div>
                             <div class="input-grupo">
                                 <label class="input-label">Fecha de regreso <span class="requerido">*</span></label>
                                 <input type="date" id="tiq-fecha-regreso" class="input-campo">
@@ -368,6 +372,7 @@
                 if (e.target.checked) {
                     document.getElementById('tiq-fecha-regreso').value = '';
                     document.getElementById('tiq-hora-regreso').value = '';
+                    document.getElementById('tiq-origen-regreso').value = '';
                 }
             });
 
@@ -414,7 +419,7 @@
 
         function limpiarFormulario() {
             ['tiq-unidad','tiq-centro','tiq-actividad','tiq-pasajero-nombre','tiq-pasajero-cedula',
-             'tiq-destino','tiq-fecha-ida','tiq-hora-ida','tiq-fecha-regreso','tiq-hora-regreso',
+             'tiq-destino','tiq-fecha-ida','tiq-hora-ida','tiq-fecha-regreso','tiq-hora-regreso','tiq-origen-regreso',
              'hotel-ciudad','hotel-checkin','hotel-checkout','hotel-observaciones','tiq-observaciones'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -451,6 +456,7 @@
             const fechaIda = document.getElementById('tiq-fecha-ida').value;
             const soloIda = document.getElementById('tiq-solo-ida').checked;
             const fechaRegreso = document.getElementById('tiq-fecha-regreso').value;
+            const origenRegreso = document.getElementById('tiq-origen-regreso').value.trim();
             const requiereHotel = document.getElementById('tiq-requiere-hotel').checked;
             const fileFrente = document.getElementById('file-cedula-frente').files[0];
             const fileReverso = document.getElementById('file-cedula-reverso').files[0];
@@ -463,6 +469,7 @@
             if (!destino) { Toast.advertencia('Ingrese el destino.'); return; }
             if (!fechaIda) { Toast.advertencia('Seleccione la fecha de ida.'); return; }
             if (!soloIda && !fechaRegreso) { Toast.advertencia('Seleccione la fecha de regreso (o marque "Solo ida").'); return; }
+            if (!soloIda && !origenRegreso) { Toast.advertencia('Indique el lugar desde donde regresa (o marque "Solo ida").'); return; }
             if (!fileFrente) { Toast.advertencia('Suba la imagen del frente de la cédula.'); return; }
             if (!fileReverso) { Toast.advertencia('Suba la imagen del reverso de la cédula.'); return; }
 
@@ -498,6 +505,7 @@
                     hora_ida: document.getElementById('tiq-hora-ida').value || null,
                     fecha_regreso: soloIda ? null : fechaRegreso,
                     hora_regreso: soloIda ? null : (document.getElementById('tiq-hora-regreso').value || null),
+                    origen_regreso: soloIda ? null : origenRegreso,
                     solo_ida: soloIda,
                     requiere_hotel: requiereHotel,
                     hotel_ciudad: requiereHotel ? document.getElementById('hotel-ciudad').value.trim() : null,
@@ -615,7 +623,7 @@
                     <div><strong>Unidad / CC:</strong> ${t.unidad_negocio} / ${t.centro_costo}</div>
                     <div><strong>Destino:</strong> ${t.destino}</div>
                     <div><strong>Ida:</strong> ${formatearFecha(t.fecha_ida)}${t.hora_ida ? ' a las ' + t.hora_ida : ''}</div>
-                    ${t.solo_ida ? '<div><strong>Tipo:</strong> Solo ida</div>' : `<div><strong>Regreso:</strong> ${formatearFecha(t.fecha_regreso)}${t.hora_regreso ? ' a las ' + t.hora_regreso : ''}</div>`}
+                    ${t.solo_ida ? '<div><strong>Tipo:</strong> Solo ida</div>' : `<div><strong>Regreso:</strong> ${formatearFecha(t.fecha_regreso)}${t.hora_regreso ? ' a las ' + t.hora_regreso : ''}${t.origen_regreso ? ' desde <strong>' + t.origen_regreso + '</strong>' : ''}</div>`}
                     <div><strong>Hotel:</strong> ${t.requiere_hotel ? `Sí — ${t.hotel_ciudad || t.destino}${t.hotel_fecha_checkin ? ' (' + formatearFecha(t.hotel_fecha_checkin) + ' → ' + formatearFecha(t.hotel_fecha_checkout) + ')' : ''}` : 'No requiere'}</div>
                     ${t.hotel_observaciones ? `<div><strong>Obs. hotel:</strong> ${t.hotel_observaciones}</div>` : ''}
                     ${t.observaciones ? `<div><strong>Observaciones:</strong> ${t.observaciones}</div>` : ''}
