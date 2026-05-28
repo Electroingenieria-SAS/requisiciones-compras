@@ -234,6 +234,7 @@
 
             if (perfil.rol === 'admin_compras') {
                 mostrarNotificacionesAdminCompras(requisiciones);
+                await mostrarTiquetesParaCompras();
             } else if (perfil.rol === 'jefe' || perfil.rol === 'director') {
                 await mostrarAprobacionesPendientes(perfil);
                 await mostrarAprobacionesTiquetesPendientes(perfil);
@@ -389,6 +390,65 @@
                     </div>
                 </div>
             `;
+            container.innerHTML += html;
+        }
+
+        // Banner de TIQUETES AÉREOS para ADMIN COMPRAS (aprobados y en gestión)
+        async function mostrarTiquetesParaCompras() {
+            const container = document.getElementById('notif-container');
+            const { data, error } = await supabase
+                .from('tiquetes_aereos')
+                .select('id, id_tiquete, solicitante, pasajero_nombre, destino, fecha_ida, estado')
+                .in('estado', ['Pendiente', 'En gestión'])
+                .eq('eliminado', false)
+                .order('fecha_ida', { ascending: true });
+
+            if (error || !data) return;
+
+            const aprobados = data.filter(t => t.estado === 'Pendiente');
+            const enGestion = data.filter(t => t.estado === 'En gestión');
+
+            if (aprobados.length === 0 && enGestion.length === 0) return;
+
+            let html = '';
+
+            if (aprobados.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#DBEAFE,#E0E7FF);border-color:#3B82F6;">
+                        <div class="notif-banner-icono">✈️</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#1E40AF;">${aprobados.length} tiquete(s) aéreo(s) listo(s) para comprar</div>
+                            <div class="notif-banner-detalle">Tiquetes aprobados esperando ser gestionados por Compras.</div>
+                            <div class="notif-items">
+                                ${aprobados.slice(0, 5).map(t => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${t.id_tiquete}</span>
+                                        <span class="notif-item-info">${t.destino} — <em>${t.pasajero_nombre}</em> (${formatearFecha(t.fecha_ida)})</span>
+                                    </div>
+                                `).join('')}
+                                ${aprobados.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${aprobados.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/tiquetes.html?filtro=Pendiente" class="btn btn-primario" style="font-size:var(--texto-sm);">Gestionar tiquetes</a>
+                        </div>
+                    </div>`;
+            }
+
+            if (enGestion.length > 0) {
+                html += `
+                    <div class="notif-banner" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-color:#8B5CF6;">
+                        <div class="notif-banner-icono">⏳</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#5B21B6;">${enGestion.length} tiquete(s) en gestión</div>
+                            <div class="notif-banner-detalle">Tiquetes que ya iniciaste pero aún no marcas como cumplidos.</div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/tiquetes.html?filtro=En%20gesti%C3%B3n" class="btn btn-secundario" style="font-size:var(--texto-sm);">Ver</a>
+                        </div>
+                    </div>`;
+            }
+
             container.innerHTML += html;
         }
 

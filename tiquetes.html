@@ -328,7 +328,7 @@
         import { supabase } from '/js/config/supabase.js';
         import { protegerRuta, cerrarSesion, puedeGestionarUsuarios } from '/js/services/auth.service.js';
         import { crearTiquete, obtenerTiquetes, subirArchivo, obtenerUrlFirmada, registrarHistorialTiquete, obtenerHistorialTiquete } from '/js/services/tiquetes.service.js';
-        import { aprobarTiquete, reenviarTiquete, puedeAprobarTiquete, puedeReenviarTiquete, puedeEditarTiquete, puedeCambiarEstadoTiquete, puedeEliminarTiquete, badgeClaseTiquete } from '/js/modules/acciones-tiquetes.js';
+        import { aprobarTiquete, reenviarTiquete, iniciarGestionTiquete, cumplirTiquete, puedeAprobarTiquete, puedeReenviarTiquete, puedeIniciarGestion, puedeCumplir, badgeClaseTiquete } from '/js/modules/acciones-tiquetes.js';
         import { formatearFecha, formatearFechaHora } from '/js/utils/formatters.js';
         import { Loader } from '/js/components/loader.js';
         import { Toast } from '/js/components/toast.js';
@@ -610,6 +610,12 @@
                 if (puedeReenviarTiquete(t, perfilActual)) {
                     acciones += `<button class="btn-accion" style="color:#3B82F6;border-color:#3B82F6;" onclick="window._reenviarTiquete(${t.id})">Reenviar</button>`;
                 }
+                if (puedeIniciarGestion(t, perfilActual)) {
+                    acciones += `<button class="btn-accion" style="color:#1D4ED8;border-color:#1D4ED8;" onclick="window._iniciarGestionTiquete(${t.id})">Iniciar gestión</button>`;
+                }
+                if (puedeCumplir(t, perfilActual)) {
+                    acciones += `<button class="btn-accion" style="color:#10B981;border-color:#10B981;font-weight:600;" onclick="window._cumplirTiquete(${t.id})">✓ Cumplir</button>`;
+                }
 
                 return `
                     <tr>
@@ -640,6 +646,18 @@
             reenviarTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
         };
 
+        window._iniciarGestionTiquete = (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+            iniciarGestionTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
+        };
+
+        window._cumplirTiquete = (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+            cumplirTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
+        };
+
         window._verTiquete = async (id) => {
             const t = tiquetesCache.find(x => x.id === id);
             if (!t) return;
@@ -647,6 +665,10 @@
             // Generar URLs firmadas para ver las cédulas
             const urlFrente = await obtenerUrlFirmada(t.pasajero_cedula_frente_url);
             const urlReverso = await obtenerUrlFirmada(t.pasajero_cedula_reverso_url);
+
+            // Generar URLs firmadas para los PDFs de cumplimiento (si están)
+            const urlTiquetePDF = t.tiquete_pdf_url ? await obtenerUrlFirmada(t.tiquete_pdf_url) : null;
+            const urlHotelPDF = t.hotel_confirmacion_url ? await obtenerUrlFirmada(t.hotel_confirmacion_url) : null;
 
             const html = `
                 <div style="display:grid; gap:0.6rem; font-size: var(--texto-sm);">
@@ -660,12 +682,23 @@
                     <div><strong>Hotel:</strong> ${t.requiere_hotel ? `Sí — ${t.hotel_ciudad || t.destino}${t.hotel_fecha_checkin ? ' (' + formatearFecha(t.hotel_fecha_checkin) + ' → ' + formatearFecha(t.hotel_fecha_checkout) + ')' : ''}` : 'No requiere'}</div>
                     ${t.hotel_observaciones ? `<div><strong>Obs. hotel:</strong> ${t.hotel_observaciones}</div>` : ''}
                     ${t.observaciones ? `<div><strong>Observaciones:</strong> ${t.observaciones}</div>` : ''}
-                    <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+
+                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">
                         ${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula frente</a>` : ''}
                         ${urlReverso ? `<a href="${urlReverso}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula reverso</a>` : ''}
                     </div>
+
                     ${t.motivo_rechazo ? `<div style="background:#FEE2E2;padding:0.6rem;border-radius:6px;color:#991B1B;"><strong>Motivo de rechazo:</strong> ${t.motivo_rechazo}</div>` : ''}
-                    ${t.codigo_reserva ? `<div style="background:#D1FAE5;padding:0.6rem;border-radius:6px;"><strong>Código de reserva:</strong> ${t.codigo_reserva}</div>` : ''}
+
+                    ${t.codigo_reserva ? `
+                    <div style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);padding:0.875rem;border-radius:8px;border-left:4px solid #10B981;margin-top:0.5rem;">
+                        <div style="font-size:var(--texto-xs);color:#065F46;font-weight:700;letter-spacing:0.5px;margin-bottom:0.25rem;">CÓDIGO DE RESERVA</div>
+                        <div style="font-size:1.25rem;color:#065F46;font-weight:700;font-family:'Courier New',monospace;letter-spacing:2px;">${t.codigo_reserva}</div>
+                        <div style="display:flex;gap:0.5rem;margin-top:0.625rem;flex-wrap:wrap;">
+                            ${urlTiquetePDF ? `<a href="${urlTiquetePDF}" target="_blank" class="btn btn-primario" style="font-size:var(--texto-xs);">📄 Descargar tiquete</a>` : ''}
+                            ${urlHotelPDF ? `<a href="${urlHotelPDF}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">🏨 Descargar hotel</a>` : ''}
+                        </div>
+                    </div>` : ''}
                 </div>
             `;
 
