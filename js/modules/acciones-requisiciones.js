@@ -14,6 +14,13 @@ import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 
 /**
+ * Helper: verifica si el usuario tiene delegación sobre el dueño de la requisición
+ */
+function esDelegadoDe(req, perfil) {
+    return Array.isArray(perfil.idsDelegados) && perfil.idsDelegados.includes(req.user_id);
+}
+
+/**
  * Verificar si el usuario puede editar una requisición
  */
 export function puedeEditar(req, perfil) {
@@ -27,6 +34,8 @@ export function puedeEditar(req, perfil) {
     if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
     // Admin de compras puede editar requisiciones aprobadas (para correcciones operativas)
     if (perfil.rol === 'admin_compras') return true;
+    // Delegado: puede editar requisiciones de Proceso Autónomo de las personas asignadas
+    if (esDelegadoDe(req, perfil) && req.quien_ejecuta === 'Proceso Autónomo') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
@@ -60,6 +69,8 @@ export function puedeCambiarEstado(req, perfil) {
     if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
     // Admin de compras gestiona los estados de las requisiciones aprobadas
     if (perfil.rol === 'admin_compras') return true;
+    // Delegado: puede cambiar estado de requisiciones de Proceso Autónomo de las personas asignadas
+    if (esDelegadoDe(req, perfil) && req.quien_ejecuta === 'Proceso Autónomo') return true;
     if (req.user_id !== perfil.id) return false;
     if (req.quien_ejecuta === 'Compras') return false;
     return true;
