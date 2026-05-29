@@ -132,43 +132,21 @@
                         </div>
                     </div>
 
-                    <!-- Pasajero -->
+                    <!-- Pasajeros (múltiples) -->
                     <div class="form-seccion">
-                        <h3 class="form-seccion-titulo">Datos del pasajero</h3>
+                        <h3 class="form-seccion-titulo">Pasajeros</h3>
+                        <p style="font-size: var(--texto-xs); color: var(--color-texto-secundario); margin: -0.5rem 0 1rem;">
+                            Agrega tantos pasajeros como necesites. Todos viajarán en las mismas fechas y al mismo destino.
+                        </p>
+
                         <label class="toggle-switch" style="margin-bottom: 1rem;">
                             <input type="checkbox" id="tiq-es-para-mi" checked>
-                            <span style="font-size: var(--texto-sm);">El tiquete es para mí</span>
+                            <span style="font-size: var(--texto-sm);">El primer pasajero soy yo</span>
                         </label>
-                        <div class="form-grid">
-                            <div class="input-grupo">
-                                <label class="input-label">Nombre completo del pasajero <span class="requerido">*</span></label>
-                                <input type="text" id="tiq-pasajero-nombre" class="input-campo">
-                            </div>
-                            <div class="input-grupo">
-                                <label class="input-label">Cédula del pasajero <span class="requerido">*</span></label>
-                                <input type="text" id="tiq-pasajero-cedula" class="input-campo" placeholder="Solo números" inputmode="numeric">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="input-grupo">
-                                <label class="input-label">Cédula - Lado frontal <span class="requerido">*</span></label>
-                                <label class="upload-area" id="upload-frente">
-                                    <input type="file" id="file-cedula-frente" accept="image/*,application/pdf">
-                                    <div class="upload-icono">📷</div>
-                                    <div class="upload-texto">Subir foto del frente</div>
-                                    <div class="upload-nombre" id="nombre-frente"></div>
-                                </label>
-                            </div>
-                            <div class="input-grupo">
-                                <label class="input-label">Cédula - Lado reverso <span class="requerido">*</span></label>
-                                <label class="upload-area" id="upload-reverso">
-                                    <input type="file" id="file-cedula-reverso" accept="image/*,application/pdf">
-                                    <div class="upload-icono">📷</div>
-                                    <div class="upload-texto">Subir foto del reverso</div>
-                                    <div class="upload-nombre" id="nombre-reverso"></div>
-                                </label>
-                            </div>
-                        </div>
+
+                        <div id="lista-pasajeros"></div>
+
+                        <button type="button" class="btn btn-secundario" id="btn-agregar-pasajero" style="margin-top: 0.5rem; font-size: var(--texto-sm);">+ Agregar otro pasajero</button>
                     </div>
 
                     <!-- Viaje -->
@@ -206,6 +184,24 @@
                             <div class="input-grupo">
                                 <label class="input-label">Hora preferida regreso</label>
                                 <input type="time" id="tiq-hora-regreso" class="input-campo">
+                            </div>
+                        </div>
+
+                        <div class="form-grid" style="margin-top: 0.5rem;">
+                            <div class="input-grupo">
+                                <label class="input-label">Tipo de tarifa <span class="requerido">*</span></label>
+                                <select id="tiq-tarifa" class="input-campo">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Básico">Básico (solo artículo personal)</option>
+                                    <option value="Estándar">Estándar (+ equipaje de mano)</option>
+                                    <option value="Plus">Plus (+ equipaje bodega y selección asiento)</option>
+                                    <option value="Flex">Flex (+ cambios y reembolsos)</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="input-grupo" id="grupo-tarifa-otro" style="display:none;">
+                                <label class="input-label">Especifique la tarifa</label>
+                                <input type="text" id="tiq-tarifa-otro" class="input-campo" placeholder="Ej: Promo Avianca, Tarifa corporativa...">
                             </div>
                         </div>
                     </div>
@@ -374,8 +370,24 @@
             document.getElementById('btn-limpiar-filtros').addEventListener('click', limpiarFiltros);
 
             document.getElementById('tiq-es-para-mi').addEventListener('change', (e) => {
-                document.getElementById('tiq-pasajero-nombre').value = e.target.checked ? perfilActual.nombre_completo : '';
-                document.getElementById('tiq-pasajero-cedula').value = '';
+                if (pasajerosTemp.length > 0) {
+                    pasajerosTemp[0].nombre = e.target.checked ? perfilActual.nombre_completo : '';
+                    pasajerosTemp[0].cedula = '';
+                    renderizarPasajeros();
+                }
+            });
+
+            document.getElementById('btn-agregar-pasajero').addEventListener('click', () => {
+                if (pasajerosTemp.length >= 9) {
+                    Toast.advertencia('Máximo 9 pasajeros por solicitud.');
+                    return;
+                }
+                pasajerosTemp.push({ nombre: '', cedula: '', fileFrente: null, fileReverso: null });
+                renderizarPasajeros();
+            });
+
+            document.getElementById('tiq-tarifa').addEventListener('change', (e) => {
+                document.getElementById('grupo-tarifa-otro').style.display = e.target.value === 'Otro' ? 'block' : 'none';
             });
 
             document.getElementById('tiq-solo-ida').addEventListener('change', (e) => {
@@ -391,16 +403,6 @@
                 document.getElementById('seccion-hotel').style.display = e.target.checked ? 'block' : 'none';
             });
 
-            ['frente', 'reverso'].forEach(lado => {
-                document.getElementById(`file-cedula-${lado}`).addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        document.getElementById(`upload-${lado}`).classList.add('tiene-archivo');
-                        document.getElementById(`nombre-${lado}`).textContent = '✓ ' + file.name;
-                    }
-                });
-            });
-
             let timerBusqueda;
             document.getElementById('filtro-busqueda').addEventListener('input', () => {
                 clearTimeout(timerBusqueda);
@@ -411,10 +413,106 @@
             });
         }
 
+        let pasajerosTemp = []; // Array de objetos {nombre, cedula, fileFrente, fileReverso}
+
+        function renderizarPasajeros() {
+            const cont = document.getElementById('lista-pasajeros');
+            const esParaMi = document.getElementById('tiq-es-para-mi').checked;
+
+            // Asegurar mínimo 1 pasajero
+            if (pasajerosTemp.length === 0) {
+                pasajerosTemp.push({ nombre: esParaMi ? perfilActual.nombre_completo : '', cedula: '', fileFrente: null, fileReverso: null });
+            }
+
+            cont.innerHTML = pasajerosTemp.map((p, i) => `
+                <div style="background: ${i === 0 ? 'var(--color-azul-light)' : '#F9FAFB'}; border-radius: var(--radio-md); padding: 1rem; margin-bottom: 0.75rem; border: 1px solid var(--color-borde);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+                        <strong style="color: var(--color-azul); font-size: var(--texto-sm);">Pasajero ${i + 1}${i === 0 && esParaMi ? ' (yo)' : ''}</strong>
+                        ${i > 0 ? `<button type="button" class="btn-accion btn-accion-eliminar" data-quitar="${i}">Quitar</button>` : ''}
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-grupo">
+                            <label class="input-label">Nombre completo <span class="requerido">*</span></label>
+                            <input type="text" class="input-campo input-pasajero-nombre" data-i="${i}" value="${p.nombre || ''}" ${i === 0 && esParaMi ? 'readonly' : ''}>
+                        </div>
+                        <div class="input-grupo">
+                            <label class="input-label">Cédula <span class="requerido">*</span></label>
+                            <input type="text" class="input-campo input-pasajero-cedula" data-i="${i}" value="${p.cedula || ''}" placeholder="Solo números" inputmode="numeric">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-grupo">
+                            <label class="input-label">Cédula - Frente <span class="requerido">*</span></label>
+                            <label class="upload-area ${p.fileFrente ? 'tiene-archivo' : ''}" data-upload-frente="${i}">
+                                <input type="file" class="file-pasajero-frente" data-i="${i}" accept="image/*,application/pdf">
+                                <div class="upload-icono">📷</div>
+                                <div class="upload-texto">Subir frente</div>
+                                <div class="upload-nombre">${p.fileFrente ? '✓ ' + p.fileFrente.name : ''}</div>
+                            </label>
+                        </div>
+                        <div class="input-grupo">
+                            <label class="input-label">Cédula - Reverso <span class="requerido">*</span></label>
+                            <label class="upload-area ${p.fileReverso ? 'tiene-archivo' : ''}" data-upload-reverso="${i}">
+                                <input type="file" class="file-pasajero-reverso" data-i="${i}" accept="image/*,application/pdf">
+                                <div class="upload-icono">📷</div>
+                                <div class="upload-texto">Subir reverso</div>
+                                <div class="upload-nombre">${p.fileReverso ? '✓ ' + p.fileReverso.name : ''}</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Listeners para inputs de texto (mantienen el valor en pasajerosTemp)
+            cont.querySelectorAll('.input-pasajero-nombre').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    pasajerosTemp[parseInt(e.target.dataset.i)].nombre = e.target.value;
+                });
+            });
+            cont.querySelectorAll('.input-pasajero-cedula').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    pasajerosTemp[parseInt(e.target.dataset.i)].cedula = e.target.value.replace(/\D/g, '');
+                    e.target.value = pasajerosTemp[parseInt(e.target.dataset.i)].cedula;
+                });
+            });
+
+            // Listeners para uploads
+            cont.querySelectorAll('.file-pasajero-frente').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const i = parseInt(e.target.dataset.i);
+                    const file = e.target.files[0];
+                    if (file) {
+                        pasajerosTemp[i].fileFrente = file;
+                        renderizarPasajeros();
+                    }
+                });
+            });
+            cont.querySelectorAll('.file-pasajero-reverso').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const i = parseInt(e.target.dataset.i);
+                    const file = e.target.files[0];
+                    if (file) {
+                        pasajerosTemp[i].fileReverso = file;
+                        renderizarPasajeros();
+                    }
+                });
+            });
+
+            // Listeners para quitar pasajero
+            cont.querySelectorAll('[data-quitar]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const i = parseInt(e.target.dataset.quitar);
+                    pasajerosTemp.splice(i, 1);
+                    renderizarPasajeros();
+                });
+            });
+        }
+
         function mostrarFormulario() {
             document.getElementById('tiq-solicitante').value = perfilActual.nombre_completo;
             document.getElementById('tiq-proceso').value = perfilActual.proceso;
-            document.getElementById('tiq-pasajero-nombre').value = perfilActual.nombre_completo;
+            pasajerosTemp = [{ nombre: perfilActual.nombre_completo, cedula: '', fileFrente: null, fileReverso: null }];
+            renderizarPasajeros();
             document.getElementById('seccion-formulario').classList.remove('oculto');
             document.getElementById('seccion-filtros').classList.add('oculto');
             document.getElementById('seccion-lista').classList.add('oculto');
@@ -429,8 +527,9 @@
         }
 
         function limpiarFormulario() {
-            ['tiq-unidad','tiq-centro','tiq-actividad','tiq-pasajero-nombre','tiq-pasajero-cedula',
+            ['tiq-unidad','tiq-centro','tiq-actividad',
              'tiq-destino','tiq-fecha-ida','tiq-hora-ida','tiq-fecha-regreso','tiq-hora-regreso','tiq-origen-regreso',
+             'tiq-tarifa','tiq-tarifa-otro',
              'hotel-ciudad','hotel-checkin','hotel-checkout','hotel-observaciones','tiq-observaciones'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -440,11 +539,8 @@
             document.getElementById('tiq-requiere-hotel').checked = false;
             document.getElementById('campos-regreso').style.display = 'grid';
             document.getElementById('seccion-hotel').style.display = 'none';
-            ['frente','reverso'].forEach(lado => {
-                document.getElementById(`file-cedula-${lado}`).value = '';
-                document.getElementById(`upload-${lado}`).classList.remove('tiene-archivo');
-                document.getElementById(`nombre-${lado}`).textContent = '';
-            });
+            document.getElementById('grupo-tarifa-otro').style.display = 'none';
+            pasajerosTemp = [];
         }
 
         function limpiarFiltros() {
@@ -461,43 +557,70 @@
             const unidad = document.getElementById('tiq-unidad').value.trim();
             const centro = document.getElementById('tiq-centro').value.trim();
             const actividad = document.getElementById('tiq-actividad').value.trim();
-            const nombrePasajero = document.getElementById('tiq-pasajero-nombre').value.trim();
-            const cedulaPasajero = document.getElementById('tiq-pasajero-cedula').value.trim();
             const destino = document.getElementById('tiq-destino').value.trim();
             const fechaIda = document.getElementById('tiq-fecha-ida').value;
             const soloIda = document.getElementById('tiq-solo-ida').checked;
             const fechaRegreso = document.getElementById('tiq-fecha-regreso').value;
             const origenRegreso = document.getElementById('tiq-origen-regreso').value.trim();
+            const tipoTarifa = document.getElementById('tiq-tarifa').value;
+            const tarifaOtro = document.getElementById('tiq-tarifa-otro').value.trim();
             const requiereHotel = document.getElementById('tiq-requiere-hotel').checked;
-            const fileFrente = document.getElementById('file-cedula-frente').files[0];
-            const fileReverso = document.getElementById('file-cedula-reverso').files[0];
 
+            // Validaciones de datos generales
             if (!unidad) { Toast.advertencia('Ingrese la unidad de negocio.'); return; }
             if (!centro) { Toast.advertencia('Ingrese el centro de costos.'); return; }
             if (!actividad) { Toast.advertencia('Ingrese la actividad a desarrollar.'); return; }
-            if (!nombrePasajero) { Toast.advertencia('Ingrese el nombre del pasajero.'); return; }
-            if (!cedulaPasajero) { Toast.advertencia('Ingrese la cédula del pasajero.'); return; }
             if (!destino) { Toast.advertencia('Ingrese el destino.'); return; }
             if (!fechaIda) { Toast.advertencia('Seleccione la fecha de ida.'); return; }
             if (!soloIda && !fechaRegreso) { Toast.advertencia('Seleccione la fecha de regreso (o marque "Solo ida").'); return; }
-            if (!soloIda && !origenRegreso) { Toast.advertencia('Indique el lugar desde donde regresa (o marque "Solo ida").'); return; }
-            if (!fileFrente) { Toast.advertencia('Suba la imagen del frente de la cédula.'); return; }
-            if (!fileReverso) { Toast.advertencia('Suba la imagen del reverso de la cédula.'); return; }
+            if (!soloIda && !origenRegreso) { Toast.advertencia('Indique el lugar desde donde regresa.'); return; }
+            if (!tipoTarifa) { Toast.advertencia('Seleccione el tipo de tarifa.'); return; }
+            if (tipoTarifa === 'Otro' && !tarifaOtro) { Toast.advertencia('Especifique la tarifa.'); return; }
+
+            // Validaciones de pasajeros
+            if (pasajerosTemp.length === 0) { Toast.advertencia('Debe haber al menos un pasajero.'); return; }
+            for (let i = 0; i < pasajerosTemp.length; i++) {
+                const p = pasajerosTemp[i];
+                if (!p.nombre) { Toast.advertencia(`Ingrese el nombre del pasajero ${i + 1}.`); return; }
+                if (!p.cedula) { Toast.advertencia(`Ingrese la cédula del pasajero ${i + 1}.`); return; }
+                if (!p.fileFrente) { Toast.advertencia(`Suba la cédula (frente) del pasajero ${i + 1}.`); return; }
+                if (!p.fileReverso) { Toast.advertencia(`Suba la cédula (reverso) del pasajero ${i + 1}.`); return; }
+            }
 
             btn.disabled = true; btn.textContent = 'Subiendo documentos...';
 
             try {
-                const upFrente = await subirArchivo(fileFrente, 'cedulas', `${cedulaPasajero}_frente`);
-                if (upFrente.error) { Toast.error('Error subiendo frente: ' + upFrente.error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+                // 1. Subir cédulas de todos los pasajeros
+                const pasajerosConArchivos = [];
+                for (let i = 0; i < pasajerosTemp.length; i++) {
+                    const p = pasajerosTemp[i];
+                    btn.textContent = `Subiendo documentos pasajero ${i + 1}/${pasajerosTemp.length}...`;
 
-                const upReverso = await subirArchivo(fileReverso, 'cedulas', `${cedulaPasajero}_reverso`);
-                if (upReverso.error) { Toast.error('Error subiendo reverso: ' + upReverso.error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+                    const upF = await subirArchivo(p.fileFrente, 'cedulas', `${p.cedula}_frente`);
+                    if (upF.error) { Toast.error(`Error subiendo frente del pasajero ${i + 1}: ${upF.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                    const upR = await subirArchivo(p.fileReverso, 'cedulas', `${p.cedula}_reverso`);
+                    if (upR.error) { Toast.error(`Error subiendo reverso del pasajero ${i + 1}: ${upR.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                    pasajerosConArchivos.push({
+                        nombre_completo: p.nombre,
+                        cedula: p.cedula,
+                        cedula_frente_url: upF.path,
+                        cedula_reverso_url: upR.path,
+                        orden: i + 1
+                    });
+                }
 
                 btn.textContent = 'Guardando solicitud...';
 
+                // 2. Detectar aprobador
                 const { data: aprobadorInfo } = await supabase.rpc('detectar_aprobador_tiquete', { p_user_id: usuarioActual.id });
                 const requiereAprobacion = aprobadorInfo?.requiere_aprobacion === true;
                 const estadoInicial = requiereAprobacion ? 'Pendiente aprobación' : 'Pendiente';
+
+                // 3. Crear el tiquete principal (usamos el primer pasajero para compatibilidad)
+                const primerPasajero = pasajerosConArchivos[0];
+                const esParaMi = document.getElementById('tiq-es-para-mi').checked;
 
                 const datos = {
                     user_id: usuarioActual.id,
@@ -506,11 +629,12 @@
                     unidad_negocio: unidad,
                     centro_costo: centro,
                     actividad: actividad,
-                    pasajero_es_solicitante: document.getElementById('tiq-es-para-mi').checked,
-                    pasajero_nombre: nombrePasajero,
-                    pasajero_cedula: cedulaPasajero,
-                    pasajero_cedula_frente_url: upFrente.path,
-                    pasajero_cedula_reverso_url: upReverso.path,
+                    cantidad_pasajeros: pasajerosConArchivos.length,
+                    pasajero_es_solicitante: esParaMi && pasajerosConArchivos.length === 1,
+                    pasajero_nombre: primerPasajero.nombre_completo,
+                    pasajero_cedula: primerPasajero.cedula,
+                    pasajero_cedula_frente_url: primerPasajero.cedula_frente_url,
+                    pasajero_cedula_reverso_url: primerPasajero.cedula_reverso_url,
                     destino: destino,
                     fecha_ida: fechaIda,
                     hora_ida: document.getElementById('tiq-hora-ida').value || null,
@@ -518,6 +642,8 @@
                     hora_regreso: soloIda ? null : (document.getElementById('tiq-hora-regreso').value || null),
                     origen_regreso: soloIda ? null : origenRegreso,
                     solo_ida: soloIda,
+                    tipo_tarifa: tipoTarifa,
+                    tarifa_otro: tipoTarifa === 'Otro' ? tarifaOtro : null,
                     requiere_hotel: requiereHotel,
                     hotel_ciudad: requiereHotel ? document.getElementById('hotel-ciudad').value.trim() : null,
                     hotel_fecha_checkin: requiereHotel ? (document.getElementById('hotel-checkin').value || null) : null,
@@ -533,6 +659,19 @@
                 const { tiquete, error } = await crearTiquete(datos);
                 if (error) { Toast.error(error); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
 
+                // 4. Crear registros en tiquete_pasajeros (todos los pasajeros)
+                const pasajerosRegistros = pasajerosConArchivos.map(p => ({
+                    tiquete_id: tiquete.id,
+                    nombre_completo: p.nombre_completo,
+                    cedula: p.cedula,
+                    cedula_frente_url: p.cedula_frente_url,
+                    cedula_reverso_url: p.cedula_reverso_url,
+                    orden: p.orden
+                }));
+                const { error: errPas } = await supabase.from('tiquete_pasajeros').insert(pasajerosRegistros);
+                if (errPas) { console.error('Error insertando pasajeros:', errPas); }
+
+                // 5. Registrar historial
                 await registrarHistorialTiquete({
                     tiquete_id: tiquete.id,
                     id_tiquete: tiquete.id_tiquete,
@@ -540,11 +679,11 @@
                     nombre_usuario: perfilActual.nombre_completo,
                     accion: 'creacion',
                     detalle: requiereAprobacion
-                        ? `Tiquete creado y enviado a aprobación de ${aprobadorInfo.nombre_aprobador}`
-                        : `Tiquete creado (sin aprobación requerida)`
+                        ? `Tiquete creado con ${pasajerosConArchivos.length} pasajero(s), enviado a aprobación de ${aprobadorInfo.nombre_aprobador}`
+                        : `Tiquete creado con ${pasajerosConArchivos.length} pasajero(s) (sin aprobación requerida)`
                 });
 
-                Toast.exito(`Tiquete ${tiquete.id_tiquete} creado${requiereAprobacion ? '. Enviado a aprobación de ' + aprobadorInfo.nombre_aprobador + '.' : '.'}`);
+                Toast.exito(`Tiquete ${tiquete.id_tiquete} creado con ${pasajerosConArchivos.length} pasajero(s)${requiereAprobacion ? '. Enviado a aprobación de ' + aprobadorInfo.nombre_aprobador + '.' : '.'}`);
                 btn.disabled = false; btn.textContent = 'Solicitar tiquete';
                 ocultarFormulario();
             } catch (err) {
@@ -617,12 +756,17 @@
                     acciones += `<button class="btn-accion" style="color:#10B981;border-color:#10B981;font-weight:600;" onclick="window._cumplirTiquete(${t.id})">✓ Cumplir</button>`;
                 }
 
+                // Botón para registrar factura del hotel (solo solicitante + hotel requerido + sin factura aún)
+                if (t.estado === 'Cumplido' && t.requiere_hotel && !t.factura_hotel && t.user_id === perfilActual.id) {
+                    acciones += `<button class="btn-accion" style="color:#F59E0B;border-color:#F59E0B;font-weight:600;" onclick="window._registrarFacturaHotel(${t.id})">📝 Factura hotel</button>`;
+                }
+
                 return `
                     <tr>
                         <td class="col-id">${t.id_tiquete}</td>
                         <td>${formatearFecha(t.created_at)}</td>
                         <td>${t.solicitante}</td>
-                        <td>${t.pasajero_nombre}${t.pasajero_es_solicitante ? '' : ' <small style="color:#7C3AED;">(3°)</small>'}</td>
+                        <td>${t.pasajero_nombre}${(t.cantidad_pasajeros || 1) > 1 ? ` <small style="color:var(--color-azul);font-weight:600;">+${(t.cantidad_pasajeros || 1) - 1}</small>` : ''}${t.pasajero_es_solicitante ? '' : ' <small style="color:#7C3AED;">(3°)</small>'}</td>
                         <td>${t.destino}</td>
                         <td>${formatearFecha(t.fecha_ida)}${t.solo_ida ? ' <small style="color:var(--color-gris);">(solo ida)</small>' : ''}</td>
                         <td style="text-align:center;">${t.requiere_hotel ? '🏨' : '—'}</td>
@@ -658,35 +802,134 @@
             cumplirTiquete(t, usuarioActual, perfilActual, cargarTiquetes);
         };
 
+        window._registrarFacturaHotel = (id) => {
+            const t = tiquetesCache.find(x => x.id === id);
+            if (!t) return;
+
+            const html = `
+                <div style="display:grid;gap:1rem;">
+                    <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:0.875rem;border-radius:6px;font-size:var(--texto-sm);">
+                        <strong style="color:#92400E;">${t.id_tiquete}</strong> — Hotel en ${t.hotel_ciudad || t.destino}
+                        <div style="font-size:var(--texto-xs);color:#92400E;margin-top:0.25rem;">
+                            Registra el número de factura del hotel que pagaste durante tu viaje para que quede en el sistema.
+                        </div>
+                    </div>
+                    <div class="input-grupo">
+                        <label class="input-label">Número de factura <span class="requerido">*</span></label>
+                        <input type="text" id="fact-numero" class="input-campo" placeholder="Ej: FE-12345" style="text-transform:uppercase;">
+                    </div>
+                    <div class="input-grupo">
+                        <label class="input-label">Fecha de la factura <span class="requerido">*</span></label>
+                        <input type="date" id="fact-fecha" class="input-campo">
+                    </div>
+                </div>
+            `;
+
+            Modal.crear({
+                titulo: 'Registrar factura del hotel',
+                contenido: html,
+                botones: [
+                    { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
+                    { texto: 'Registrar', clase: 'btn-primario', onClick: async () => {
+                        const numero = document.getElementById('fact-numero').value.trim().toUpperCase();
+                        const fecha = document.getElementById('fact-fecha').value;
+                        if (!numero) { Toast.advertencia('Ingrese el número de factura.'); return; }
+                        if (!fecha) { Toast.advertencia('Seleccione la fecha de la factura.'); return; }
+
+                        const { error } = await supabase
+                            .from('tiquetes_aereos')
+                            .update({ factura_hotel: numero, fecha_factura_hotel: fecha })
+                            .eq('id', t.id);
+
+                        if (error) { Toast.error('Error al registrar la factura.'); return; }
+
+                        await registrarHistorialTiquete({
+                            tiquete_id: t.id,
+                            id_tiquete: t.id_tiquete,
+                            user_id: usuarioActual.id,
+                            nombre_usuario: perfilActual.nombre_completo,
+                            accion: 'factura_hotel',
+                            detalle: `Factura hotel registrada: ${numero} (${fecha})`
+                        });
+
+                        Toast.exito('Factura del hotel registrada.');
+                        Modal.cerrar();
+                        await cargarTiquetes();
+                    }}
+                ]
+            });
+        };
+
         window._verTiquete = async (id) => {
             const t = tiquetesCache.find(x => x.id === id);
             if (!t) return;
 
-            // Generar URLs firmadas para ver las cédulas
-            const urlFrente = await obtenerUrlFirmada(t.pasajero_cedula_frente_url);
-            const urlReverso = await obtenerUrlFirmada(t.pasajero_cedula_reverso_url);
+            // Cargar todos los pasajeros del tiquete
+            const { data: pasajerosDb } = await supabase
+                .from('tiquete_pasajeros')
+                .select('*')
+                .eq('tiquete_id', t.id)
+                .order('orden', { ascending: true });
 
-            // Generar URLs firmadas para los PDFs de cumplimiento (si están)
+            const pasajeros = pasajerosDb || [];
+
+            // Si no hay registros en la nueva tabla, usar los datos legacy del tiquete
+            if (pasajeros.length === 0 && t.pasajero_nombre) {
+                pasajeros.push({
+                    nombre_completo: t.pasajero_nombre,
+                    cedula: t.pasajero_cedula,
+                    cedula_frente_url: t.pasajero_cedula_frente_url,
+                    cedula_reverso_url: t.pasajero_cedula_reverso_url,
+                    orden: 1
+                });
+            }
+
+            // Generar HTML de todos los pasajeros con sus enlaces de cédula
+            let htmlPasajeros = '';
+            for (const p of pasajeros) {
+                const urlF = await obtenerUrlFirmada(p.cedula_frente_url);
+                const urlR = await obtenerUrlFirmada(p.cedula_reverso_url);
+                htmlPasajeros += `
+                    <div style="background:#f8f9fc;border-left:3px solid var(--color-azul);padding:0.625rem 0.875rem;border-radius:0 6px 6px 0;margin-bottom:0.5rem;">
+                        <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-sm);">Pasajero ${p.orden}: ${p.nombre_completo}</div>
+                        <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);">CC ${p.cedula}</div>
+                        <div style="display:flex;gap:0.4rem;margin-top:0.4rem;flex-wrap:wrap;">
+                            ${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
+                            ${urlR ? `<a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // URLs firmadas para PDFs
             const urlTiquetePDF = t.tiquete_pdf_url ? await obtenerUrlFirmada(t.tiquete_pdf_url) : null;
             const urlHotelPDF = t.hotel_confirmacion_url ? await obtenerUrlFirmada(t.hotel_confirmacion_url) : null;
+
+            // Texto de tarifa
+            const tarifaTexto = t.tipo_tarifa === 'Otro' && t.tarifa_otro
+                ? `Otro: ${t.tarifa_otro}`
+                : (t.tipo_tarifa || 'No especificada');
 
             const html = `
                 <div style="display:grid; gap:0.6rem; font-size: var(--texto-sm);">
                     <div><strong>Solicitante:</strong> ${t.solicitante} (${t.proceso})</div>
-                    <div><strong>Pasajero:</strong> ${t.pasajero_nombre} — CC ${t.pasajero_cedula}</div>
                     <div><strong>Actividad:</strong> ${t.actividad}</div>
                     <div><strong>Unidad / CC:</strong> ${t.unidad_negocio} / ${t.centro_costo}</div>
-                    <div><strong>Destino:</strong> ${t.destino}</div>
+                    <div><strong>Tarifa:</strong> ${tarifaTexto}</div>
+
+                    <div style="margin-top:0.5rem;">
+                        <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-sm);margin-bottom:0.4rem;">
+                            👥 ${pasajeros.length} pasajero(s):
+                        </div>
+                        ${htmlPasajeros}
+                    </div>
+
+                    <div style="margin-top:0.4rem;"><strong>Destino:</strong> ${t.destino}</div>
                     <div><strong>Ida:</strong> ${formatearFecha(t.fecha_ida)}${t.hora_ida ? ' a las ' + t.hora_ida : ''}</div>
                     ${t.solo_ida ? '<div><strong>Tipo:</strong> Solo ida</div>' : `<div><strong>Regreso:</strong> ${formatearFecha(t.fecha_regreso)}${t.hora_regreso ? ' a las ' + t.hora_regreso : ''}${t.origen_regreso ? ' desde <strong>' + t.origen_regreso + '</strong>' : ''}</div>`}
                     <div><strong>Hotel:</strong> ${t.requiere_hotel ? `Sí — ${t.hotel_ciudad || t.destino}${t.hotel_fecha_checkin ? ' (' + formatearFecha(t.hotel_fecha_checkin) + ' → ' + formatearFecha(t.hotel_fecha_checkout) + ')' : ''}` : 'No requiere'}</div>
                     ${t.hotel_observaciones ? `<div><strong>Obs. hotel:</strong> ${t.hotel_observaciones}</div>` : ''}
                     ${t.observaciones ? `<div><strong>Observaciones:</strong> ${t.observaciones}</div>` : ''}
-
-                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">
-                        ${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula frente</a>` : ''}
-                        ${urlReverso ? `<a href="${urlReverso}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula reverso</a>` : ''}
-                    </div>
 
                     ${t.motivo_rechazo ? `<div style="background:#FEE2E2;padding:0.6rem;border-radius:6px;color:#991B1B;"><strong>Motivo de rechazo:</strong> ${t.motivo_rechazo}</div>` : ''}
 
@@ -698,6 +941,12 @@
                             ${urlTiquetePDF ? `<a href="${urlTiquetePDF}" target="_blank" class="btn btn-primario" style="font-size:var(--texto-xs);">📄 Descargar tiquete</a>` : ''}
                             ${urlHotelPDF ? `<a href="${urlHotelPDF}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">🏨 Descargar hotel</a>` : ''}
                         </div>
+                    </div>` : ''}
+
+                    ${t.factura_hotel ? `
+                    <div style="background:#FEF3C7;padding:0.75rem;border-radius:8px;border-left:4px solid #F59E0B;">
+                        <div style="font-size:var(--texto-xs);color:#92400E;font-weight:700;">FACTURA DEL HOTEL</div>
+                        <div style="color:#92400E;font-weight:600;margin-top:0.25rem;">N° ${t.factura_hotel}${t.fecha_factura_hotel ? ' · ' + formatearFecha(t.fecha_factura_hotel) : ''}</div>
                     </div>` : ''}
                 </div>
             `;
