@@ -241,7 +241,7 @@
             } else if (esAdministrador(perfil)) {
                 mostrarNotificacionesAdmin(requisiciones);
             } else {
-                await mostrarNotificacionesUsuario();
+                await mostrarNotificacionesUsuario(usuario);
             }
 
             // Métricas
@@ -387,6 +387,45 @@
                     </div>
                     <div class="notif-banner-acciones">
                         <a href="/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Revisar aprobaciones</a>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        }
+
+        // Banner para el SOLICITANTE: sus tiquetes cumplidos recientemente
+        async function mostrarMisTiquetesCumplidos(userId, desde) {
+            const container = document.getElementById('notif-container');
+            const limite = desde || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+            const { data, error } = await supabase
+                .from('tiquetes_aereos')
+                .select('id, id_tiquete, destino, fecha_ida, codigo_reserva, fecha_entrega, requiere_hotel, pasajero_nombre, solicitante')
+                .eq('estado', 'Cumplido')
+                .eq('user_id', userId)
+                .eq('eliminado', false)
+                .gte('fecha_entrega', limite)
+                .order('fecha_entrega', { ascending: false });
+
+            if (error || !data || data.length === 0) return;
+
+            const html = `
+                <div class="notif-banner" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#10B981;">
+                    <div class="notif-banner-icono">✈️</div>
+                    <div class="notif-banner-texto">
+                        <div class="notif-banner-titulo" style="color:#065F46;">${data.length} tiquete(s) listo(s) — Tu viaje está confirmado</div>
+                        <div class="notif-banner-detalle">Ya puedes descargar tu tiquete aéreo. Haz clic en "Ver" en cada tiquete para acceder al código de reserva y los documentos.</div>
+                        <div class="notif-items">
+                            ${data.slice(0, 5).map(t => `
+                                <div class="notif-item">
+                                    <span class="notif-item-id">${t.id_tiquete}</span>
+                                    <span class="notif-item-info">${t.destino} (${formatearFecha(t.fecha_ida)}) — Código: <strong style="font-family:'Courier New',monospace;">${t.codigo_reserva}</strong></span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="notif-banner-acciones">
+                        <a href="/tiquetes.html?filtro=Cumplido" class="btn btn-primario" style="font-size:var(--texto-sm);">Ver mis tiquetes</a>
                     </div>
                 </div>
             `;
@@ -550,13 +589,16 @@
         }
 
         // Notificaciones para USUARIOS (cambios en sus requisiciones)
-        async function mostrarNotificacionesUsuario() {
+        async function mostrarNotificacionesUsuario(usuario) {
             const container = document.getElementById('notif-container');
             const ultimaVisita = localStorage.getItem('user_ultima_visita');
             const ahora = new Date().toISOString();
 
             // Guardar visita actual
             localStorage.setItem('user_ultima_visita', ahora);
+
+            // ─── BANNER: Tiquetes propios cumplidos recientemente ───
+            await mostrarMisTiquetesCumplidos(usuario.id, ultimaVisita);
 
             // Consultar cambios hechos por otros en mis requisiciones
             const { data, error } = await supabase.rpc('obtener_mis_notificaciones', {
