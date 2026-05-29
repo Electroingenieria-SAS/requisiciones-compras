@@ -339,37 +339,12 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
                         detalle: `Tiquete cumplido. Código: ${codigo}${observaciones ? ' · Notas: ' + observaciones : ''}`
                     });
 
-                    btn.textContent = 'Enviando correo al solicitante...';
+                    btn.textContent = 'Finalizando...';
 
-                    // Enviar correo al solicitante (sin bloquear si falla)
-                    fetch('/api/notificar-tiquete-cumplido', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            id_tiquete: tiq.id_tiquete,
-                            user_id: tiq.user_id,
-                            solicitante: tiq.solicitante,
-                            pasajero_nombre: tiq.pasajero_nombre,
-                            pasajero_cedula: tiq.pasajero_cedula,
-                            destino: tiq.destino,
-                            fecha_ida: tiq.fecha_ida,
-                            hora_ida: tiq.hora_ida,
-                            fecha_regreso: tiq.fecha_regreso,
-                            hora_regreso: tiq.hora_regreso,
-                            origen_regreso: tiq.origen_regreso,
-                            solo_ida: tiq.solo_ida,
-                            requiere_hotel: tiq.requiere_hotel,
-                            hotel_ciudad: tiq.hotel_ciudad,
-                            hotel_fecha_checkin: tiq.hotel_fecha_checkin,
-                            hotel_fecha_checkout: tiq.hotel_fecha_checkout,
-                            codigo_reserva: codigo,
-                            tiquete_pdf_path: upTiquete.path,
-                            hotel_confirmacion_path: upHotel.path,
-                            observaciones_entrega: observaciones
-                        })
-                    }).catch(err => console.error('Error correo tiquete cumplido:', err));
+                    // Nota: el envío de correo automático está desactivado.
+                    // El solicitante verá el código y descargas en la app.
 
-                    Toast.exito('Tiquete cumplido. Se envió un correo al solicitante.');
+                    Toast.exito('Tiquete cumplido. El solicitante verá los detalles en su sesión.');
                     Modal.cerrar();
                     if (onCumplido) onCumplido();
                 } catch (err) {
