@@ -7,7 +7,7 @@ Sistema web empresarial para la gestión de requisiciones de compras administrat
 
 - **Frontend:** HTML5, CSS3, JavaScript Vanilla (ES6+ modular)
 - **Backend:** Supabase (PostgreSQL + Auth + RLS)
-- **Hosting:** Netlify (con Functions para operaciones sensibles)
+- **Hosting:** Vercel (con Functions para operaciones sensibles)
 - **Gráficos:** Chart.js
 - **Excel:** SheetJS (xlsx)
 - **Control de versiones:** GitHub
