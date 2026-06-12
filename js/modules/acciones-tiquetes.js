@@ -60,9 +60,14 @@ export function puedeEliminarTiquete(tiq, perfil) {
  * ─── APROBAR / RECHAZAR ───
  */
 export async function aprobarTiquete(tiq, usuario, perfil, onProcesado) {
-    // Pre-cargar URLs firmadas de las cédulas
+    // Pre-cargar URLs firmadas de las cédulas (retrocompatible: tiquetes viejos tienen frente+reverso, nuevos solo un archivo)
     const urlFrente = await obtenerUrlFirmada(tiq.pasajero_cedula_frente_url);
-    const urlReverso = await obtenerUrlFirmada(tiq.pasajero_cedula_reverso_url);
+    const urlReverso = tiq.pasajero_cedula_reverso_url ? await obtenerUrlFirmada(tiq.pasajero_cedula_reverso_url) : null;
+    // Si hay reverso → registro viejo (mostrar 2 botones). Si no → registro nuevo (1 botón).
+    const botonesCedula = urlReverso
+        ? `${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula frente</a>` : ''}
+           <a href="${urlReverso}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula reverso</a>`
+        : `${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula</a>` : ''}`;
 
     const html = `
         <div style="display:grid;gap:1rem;">
@@ -88,8 +93,7 @@ export async function aprobarTiquete(tiq, usuario, perfil, onProcesado) {
             </div>
 
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                ${urlFrente ? `<a href="${urlFrente}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula frente</a>` : ''}
-                ${urlReverso ? `<a href="${urlReverso}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">Ver cédula reverso</a>` : ''}
+                ${botonesCedula}
             </div>
 
             <div class="input-grupo">
