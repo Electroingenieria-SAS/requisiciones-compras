@@ -1,7 +1,13 @@
 /**
  * ============================================================
- * ESTILOS GLOBALES
+ * ESTILOS GLOBALES  (VERSIÓN CON ANIMACIONES)
  * Electroingeniería S.A.S.
+ * ============================================================
+ * Mejoras:
+ *  - Animación de entrada de página
+ *  - Botones con efecto ripple + brillo deslizante
+ *  - Inputs con focus glow corporativo
+ *  - Keyframes globales reutilizables en todas las páginas
  * ============================================================
  */
 
@@ -29,11 +35,18 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    animation: paginaEntrada 0.5s ease;
+}
+
+@keyframes paginaEntrada {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 a {
     color: var(--color-azul);
     text-decoration: none;
+    transition: var(--transicion);
 }
 
 a:hover {
@@ -58,8 +71,10 @@ img {
     border: none;
     border-radius: var(--radio-md);
     cursor: pointer;
-    transition: var(--transicion);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn:disabled {
@@ -67,13 +82,41 @@ img {
     cursor: not-allowed;
 }
 
+/* Efecto ripple universal en todos los botones */
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+    pointer-events: none;
+}
+
+.btn:active::after {
+    width: 250px;
+    height: 250px;
+    transition: width 0s, height 0s;
+}
+
 .btn-primario {
     background-color: var(--color-azul);
     color: var(--color-blanco);
+    box-shadow: 0 2px 6px rgba(0, 54, 156, 0.2);
 }
 
 .btn-primario:hover:not(:disabled) {
     background-color: var(--color-azul-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 54, 156, 0.3);
+}
+
+.btn-primario:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .btn-secundario {
@@ -84,24 +127,31 @@ img {
 
 .btn-secundario:hover:not(:disabled) {
     background-color: var(--color-borde);
+    transform: translateY(-1px);
 }
 
 .btn-peligro {
     background-color: var(--color-error);
     color: var(--color-blanco);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
 }
 
 .btn-peligro:hover:not(:disabled) {
     background-color: #DC2626;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
 }
 
 .btn-exito {
     background-color: var(--color-exito);
     color: var(--color-blanco);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
 }
 
 .btn-exito:hover:not(:disabled) {
     background-color: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
 /* ─── Inputs globales ─── */
@@ -114,13 +164,17 @@ img {
     background-color: var(--color-blanco);
     border: 1px solid var(--color-borde);
     border-radius: var(--radio-md);
-    transition: var(--transicion);
+    transition: all 0.25s ease;
     outline: none;
 }
 
 .input-campo:focus {
     border-color: var(--color-azul);
-    box-shadow: 0 0 0 3px rgba(0, 54, 156, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 54, 156, 0.12);
+}
+
+.input-campo:hover:not(:focus):not(:disabled) {
+    border-color: var(--color-gris-dark);
 }
 
 .input-campo::placeholder {
@@ -161,4 +215,64 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* ============================================================ */
+/* ─── KEYFRAMES GLOBALES REUTILIZABLES ─── */
+/* ============================================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseSuave {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes floatSuave {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+
+@keyframes rebote {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+/* ─── Respeto a preferencia "reducir movimiento" ─── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

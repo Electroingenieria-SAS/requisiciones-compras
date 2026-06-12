@@ -1,33 +1,146 @@
 /**
  * ============================================================
- * ESTILOS - PÁGINA DE LOGIN
+ * ESTILOS - PÁGINA DE LOGIN  (VERSIÓN CON ANIMACIONES)
  * Electroingeniería S.A.S.
+ * ============================================================
+ * Mejoras visuales:
+ *  - Fondo con gradiente animado azul corporativo
+ *  - Partículas/formas geométricas flotando (puro CSS, sin imágenes)
+ *  - Patrón de circuito sutil que se mueve
+ *  - Tarjeta de login con animación de entrada
+ *  - Logo con entrada suave
+ *  - Botón con efecto ripple al hacer clic
+ *  - Input focus con glow corporativo
  * ============================================================
  */
 
+/* ─── FONDO ANIMADO PRINCIPAL ─── */
 .login-pagina {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #00369C 0%, #001F5C 100%);
     padding: 1rem;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+        135deg,
+        #001F5C 0%,
+        #00369C 35%,
+        #002A7A 70%,
+        #001440 100%
+    );
+    background-size: 400% 400%;
+    animation: fondoMovimiento 18s ease infinite;
 }
 
+@keyframes fondoMovimiento {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ─── CAPA DE PATRÓN DE CIRCUITO (SVG inline) ─── */
+.login-pagina::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><g fill='none' stroke='%23F6D000' stroke-width='0.6' opacity='0.18'><circle cx='20' cy='20' r='2'/><circle cx='100' cy='20' r='2'/><circle cx='60' cy='60' r='2'/><circle cx='20' cy='100' r='2'/><circle cx='100' cy='100' r='2'/><path d='M20 20 L60 60 L100 20 M20 100 L60 60 L100 100 M60 60 L60 20 M60 60 L60 100'/></g></svg>");
+    background-repeat: repeat;
+    opacity: 0.7;
+    animation: circuitoMovimiento 60s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes circuitoMovimiento {
+    from { background-position: 0 0; }
+    to   { background-position: 240px 240px; }
+}
+
+/* ─── PARTÍCULAS / BRILLOS FLOTANTES ─── */
+.login-pagina::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 15% 25%, rgba(246, 208, 0, 0.18) 0%, transparent 35%),
+        radial-gradient(circle at 85% 75%, rgba(246, 208, 0, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 75% 15%, rgba(255, 255, 255, 0.08) 0%, transparent 30%),
+        radial-gradient(circle at 25% 85%, rgba(255, 255, 255, 0.06) 0%, transparent 35%);
+    animation: brillosMovimiento 14s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes brillosMovimiento {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(20px, -15px) scale(1.05); }
+    100% { transform: translate(-15px, 10px) scale(0.98); }
+}
+
+/* ─── TARJETA DE LOGIN ─── */
 .login-tarjeta {
     background-color: var(--color-blanco);
     border-radius: var(--radio-xl);
-    box-shadow: var(--sombra-xl);
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(246, 208, 0, 0.08);
     width: 100%;
     max-width: 420px;
     padding: 2.5rem 2rem;
     text-align: center;
+    position: relative;
+    z-index: 2;
+    animation: tarjetaEntrada 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
+@keyframes tarjetaEntrada {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Borde superior decorativo (azul-amarillo-azul) que se mueve */
+.login-tarjeta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(
+        90deg,
+        var(--color-amarillo) 0%,
+        var(--color-azul) 50%,
+        var(--color-amarillo) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: var(--radio-xl) var(--radio-xl) 0 0;
+    animation: bordeBrillo 4s linear infinite;
+}
+
+@keyframes bordeBrillo {
+    from { background-position: 0% 0; }
+    to   { background-position: 200% 0; }
+}
+
+/* ─── LOGO ─── */
 .login-logo {
     width: 180px;
     height: auto;
     margin-bottom: 1rem;
+    animation: logoEntrada 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+    opacity: 0;
+    transform: scale(0.85);
+}
+
+@keyframes logoEntrada {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* Placeholder cuando no hay logo */
@@ -45,21 +158,34 @@
     font-weight: 500;
 }
 
+/* ─── TÍTULOS ─── */
 .login-titulo {
     font-size: var(--texto-lg);
     font-weight: 700;
     color: var(--color-azul);
     margin-bottom: 0.25rem;
+    animation: textoEntrada 0.6s ease 0.35s forwards;
+    opacity: 0;
 }
 
 .login-subtitulo {
     font-size: var(--texto-sm);
     color: var(--color-texto-secundario);
     margin-bottom: 2rem;
+    animation: textoEntrada 0.6s ease 0.45s forwards;
+    opacity: 0;
 }
 
+@keyframes textoEntrada {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── FORMULARIO ─── */
 .login-formulario {
     text-align: left;
+    animation: textoEntrada 0.6s ease 0.55s forwards;
+    opacity: 0;
 }
 
 .login-formulario .input-grupo {
@@ -67,18 +193,89 @@
 }
 
 .login-formulario .input-campo {
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     font-size: var(--texto-base);
+    transition: all 0.25s ease;
+    border: 1.5px solid var(--color-borde);
 }
 
+.login-formulario .input-campo:focus {
+    border-color: var(--color-azul);
+    box-shadow:
+        0 0 0 4px rgba(0, 54, 156, 0.12),
+        0 4px 12px rgba(0, 54, 156, 0.08);
+    transform: translateY(-1px);
+}
+
+/* ─── BOTÓN DE LOGIN ─── */
 .login-btn {
     width: 100%;
-    padding: 0.875rem;
+    padding: 0.95rem;
     font-size: var(--texto-base);
     font-weight: 600;
     margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 54, 156, 0.25);
+    letter-spacing: 0.3px;
 }
 
+.login-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(0, 54, 156, 0.35),
+        0 0 0 1px rgba(246, 208, 0, 0.15);
+}
+
+.login-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 54, 156, 0.25);
+}
+
+/* Efecto ripple al hacer clic */
+.login-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+}
+
+.login-btn:active::after {
+    width: 320px;
+    height: 320px;
+    transition: width 0s, height 0s;
+}
+
+/* Brillo deslizante en hover */
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(246, 208, 0, 0.25),
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.login-btn:hover::before {
+    left: 100%;
+}
+
+/* ─── ERROR ─── */
 .login-error {
     background-color: var(--color-eliminado-bg);
     color: var(--color-error);
@@ -87,16 +284,26 @@
     font-size: var(--texto-sm);
     margin-bottom: 1rem;
     display: none;
+    border-left: 4px solid var(--color-error);
 }
 
 .login-error.visible {
     display: block;
+    animation: errorAparecer 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+@keyframes errorAparecer {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── FOOTER ─── */
 .login-footer {
     margin-top: 2rem;
     font-size: var(--texto-xs);
     color: var(--color-gris);
+    animation: textoEntrada 0.6s ease 0.7s forwards;
+    opacity: 0;
 }
 
 /* ─── Password toggle ─── */
@@ -119,19 +326,40 @@
     cursor: pointer;
     font-size: 1.1rem;
     padding: 0.25rem;
+    transition: all 0.2s ease;
 }
 
 .password-toggle:hover {
-    color: var(--color-texto);
+    color: var(--color-azul);
+    transform: translateY(-50%) scale(1.1);
 }
 
-/* ─── Responsive ─── */
+/* ─── RESPONSIVE ─── */
 @media (max-width: 480px) {
     .login-tarjeta {
         padding: 2rem 1.5rem;
     }
-
     .login-logo {
         width: 140px;
+    }
+}
+
+/* ─── Respeto a preferencia "reducir movimiento" ─── */
+@media (prefers-reduced-motion: reduce) {
+    .login-pagina,
+    .login-pagina::before,
+    .login-pagina::after,
+    .login-tarjeta::before {
+        animation: none !important;
+    }
+    .login-tarjeta,
+    .login-logo,
+    .login-titulo,
+    .login-subtitulo,
+    .login-formulario,
+    .login-footer {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
     }
 }
