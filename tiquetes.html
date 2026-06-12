@@ -381,7 +381,7 @@
                     Toast.advertencia('Máximo 9 pasajeros por solicitud.');
                     return;
                 }
-                pasajerosTemp.push({ nombre: '', cedula: '', fileFrente: null, fileReverso: null });
+                pasajerosTemp.push({ nombre: '', cedula: '', fileCedula: null });
                 renderizarPasajeros();
             });
 
@@ -412,7 +412,7 @@
             });
         }
 
-        let pasajerosTemp = []; // Array de objetos {nombre, cedula, fileFrente, fileReverso}
+        let pasajerosTemp = []; // Array de objetos {nombre, cedula, fileCedula}
 
         function renderizarPasajeros() {
             const cont = document.getElementById('lista-pasajeros');
@@ -420,7 +420,7 @@
 
             // Asegurar mínimo 1 pasajero
             if (pasajerosTemp.length === 0) {
-                pasajerosTemp.push({ nombre: esParaMi ? perfilActual.nombre_completo : '', cedula: '', fileFrente: null, fileReverso: null });
+                pasajerosTemp.push({ nombre: esParaMi ? perfilActual.nombre_completo : '', cedula: '', fileCedula: null });
             }
 
             cont.innerHTML = pasajerosTemp.map((p, i) => `
@@ -440,22 +440,13 @@
                         </div>
                     </div>
                     <div class="form-grid">
-                        <div class="input-grupo">
-                            <label class="input-label">Cédula - Frente <span class="requerido">*</span></label>
-                            <label class="upload-area ${p.fileFrente ? 'tiene-archivo' : ''}" data-upload-frente="${i}">
-                                <input type="file" class="file-pasajero-frente" data-i="${i}" accept="image/*,application/pdf">
-                                <div class="upload-icono">📷</div>
-                                <div class="upload-texto">Subir frente</div>
-                                <div class="upload-nombre">${p.fileFrente ? '✓ ' + p.fileFrente.name : ''}</div>
-                            </label>
-                        </div>
-                        <div class="input-grupo">
-                            <label class="input-label">Cédula - Reverso <span class="requerido">*</span></label>
-                            <label class="upload-area ${p.fileReverso ? 'tiene-archivo' : ''}" data-upload-reverso="${i}">
-                                <input type="file" class="file-pasajero-reverso" data-i="${i}" accept="image/*,application/pdf">
-                                <div class="upload-icono">📷</div>
-                                <div class="upload-texto">Subir reverso</div>
-                                <div class="upload-nombre">${p.fileReverso ? '✓ ' + p.fileReverso.name : ''}</div>
+                        <div class="input-grupo form-campo-full">
+                            <label class="input-label">Cédula (PDF con ambos lados o imagen) <span class="requerido">*</span></label>
+                            <label class="upload-area ${p.fileCedula ? 'tiene-archivo' : ''}" data-upload-cedula="${i}">
+                                <input type="file" class="file-pasajero-cedula" data-i="${i}" accept="image/*,application/pdf">
+                                <div class="upload-icono">📄</div>
+                                <div class="upload-texto">${p.fileCedula ? 'Cambiar archivo' : 'Subir cédula (PDF o imagen)'}</div>
+                                <div class="upload-nombre">${p.fileCedula ? '✓ ' + p.fileCedula.name : ''}</div>
                             </label>
                         </div>
                     </div>
@@ -475,23 +466,13 @@
                 });
             });
 
-            // Listeners para uploads
-            cont.querySelectorAll('.file-pasajero-frente').forEach(inp => {
+            // Listener para upload de cédula (PDF o imagen único)
+            cont.querySelectorAll('.file-pasajero-cedula').forEach(inp => {
                 inp.addEventListener('change', (e) => {
                     const i = parseInt(e.target.dataset.i);
                     const file = e.target.files[0];
                     if (file) {
-                        pasajerosTemp[i].fileFrente = file;
-                        renderizarPasajeros();
-                    }
-                });
-            });
-            cont.querySelectorAll('.file-pasajero-reverso').forEach(inp => {
-                inp.addEventListener('change', (e) => {
-                    const i = parseInt(e.target.dataset.i);
-                    const file = e.target.files[0];
-                    if (file) {
-                        pasajerosTemp[i].fileReverso = file;
+                        pasajerosTemp[i].fileCedula = file;
                         renderizarPasajeros();
                     }
                 });
@@ -510,7 +491,7 @@
         function mostrarFormulario() {
             document.getElementById('tiq-solicitante').value = perfilActual.nombre_completo;
             document.getElementById('tiq-proceso').value = perfilActual.proceso;
-            pasajerosTemp = [{ nombre: perfilActual.nombre_completo, cedula: '', fileFrente: null, fileReverso: null }];
+            pasajerosTemp = [{ nombre: perfilActual.nombre_completo, cedula: '', fileCedula: null }];
             renderizarPasajeros();
             document.getElementById('seccion-formulario').classList.remove('oculto');
             document.getElementById('seccion-filtros').classList.add('oculto');
@@ -582,8 +563,7 @@
                 const p = pasajerosTemp[i];
                 if (!p.nombre) { Toast.advertencia(`Ingrese el nombre del pasajero ${i + 1}.`); return; }
                 if (!p.cedula) { Toast.advertencia(`Ingrese la cédula del pasajero ${i + 1}.`); return; }
-                if (!p.fileFrente) { Toast.advertencia(`Suba la cédula (frente) del pasajero ${i + 1}.`); return; }
-                if (!p.fileReverso) { Toast.advertencia(`Suba la cédula (reverso) del pasajero ${i + 1}.`); return; }
+                if (!p.fileCedula) { Toast.advertencia(`Suba la cédula del pasajero ${i + 1}.`); return; }
             }
 
             btn.disabled = true; btn.textContent = 'Subiendo documentos...';
@@ -595,17 +575,14 @@
                     const p = pasajerosTemp[i];
                     btn.textContent = `Subiendo documentos pasajero ${i + 1}/${pasajerosTemp.length}...`;
 
-                    const upF = await subirArchivo(p.fileFrente, 'cedulas', `${p.cedula}_frente`);
-                    if (upF.error) { Toast.error(`Error subiendo frente del pasajero ${i + 1}: ${upF.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
-
-                    const upR = await subirArchivo(p.fileReverso, 'cedulas', `${p.cedula}_reverso`);
-                    if (upR.error) { Toast.error(`Error subiendo reverso del pasajero ${i + 1}: ${upR.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+                    const upC = await subirArchivo(p.fileCedula, 'cedulas', `${p.cedula}_cedula`);
+                    if (upC.error) { Toast.error(`Error subiendo cédula del pasajero ${i + 1}: ${upC.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
 
                     pasajerosConArchivos.push({
                         nombre_completo: p.nombre,
                         cedula: p.cedula,
-                        cedula_frente_url: upF.path,
-                        cedula_reverso_url: upR.path,
+                        cedula_frente_url: upC.path,
+                        cedula_reverso_url: null,
                         orden: i + 1
                     });
                 }
@@ -887,14 +864,18 @@
             let htmlPasajeros = '';
             for (const p of pasajeros) {
                 const urlF = await obtenerUrlFirmada(p.cedula_frente_url);
-                const urlR = await obtenerUrlFirmada(p.cedula_reverso_url);
+                const urlR = p.cedula_reverso_url ? await obtenerUrlFirmada(p.cedula_reverso_url) : null;
+                // Si hay reverso → registro viejo (mostrar 2 links). Si no → registro nuevo (1 link).
+                const linksCedula = urlR
+                    ? `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
+                       <a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>`
+                    : `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula</a>` : ''}`;
                 htmlPasajeros += `
                     <div style="background:#f8f9fc;border-left:3px solid var(--color-azul);padding:0.625rem 0.875rem;border-radius:0 6px 6px 0;margin-bottom:0.5rem;">
                         <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-sm);">Pasajero ${p.orden}: ${p.nombre_completo}</div>
                         <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);">CC ${p.cedula}</div>
                         <div style="display:flex;gap:0.4rem;margin-top:0.4rem;flex-wrap:wrap;">
-                            ${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
-                            ${urlR ? `<a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>` : ''}
+                            ${linksCedula}
                         </div>
                     </div>
                 `;
