@@ -152,9 +152,17 @@
                 <div class="dash-card-label">Cumplidas</div>
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
-            <div class="dash-card">
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-azul);">
                 <div class="dash-card-label">Valor total compras</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor">$0</div>
+                <div class="dash-card-valor" style="color:var(--color-azul);font-size:var(--texto-xl);" id="m-valor">$0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-amarillo);">
+                <div class="dash-card-label">Gestionadas por Compras</div>
+                <div class="dash-card-valor" style="color:#92400E;font-size:var(--texto-xl);" id="m-valor-compras">$0</div>
+            </div>
+            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-gris);">
+                <div class="dash-card-label">Gestionadas autónomamente</div>
+                <div class="dash-card-valor" style="color:var(--color-gris-dark);font-size:var(--texto-xl);" id="m-valor-autonomas">$0</div>
             </div>
             <div class="dash-card">
                 <div class="dash-card-label">Tiempo promedio Compras</div>
@@ -253,6 +261,10 @@
             const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
             const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
                 .reduce((s, r) => s + Number(r.valor_real_compra), 0);
+            const valorCompras = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra && r.quien_ejecuta === 'Compras')
+                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
+            const valorAutonomas = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra && r.quien_ejecuta === 'Proceso Autónomo')
+                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
 
             // Tiempo promedio SEPARADO por quien ejecuta
             const cumplidasCompras = activas.filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Compras');
@@ -275,6 +287,8 @@
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
             document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
+            document.getElementById('m-valor-compras').textContent = formatearMoneda(valorCompras);
+            document.getElementById('m-valor-autonomas').textContent = formatearMoneda(valorAutonomas);
             document.getElementById('m-tiempo-compras').textContent = tiempoCompras === '-' ? '- días' : `${tiempoCompras} días`;
             document.getElementById('m-tiempo-autonomo').textContent = tiempoAutonomo === '-' ? '- días' : `${tiempoAutonomo} días`;
 
