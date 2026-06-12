@@ -36,6 +36,80 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     animation: paginaEntrada 0.5s ease;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ============================================================
+   FONDO DECORATIVO PARA PÁGINAS INTERNAS
+   (dashboard, requisiciones, tiquetes, admin, cambiar-password)
+   El login tiene su propio fondo y NO usa este (ver login.css)
+   ============================================================ */
+
+/* Capa 1: PATRÓN GEOMÉTRICO DE "RED NEURONAL" (puntos + líneas tenues) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-color: var(--color-fondo);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><g fill='none' opacity='0.6'><circle cx='20' cy='20' r='1.5' fill='%2300369C' opacity='0.35'/><circle cx='140' cy='20' r='1.5' fill='%23F6D000' opacity='0.45'/><circle cx='80' cy='80' r='2' fill='%2300369C' opacity='0.4'/><circle cx='20' cy='140' r='1.5' fill='%23F6D000' opacity='0.4'/><circle cx='140' cy='140' r='1.5' fill='%2300369C' opacity='0.35'/><circle cx='80' cy='20' r='1' fill='%23A4A8AB' opacity='0.3'/><circle cx='20' cy='80' r='1' fill='%23A4A8AB' opacity='0.3'/><circle cx='140' cy='80' r='1' fill='%23A4A8AB' opacity='0.3'/><circle cx='80' cy='140' r='1' fill='%23A4A8AB' opacity='0.3'/><path d='M20 20 L80 80 L140 20 M20 140 L80 80 L140 140 M80 20 L80 140 M20 80 L140 80' stroke='%2300369C' stroke-width='0.4' opacity='0.12'/></g></svg>");
+    background-repeat: repeat;
+    background-size: 160px 160px;
+    animation: redNeuronalDeriva 90s linear infinite;
+}
+
+@keyframes redNeuronalDeriva {
+    from { background-position: 0 0; }
+    to   { background-position: 320px 320px; }
+}
+
+/* Capa 2: AURORAS - gradientes orgánicos de color corporativo que se mueven lento */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 900px 700px at 15% 25%, rgba(0, 54, 156, 0.10) 0%, transparent 55%),
+        radial-gradient(ellipse 700px 600px at 85% 30%, rgba(246, 208, 0, 0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 800px 500px at 50% 90%, rgba(0, 54, 156, 0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 600px 450px at 90% 75%, rgba(246, 208, 0, 0.05) 0%, transparent 55%);
+    animation: auroraMovimiento 35s ease-in-out infinite alternate;
+}
+
+@keyframes auroraMovimiento {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.85;
+    }
+    33% {
+        transform: translate(20px, -15px) scale(1.05);
+        opacity: 1;
+    }
+    66% {
+        transform: translate(-15px, 20px) scale(0.97);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translate(10px, 10px) scale(1.02);
+        opacity: 1;
+    }
+}
+
+/* IMPORTANTE: Si la página tiene .login-pagina (el login), ocultar el fondo del body
+   porque el login tiene su propio fondo más elaborado */
+body:has(.login-pagina)::before,
+body:has(.login-pagina)::after {
+    display: none;
 }
 
 @keyframes paginaEntrada {
