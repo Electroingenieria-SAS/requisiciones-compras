@@ -198,6 +198,10 @@
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
             <div class="dash-card">
+                <div class="dash-card-label">Valor total compras</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor-total">$0</div>
+            </div>
+            <div class="dash-card">
                 <div class="dash-card-label">Gestionadas por Compras</div>
                 <div class="dash-card-valor" style="color:var(--color-azul);font-size:var(--texto-xl);" id="m-valor-compras">$0</div>
             </div>
@@ -341,6 +345,7 @@
             document.getElementById('m-en-cotizacion').textContent = enCotizacion;
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
+            document.getElementById('m-valor-total').textContent = formatearMoneda(valorCompras + valorAutonomo);
             document.getElementById('m-valor-compras').textContent = formatearMoneda(valorCompras);
             document.getElementById('m-valor-autonomo').textContent = formatearMoneda(valorAutonomo);
             document.getElementById('m-tiempo-aprobacion').textContent = tiempoAprobacion === '-' ? '- días' : `${tiempoAprobacion} días`;
