@@ -120,25 +120,34 @@
     transform: translateY(-1px);
 }
 
-/* ─── NAVEGACIÓN CON ÍCONOS ─── */
+/* ─── NAVEGACIÓN CON ÍCONOS COLORIDOS - CENTRADA ─── */
+/*
+ * Truco: Grid de 3 columnas (1fr | auto | 1fr).
+ * Esto centra .nav-links PERFECTAMENTE sin importar si existe o no .nav-acciones.
+ * - dashboard.html → no tiene .nav-acciones → columna 3 vacía → links centrados.
+ * - requisiciones / tiquetes / admin → tienen .nav-acciones → se alinean a la derecha,
+ *   y los links siguen centrados perfectamente.
+ */
 .nav-bar {
     background-color: var(--color-blanco);
     border-bottom: 1px solid var(--color-borde);
     padding: 0 1.5rem;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
-    height: 52px;
+    height: 56px;
     animation: fadeInDown 0.5s ease;
 }
 
 .nav-links {
+    grid-column: 2;
     display: flex;
-    gap: 0.25rem;
+    gap: 0.5rem;
+    justify-self: center;
 }
 
 .nav-link {
-    padding: 0.5rem 1rem 0.5rem 2.4rem;
+    padding: 0.5rem 1.1rem 0.5rem 2.6rem;
     font-size: var(--texto-sm);
     font-weight: 500;
     color: var(--color-texto-secundario);
@@ -149,43 +158,16 @@
     display: inline-flex;
     align-items: center;
     background-repeat: no-repeat;
-    background-position: 0.7rem center;
-    background-size: 18px 18px;
+    background-position: 0.55rem center;
+    background-size: 24px 24px;
 }
 
-/* Icono DASHBOARD (gráfico de barras) */
-.nav-link[href*="dashboard"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='12' width='4' height='8' rx='1'/><rect x='10' y='8' width='4' height='12' rx='1'/><rect x='17' y='4' width='4' height='16' rx='1'/></svg>");
-}
-
-/* Icono REQUISICIONES (clipboard con check) */
-.nav-link[href*="requisiciones"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 4h6v2H9z' fill='%236B7280'/><path d='M9 12l2 2 4-4'/></svg>");
-}
-
-/* Icono TIQUETES (avión) */
-.nav-link[href*="tiquetes"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z'/></svg>");
-}
-
-/* Icono ADMIN (engranaje) */
-.nav-link[href*="admin"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
-}
-
-/* Variante azul cuando está activo */
-.nav-link.activo[href*="dashboard"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300369C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='12' width='4' height='8' rx='1'/><rect x='10' y='8' width='4' height='12' rx='1'/><rect x='17' y='4' width='4' height='16' rx='1'/></svg>");
-}
-.nav-link.activo[href*="requisiciones"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300369C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 4h6v2H9z' fill='%2300369C'/><path d='M9 12l2 2 4-4'/></svg>");
-}
-.nav-link.activo[href*="tiquetes"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300369C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z'/></svg>");
-}
-.nav-link.activo[href*="admin"] {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300369C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>");
-}
+/* Íconos coloridos PNG — los íconos se ven igual en estado normal y activo
+   porque ya tienen su color propio. Lo que cambia en activo es el fondo + texto. */
+.nav-link[href*="dashboard"]      { background-image: url('iconos/datos.png'); }
+.nav-link[href*="requisiciones"]  { background-image: url('iconos/pedido.png'); }
+.nav-link[href*="tiquetes"]       { background-image: url('iconos/avion.png'); }
+.nav-link[href*="admin"]          { background-image: url('iconos/sistema-de-seguridad.png'); }
 
 .nav-link:hover {
     background-color: var(--color-gris-light);
@@ -201,7 +183,12 @@
     box-shadow: inset 0 -3px 0 var(--color-azul);
 }
 
-.nav-acciones { display: flex; gap: 0.5rem; }
+.nav-acciones {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 0.5rem;
+}
 
 /* ─── CONTENIDO PRINCIPAL ─── */
 .contenido-principal {
@@ -724,7 +711,21 @@
 @media (max-width: 768px) {
     .header-centro, .header-info { display: none; }
     .app-header { padding: 0 1rem; }
-    .nav-bar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; gap: 0.5rem; }
+    .nav-bar {
+        grid-template-columns: 1fr;
+        height: auto;
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+    }
+    .nav-links {
+        grid-column: 1;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .nav-acciones {
+        grid-column: 1;
+        justify-self: center;
+    }
     .contenido-principal { padding: var(--espacio-md); }
     .filtros-barra { flex-direction: column; }
     .filtro-grupo input, .filtro-grupo select { min-width: auto; width: 100%; }
