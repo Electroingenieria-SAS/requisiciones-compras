@@ -710,7 +710,7 @@
             }
         }
 
-        function renderizarTabla(datos) {
+        async function renderizarTabla(datos) {
             const total = datos.length;
             const totalPaginas = Math.ceil(total / POR_PAGINA);
             if (paginaActual > totalPaginas) paginaActual = Math.max(1, totalPaginas);
