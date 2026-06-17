@@ -17,11 +17,88 @@
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/animaciones.css">
 </head>
 <body>
 
     <!-- ─── PÁGINA DE LOGIN ─── -->
     <div class="login-pagina">
+
+        <!-- ─── ESCENA ANIMADA DE FONDO (decorativa) ─── -->
+        <div class="login-escena" aria-hidden="true">
+
+            <!-- Nubes -->
+            <div class="login-nube n1"></div>
+            <div class="login-nube n2"></div>
+            <div class="login-nube n3"></div>
+
+            <!-- Puntos de luz -->
+            <div class="login-punto p1"></div>
+            <div class="login-punto p2"></div>
+            <div class="login-punto p3"></div>
+            <div class="login-punto p4"></div>
+
+            <!-- Avión cruzando con estela -->
+            <div class="login-avion">
+                <svg viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg">
+                    <path class="estela" d="M0 38 Q 30 36 52 30" stroke="#F6D000" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+                    <g>
+                        <path d="M54 26 L96 22 Q104 21.5 108 25 Q104 28.5 96 28 L54 31 Z" fill="#FFFFFF"/>
+                        <path d="M70 27 L60 14 L67 14 L80 25.5 Z" fill="#E8EEF8"/>
+                        <path d="M70 29 L62 40 L68 40 L79 30 Z" fill="#E8EEF8"/>
+                        <path d="M55 27 L48 21 L52 21 L60 26.5 Z" fill="#F6D000"/>
+                        <circle cx="99" cy="24.5" r="1.6" fill="#00369C"/>
+                        <circle cx="93" cy="24.8" r="1.6" fill="#00369C"/>
+                        <circle cx="87" cy="25.1" r="1.6" fill="#00369C"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Documento de requisición flotante -->
+            <svg class="login-flotante doc" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="4" width="68" height="88" rx="8" fill="#FFFFFF"/>
+                <rect x="6" y="4" width="68" height="18" rx="8" fill="#F6D000"/>
+                <rect x="6" y="14" width="68" height="8" fill="#F6D000"/>
+                <rect x="16" y="32" width="48" height="5" rx="2.5" fill="#C7D4EC"/>
+                <rect x="16" y="44" width="38" height="5" rx="2.5" fill="#C7D4EC"/>
+                <rect x="16" y="56" width="44" height="5" rx="2.5" fill="#C7D4EC"/>
+                <circle cx="22" cy="76" r="8" fill="#E8EEF8"/>
+                <path d="M18 76 l3 3 l5 -6" stroke="#00369C" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="36" y="73" width="28" height="5" rx="2.5" fill="#E8EEF8"/>
+            </svg>
+
+            <!-- Carrito de compras flotante -->
+            <svg class="login-flotante carrito" viewBox="0 0 96 84" xmlns="http://www.w3.org/2000/svg">
+                <rect x="34" y="8" width="20" height="16" rx="3" fill="#F6D000"/>
+                <rect x="56" y="12" width="16" height="12" rx="3" fill="#FFFFFF"/>
+                <path d="M10 14 H22 L32 50 H76 L86 26 H28" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="38" cy="66" r="7" fill="#F6D000"/>
+                <circle cx="68" cy="66" r="7" fill="#F6D000"/>
+                <circle cx="38" cy="66" r="2.5" fill="#00369C"/>
+                <circle cx="68" cy="66" r="2.5" fill="#00369C"/>
+            </svg>
+
+            <!-- Tiquete aéreo flotante -->
+            <svg class="login-flotante tiquete" viewBox="0 0 110 56" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 6 H72 Q72 14 78 14 Q84 14 84 6 H104 Q108 6 108 10 V46 Q108 50 104 50 H84 Q84 42 78 42 Q72 42 72 50 H6 Q2 50 2 46 V10 Q2 6 6 6 Z" fill="#FFFFFF"/>
+                <line x1="78" y1="16" x2="78" y2="40" stroke="#C7D4EC" stroke-width="2" stroke-dasharray="4 4"/>
+                <text x="12" y="24" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#00369C">CLO</text>
+                <text x="48" y="24" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#00369C">BOG</text>
+                <path d="M34 20 L44 20 M41 17 L44 20 L41 23" stroke="#F6D000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="12" y="32" width="30" height="4" rx="2" fill="#E8EEF8"/>
+                <rect x="12" y="40" width="22" height="4" rx="2" fill="#E8EEF8"/>
+                <circle cx="94" cy="22" r="6" fill="#F6D000"/>
+                <rect x="88" y="34" width="13" height="4" rx="2" fill="#E8EEF8"/>
+            </svg>
+
+            <!-- Moneda flotante -->
+            <svg class="login-flotante moneda" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="22" fill="#F6D000"/>
+                <circle cx="24" cy="24" r="16" fill="none" stroke="#D9B400" stroke-width="2"/>
+                <text x="24" y="31" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#00369C" text-anchor="middle">$</text>
+            </svg>
+        </div>
+
         <div class="login-tarjeta">
 
             <!-- Logo de la empresa -->
@@ -37,7 +114,7 @@
             <!-- Formulario -->
             <form class="login-formulario" id="login-form" autocomplete="off">
 
-                <!-- Campo: Correo (visualmente dice "Proceso" pero usa email) -->
+                <!-- Campo: Correo -->
                 <div class="input-grupo">
                     <label class="input-label" for="login-email">Correo electrónico</label>
                     <input

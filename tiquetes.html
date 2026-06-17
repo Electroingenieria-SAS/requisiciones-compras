@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/requisiciones.css">
+    <link rel="stylesheet" href="/css/animaciones.css">
     <style>
         /* ─── Filtros ─── */
         .filtros-barra {
@@ -93,6 +94,67 @@
     </nav>
 
     <main class="contenido-principal" id="contenido-principal" style="display:none;">
+
+        <!-- ─── BANNER ILUSTRADO: TIQUETES AÉREOS ─── -->
+        <section class="hero-banner" aria-label="Tiquetes aéreos">
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-texto">
+                <span class="hero-eyebrow">Viajes corporativos</span>
+                <h2 class="hero-titulo">Tu próximo vuelo, <span class="acento">gestionado</span></h2>
+                <p class="hero-subtitulo">Solicita tiquetes y hospedaje con aprobación, soportes adjuntos y trazabilidad de principio a fin.</p>
+            </div>
+            <div class="hero-escena" aria-hidden="true">
+                <svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Nubes derivando -->
+                    <g class="svg-nube-1">
+                        <ellipse cx="60" cy="26" rx="30" ry="11" fill="rgba(255,255,255,0.35)"/>
+                        <ellipse cx="78" cy="20" rx="18" ry="9" fill="rgba(255,255,255,0.35)"/>
+                    </g>
+                    <g class="svg-nube-2">
+                        <ellipse cx="230" cy="100" rx="26" ry="9" fill="rgba(255,255,255,0.28)"/>
+                        <ellipse cx="246" cy="95" rx="15" ry="7" fill="rgba(255,255,255,0.28)"/>
+                    </g>
+                    <!-- Ruta punteada entre pines -->
+                    <path class="svg-ruta" d="M30 96 Q 110 14 256 50" stroke="#F6D000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <!-- Pin origen -->
+                    <g class="svg-pin-pulso">
+                        <circle cx="30" cy="88" r="10" fill="#FFFFFF"/>
+                        <circle cx="30" cy="88" r="4.5" fill="#00369C"/>
+                        <path d="M30 106 L23 93 L37 93 Z" fill="#FFFFFF"/>
+                    </g>
+                    <!-- Pin destino -->
+                    <g class="svg-pin-pulso" style="animation-delay:1.2s;">
+                        <circle cx="256" cy="44" r="10" fill="#F6D000"/>
+                        <circle cx="256" cy="44" r="4.5" fill="#00369C"/>
+                        <path d="M256 62 L249 49 L263 49 Z" fill="#F6D000"/>
+                    </g>
+                    <!-- Avión flotando sobre la ruta -->
+                    <g class="svg-avion-flota">
+                        <g transform="translate(118 30) rotate(-12)">
+                            <path d="M0 14 L52 9.5 Q62 8.8 67 13 Q62 17.5 52 16.5 L0 21 Z" fill="#FFFFFF"/>
+                            <path d="M20 15 L9 0 L17 0 L33 13 Z" fill="#E8EEF8"/>
+                            <path d="M20 18 L11 31 L18 31 L32 19.5 Z" fill="#E8EEF8"/>
+                            <path d="M2 15 L-6 8 L-1 8 L8 14.3 Z" fill="#F6D000"/>
+                            <circle cx="55" cy="12" r="1.8" fill="#00369C"/>
+                            <circle cx="48" cy="12.4" r="1.8" fill="#00369C"/>
+                            <circle cx="41" cy="12.8" r="1.8" fill="#00369C"/>
+                        </g>
+                    </g>
+                    <!-- Pase de abordar flotante -->
+                    <g class="svg-flota-2">
+                        <path d="M196 78 H238 Q238 84 243 84 Q248 84 248 78 H264 Q267 78 267 81 V104 Q267 107 264 107 H248 Q248 101 243 101 Q238 101 238 107 H196 Q193 107 193 104 V81 Q193 78 196 78 Z" fill="rgba(255,255,255,0.95)"/>
+                        <text x="201" y="92" font-family="Arial, sans-serif" font-size="8.5" font-weight="bold" fill="#00369C">CLO</text>
+                        <path d="M219 89 L228 89 M225.5 86.5 L228 89 L225.5 91.5" stroke="#F6D000" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="200" y="97" width="26" height="3.5" rx="1.75" fill="#C7D4EC"/>
+                        <rect x="253" y="86" width="9" height="3.5" rx="1.75" fill="#C7D4EC"/>
+                        <rect x="253" y="94" width="9" height="3.5" rx="1.75" fill="#C7D4EC"/>
+                    </g>
+                </svg>
+            </div>
+        </section>
 
         <!-- FORMULARIO -->
         <div id="seccion-formulario" class="oculto">
@@ -381,7 +443,7 @@
                     Toast.advertencia('Máximo 9 pasajeros por solicitud.');
                     return;
                 }
-                pasajerosTemp.push({ nombre: '', cedula: '', fileCedula: null });
+                pasajerosTemp.push({ nombre: '', cedula: '', fileFrente: null, fileReverso: null });
                 renderizarPasajeros();
             });
 
@@ -412,7 +474,7 @@
             });
         }
 
-        let pasajerosTemp = []; // Array de objetos {nombre, cedula, fileCedula}
+        let pasajerosTemp = []; // Array de objetos {nombre, cedula, fileFrente, fileReverso}
 
         function renderizarPasajeros() {
             const cont = document.getElementById('lista-pasajeros');
@@ -420,7 +482,7 @@
 
             // Asegurar mínimo 1 pasajero
             if (pasajerosTemp.length === 0) {
-                pasajerosTemp.push({ nombre: esParaMi ? perfilActual.nombre_completo : '', cedula: '', fileCedula: null });
+                pasajerosTemp.push({ nombre: esParaMi ? perfilActual.nombre_completo : '', cedula: '', fileFrente: null, fileReverso: null });
             }
 
             cont.innerHTML = pasajerosTemp.map((p, i) => `
@@ -440,13 +502,22 @@
                         </div>
                     </div>
                     <div class="form-grid">
-                        <div class="input-grupo form-campo-full">
-                            <label class="input-label">Cédula (PDF con ambos lados o imagen) <span class="requerido">*</span></label>
-                            <label class="upload-area ${p.fileCedula ? 'tiene-archivo' : ''}" data-upload-cedula="${i}">
-                                <input type="file" class="file-pasajero-cedula" data-i="${i}" accept="image/*,application/pdf">
-                                <div class="upload-icono">📄</div>
-                                <div class="upload-texto">${p.fileCedula ? 'Cambiar archivo' : 'Subir cédula (PDF o imagen)'}</div>
-                                <div class="upload-nombre">${p.fileCedula ? '✓ ' + p.fileCedula.name : ''}</div>
+                        <div class="input-grupo">
+                            <label class="input-label">Cédula - Frente <span class="requerido">*</span></label>
+                            <label class="upload-area ${p.fileFrente ? 'tiene-archivo' : ''}" data-upload-frente="${i}">
+                                <input type="file" class="file-pasajero-frente" data-i="${i}" accept="image/*,application/pdf">
+                                <div class="upload-icono">📷</div>
+                                <div class="upload-texto">Subir frente</div>
+                                <div class="upload-nombre">${p.fileFrente ? '✓ ' + p.fileFrente.name : ''}</div>
+                            </label>
+                        </div>
+                        <div class="input-grupo">
+                            <label class="input-label">Cédula - Reverso <span class="requerido">*</span></label>
+                            <label class="upload-area ${p.fileReverso ? 'tiene-archivo' : ''}" data-upload-reverso="${i}">
+                                <input type="file" class="file-pasajero-reverso" data-i="${i}" accept="image/*,application/pdf">
+                                <div class="upload-icono">📷</div>
+                                <div class="upload-texto">Subir reverso</div>
+                                <div class="upload-nombre">${p.fileReverso ? '✓ ' + p.fileReverso.name : ''}</div>
                             </label>
                         </div>
                     </div>
@@ -466,13 +537,23 @@
                 });
             });
 
-            // Listener para upload de cédula (PDF o imagen único)
-            cont.querySelectorAll('.file-pasajero-cedula').forEach(inp => {
+            // Listeners para uploads
+            cont.querySelectorAll('.file-pasajero-frente').forEach(inp => {
                 inp.addEventListener('change', (e) => {
                     const i = parseInt(e.target.dataset.i);
                     const file = e.target.files[0];
                     if (file) {
-                        pasajerosTemp[i].fileCedula = file;
+                        pasajerosTemp[i].fileFrente = file;
+                        renderizarPasajeros();
+                    }
+                });
+            });
+            cont.querySelectorAll('.file-pasajero-reverso').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const i = parseInt(e.target.dataset.i);
+                    const file = e.target.files[0];
+                    if (file) {
+                        pasajerosTemp[i].fileReverso = file;
                         renderizarPasajeros();
                     }
                 });
@@ -491,7 +572,7 @@
         function mostrarFormulario() {
             document.getElementById('tiq-solicitante').value = perfilActual.nombre_completo;
             document.getElementById('tiq-proceso').value = perfilActual.proceso;
-            pasajerosTemp = [{ nombre: perfilActual.nombre_completo, cedula: '', fileCedula: null }];
+            pasajerosTemp = [{ nombre: perfilActual.nombre_completo, cedula: '', fileFrente: null, fileReverso: null }];
             renderizarPasajeros();
             document.getElementById('seccion-formulario').classList.remove('oculto');
             document.getElementById('seccion-filtros').classList.add('oculto');
@@ -563,7 +644,8 @@
                 const p = pasajerosTemp[i];
                 if (!p.nombre) { Toast.advertencia(`Ingrese el nombre del pasajero ${i + 1}.`); return; }
                 if (!p.cedula) { Toast.advertencia(`Ingrese la cédula del pasajero ${i + 1}.`); return; }
-                if (!p.fileCedula) { Toast.advertencia(`Suba la cédula del pasajero ${i + 1}.`); return; }
+                if (!p.fileFrente) { Toast.advertencia(`Suba la cédula (frente) del pasajero ${i + 1}.`); return; }
+                if (!p.fileReverso) { Toast.advertencia(`Suba la cédula (reverso) del pasajero ${i + 1}.`); return; }
             }
 
             btn.disabled = true; btn.textContent = 'Subiendo documentos...';
@@ -575,14 +657,17 @@
                     const p = pasajerosTemp[i];
                     btn.textContent = `Subiendo documentos pasajero ${i + 1}/${pasajerosTemp.length}...`;
 
-                    const upC = await subirArchivo(p.fileCedula, 'cedulas', `${p.cedula}_cedula`);
-                    if (upC.error) { Toast.error(`Error subiendo cédula del pasajero ${i + 1}: ${upC.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+                    const upF = await subirArchivo(p.fileFrente, 'cedulas', `${p.cedula}_frente`);
+                    if (upF.error) { Toast.error(`Error subiendo frente del pasajero ${i + 1}: ${upF.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+
+                    const upR = await subirArchivo(p.fileReverso, 'cedulas', `${p.cedula}_reverso`);
+                    if (upR.error) { Toast.error(`Error subiendo reverso del pasajero ${i + 1}: ${upR.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
 
                     pasajerosConArchivos.push({
                         nombre_completo: p.nombre,
                         cedula: p.cedula,
-                        cedula_frente_url: upC.path,
-                        cedula_reverso_url: null,
+                        cedula_frente_url: upF.path,
+                        cedula_reverso_url: upR.path,
                         orden: i + 1
                     });
                 }
@@ -864,18 +949,14 @@
             let htmlPasajeros = '';
             for (const p of pasajeros) {
                 const urlF = await obtenerUrlFirmada(p.cedula_frente_url);
-                const urlR = p.cedula_reverso_url ? await obtenerUrlFirmada(p.cedula_reverso_url) : null;
-                // Si hay reverso → registro viejo (mostrar 2 links). Si no → registro nuevo (1 link).
-                const linksCedula = urlR
-                    ? `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
-                       <a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>`
-                    : `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula</a>` : ''}`;
+                const urlR = await obtenerUrlFirmada(p.cedula_reverso_url);
                 htmlPasajeros += `
                     <div style="background:#f8f9fc;border-left:3px solid var(--color-azul);padding:0.625rem 0.875rem;border-radius:0 6px 6px 0;margin-bottom:0.5rem;">
                         <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-sm);">Pasajero ${p.orden}: ${p.nombre_completo}</div>
                         <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);">CC ${p.cedula}</div>
                         <div style="display:flex;gap:0.4rem;margin-top:0.4rem;flex-wrap:wrap;">
-                            ${linksCedula}
+                            ${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
+                            ${urlR ? `<a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>` : ''}
                         </div>
                     </div>
                 `;
@@ -961,5 +1042,6 @@
         document.addEventListener('DOMContentLoaded', inicializar);
     </script>
 
+    <script src="/js/animaciones.js" defer></script>
 </body>
 </html>

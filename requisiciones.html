@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/requisiciones.css">
+    <link rel="stylesheet" href="/css/animaciones.css">
+    <link rel="stylesheet" href="/css/cotizaciones.css">
     <style>
         /* ─── Filtros ─── */
         .filtros-barra {
@@ -129,6 +131,55 @@
 
     <!-- CONTENIDO -->
     <main class="contenido-principal">
+
+        <!-- ─── BANNER ILUSTRADO: COMPRAS ─── -->
+        <section class="hero-banner" aria-label="Requisiciones de compras">
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-texto">
+                <span class="hero-eyebrow">Compras administrativas</span>
+                <h2 class="hero-titulo">Solicita, aprueba y <span class="acento">haz seguimiento</span></h2>
+                <p class="hero-subtitulo">Cada requisición con su ID, historial de cambios y estado en tiempo real. Sin papeles, sin correos perdidos.</p>
+            </div>
+            <div class="hero-escena" aria-hidden="true">
+                <svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Checklist con chulos animados -->
+                    <rect x="14" y="14" width="96" height="92" rx="10" fill="rgba(255,255,255,0.95)"/>
+                    <rect x="14" y="14" width="96" height="22" rx="10" fill="#F6D000"/>
+                    <rect x="14" y="26" width="96" height="10" fill="#F6D000"/>
+                    <rect x="48" y="44" width="52" height="6" rx="3" fill="#C7D4EC"/>
+                    <rect x="48" y="64" width="44" height="6" rx="3" fill="#C7D4EC"/>
+                    <rect x="48" y="84" width="48" height="6" rx="3" fill="#C7D4EC"/>
+                    <rect x="26" y="40" width="14" height="14" rx="4" fill="#E8EEF8"/>
+                    <rect x="26" y="60" width="14" height="14" rx="4" fill="#E8EEF8"/>
+                    <rect x="26" y="80" width="14" height="14" rx="4" fill="#E8EEF8"/>
+                    <path class="svg-check-1" d="M29 47 l3.5 3.5 l6 -7" stroke="#00369C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path class="svg-check-2" d="M29 67 l3.5 3.5 l6 -7" stroke="#00369C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path class="svg-check-3" d="M29 87 l3.5 3.5 l6 -7" stroke="#00369C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Carrito con cajas saltarinas -->
+                    <g class="svg-caja-1">
+                        <rect x="172" y="34" width="26" height="22" rx="4" fill="#F6D000"/>
+                        <line x1="185" y1="34" x2="185" y2="56" stroke="#D9B400" stroke-width="2"/>
+                    </g>
+                    <g class="svg-caja-2">
+                        <rect x="202" y="40" width="20" height="16" rx="4" fill="rgba(255,255,255,0.95)"/>
+                        <line x1="212" y1="40" x2="212" y2="56" stroke="#C7D4EC" stroke-width="2"/>
+                    </g>
+                    <path d="M150 32 H164 L174 78 H226 L238 48 H170" stroke="rgba(255,255,255,0.95)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="182" cy="94" r="8" fill="#F6D000"/>
+                    <circle cx="216" cy="94" r="8" fill="#F6D000"/>
+                    <circle cx="182" cy="94" r="3" fill="#00369C"/>
+                    <circle cx="216" cy="94" r="3" fill="#00369C"/>
+                    <!-- Moneda saltando -->
+                    <g class="svg-moneda">
+                        <circle cx="268" cy="84" r="15" fill="#F6D000"/>
+                        <text x="268" y="89" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#00369C" text-anchor="middle">$</text>
+                    </g>
+                </svg>
+            </div>
+        </section>
 
         <!-- FORMULARIO NUEVA REQUISICIÓN -->
         <div id="seccion-formulario" class="oculto">
@@ -302,7 +353,9 @@
         import { formatearFecha } from '/js/utils/formatters.js';
         import { Toast } from '/js/components/toast.js';
         import { Loader } from '/js/components/loader.js';
-        import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, verHistorial, aprobarRequisicion, reenviarAprobacion, puedeEditar, puedeEliminar, puedeCambiarEstado, puedeAprobar, badgeClase } from '/js/modules/acciones-requisiciones.js';
+        import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, verHistorial, aprobarRequisicion, reenviarAprobacion, puedeEditar, puedeEliminar, puedeCambiarEstado, puedeAprobar, puedeGestionarCotizaciones, badgeClase } from '/js/modules/acciones-requisiciones.js';
+        import { abrirGestorCotizaciones } from '/js/modules/cotizaciones-modal.js';
+        import { contarCotizacionesPorRequisicion } from '/js/services/cotizaciones.service.js';
         import { exportarRequisicionesExcel } from '/js/modules/exportar-excel.js';
 
         let usuarioActual = null;
@@ -667,6 +720,13 @@
 
             document.getElementById('tabla-titulo').textContent = `Requisiciones (${total})`;
 
+            // Cargar conteo de cotizaciones para los visibles (solo si compras/admin)
+            let mapaCotizaciones = {};
+            if (perfilActual && ['admin_compras','administrador','super_admin'].includes(perfilActual.rol)) {
+                const ids = paginados.map(r => r.id);
+                mapaCotizaciones = await contarCotizacionesPorRequisicion(ids);
+            }
+
             const tbody = document.getElementById('tabla-body');
             if (paginados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--color-texto-secundario);">No se encontraron requisiciones con los filtros aplicados.</td></tr>`;
@@ -674,12 +734,20 @@
                 tbody.innerHTML = paginados.map(req => {
                     const filaClase = req.eliminado ? 'fila-eliminada' : '';
                     const estadoTexto = req.eliminado ? 'Eliminada' : req.estado;
-                    const badge = `<span class="badge-estado ${badgeClase(req)}">${estadoTexto}</span>`;
+                    const conteoCot = mapaCotizaciones[req.id] || 0;
+                    const badgeCot = conteoCot > 0
+                        ? `<span class="badge-cotizaciones" title="${conteoCot} cotización(es) cargada(s)">📋 ${conteoCot}</span>`
+                        : '';
+                    const badge = `<span class="badge-estado ${badgeClase(req)}">${estadoTexto}</span>${badgeCot}`;
 
                     let acciones = `<button class="btn-accion btn-accion-ver" data-accion="ver" data-id="${req.id}">Ver</button>`;
                     acciones += `<button class="btn-accion" data-accion="historial" data-id="${req.id}" style="color:#7C3AED;border-color:#7C3AED;">Historial</button>`;
                     if (puedeAprobar(req, perfilActual)) {
                         acciones += `<button class="btn-accion" data-accion="aprobar" data-id="${req.id}" style="color:#10B981;border-color:#10B981;font-weight:600;">✓ Aprobar</button>`;
+                    }
+                    if (puedeGestionarCotizaciones(req, perfilActual)) {
+                        const lbl = conteoCot > 0 ? `Cotizaciones (${conteoCot})` : '+ Cotizar';
+                        acciones += `<button class="btn-accion btn-accion-cotizar" data-accion="cotizar" data-id="${req.id}">${lbl}</button>`;
                     }
                     if (puedeEditar(req, perfilActual)) {
                         acciones += `<button class="btn-accion btn-accion-editar" data-accion="editar" data-id="${req.id}">Editar</button>`;
@@ -739,6 +807,7 @@
                         case 'editar': editarRequisicion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'reenviar': reenviarAprobacion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'estado': cambiarEstado(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                        case 'cotizar': abrirGestorCotizaciones(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'eliminar': confirmarEliminar(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                     }
                 });
@@ -760,5 +829,6 @@
         document.addEventListener('DOMContentLoaded', inicializar);
     </script>
 
+    <script src="/js/animaciones.js" defer></script>
 </body>
 </html>

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/requisiciones.css">
+    <link rel="stylesheet" href="/css/animaciones.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
@@ -110,6 +111,50 @@
 
     <main class="contenido-principal" id="contenido-principal" style="display:none;">
 
+        <!-- ─── BANNER ILUSTRADO ─── -->
+        <section class="hero-banner" aria-label="Centro de gestión">
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-particula"></div>
+            <div class="hero-texto">
+                <span class="hero-eyebrow">Centro de gestión</span>
+                <h2 class="hero-titulo">Compras y tiquetes, <span class="acento">bajo control</span></h2>
+                <p class="hero-subtitulo">Trazabilidad completa de tus requisiciones administrativas y solicitudes de viaje en un solo lugar.</p>
+            </div>
+            <div class="hero-escena" aria-hidden="true">
+                <svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Gráfica de barras creciendo -->
+                    <line x1="20" y1="104" x2="150" y2="104" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round"/>
+                    <rect class="svg-barra-1" x="30" y="56" width="20" height="48" rx="4" fill="#F6D000"/>
+                    <rect class="svg-barra-2" x="60" y="40" width="20" height="64" rx="4" fill="rgba(255,255,255,0.9)"/>
+                    <rect class="svg-barra-3" x="90" y="64" width="20" height="40" rx="4" fill="#F6D000"/>
+                    <rect class="svg-barra-4" x="120" y="30" width="20" height="74" rx="4" fill="rgba(255,255,255,0.9)"/>
+                    <!-- Moneda saltando -->
+                    <g class="svg-moneda">
+                        <circle cx="180" cy="92" r="14" fill="#F6D000"/>
+                        <text x="180" y="97" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#00369C" text-anchor="middle">$</text>
+                    </g>
+                    <!-- Avión cruzando arriba -->
+                    <g class="svg-avion">
+                        <path d="M-30 28 Q -10 26 8 22" class="svg-ruta" stroke="#F6D000" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        <g>
+                            <path d="M10 16 L38 13.5 Q44 13 47 15.8 Q44 18.5 38 18 L10 20 Z" fill="#FFFFFF"/>
+                            <path d="M21 17 L15 9 L20 9 L28 16 Z" fill="#E8EEF8"/>
+                            <path d="M21 19 L16 26 L20 26 L27 19.8 Z" fill="#E8EEF8"/>
+                        </g>
+                    </g>
+                    <!-- Caja flotante -->
+                    <g class="svg-flota-2">
+                        <rect x="225" y="60" width="42" height="36" rx="5" fill="rgba(255,255,255,0.95)"/>
+                        <rect x="225" y="60" width="42" height="11" rx="5" fill="#F6D000"/>
+                        <line x1="246" y1="60" x2="246" y2="96" stroke="#C7D4EC" stroke-width="2.5"/>
+                        <path d="M238 82 l5 5 l9 -10" stroke="#00369C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                </svg>
+            </div>
+        </section>
+
         <!-- Saludo -->
         <div class="info-usuario-card">
             <div class="info-avatar" id="user-avatar">--</div>
@@ -152,17 +197,9 @@
                 <div class="dash-card-label">Cumplidas</div>
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-azul);">
+            <div class="dash-card">
                 <div class="dash-card-label">Valor total compras</div>
-                <div class="dash-card-valor" style="color:var(--color-azul);font-size:var(--texto-xl);" id="m-valor">$0</div>
-            </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-amarillo);">
-                <div class="dash-card-label">Gestionadas por Compras</div>
-                <div class="dash-card-valor" style="color:#92400E;font-size:var(--texto-xl);" id="m-valor-compras">$0</div>
-            </div>
-            <div class="dash-card dash-card-borde" style="border-left-color:var(--color-gris);">
-                <div class="dash-card-label">Gestionadas autónomamente</div>
-                <div class="dash-card-valor" style="color:var(--color-gris-dark);font-size:var(--texto-xl);" id="m-valor-autonomas">$0</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor">$0</div>
             </div>
             <div class="dash-card">
                 <div class="dash-card-label">Tiempo promedio Compras</div>
@@ -261,10 +298,6 @@
             const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
             const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
                 .reduce((s, r) => s + Number(r.valor_real_compra), 0);
-            const valorCompras = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra && r.quien_ejecuta === 'Compras')
-                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
-            const valorAutonomas = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra && r.quien_ejecuta === 'Proceso Autónomo')
-                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
 
             // Tiempo promedio SEPARADO por quien ejecuta
             const cumplidasCompras = activas.filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Compras');
@@ -287,8 +320,6 @@
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
             document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
-            document.getElementById('m-valor-compras').textContent = formatearMoneda(valorCompras);
-            document.getElementById('m-valor-autonomas').textContent = formatearMoneda(valorAutonomas);
             document.getElementById('m-tiempo-compras').textContent = tiempoCompras === '-' ? '- días' : `${tiempoCompras} días`;
             document.getElementById('m-tiempo-autonomo').textContent = tiempoAutonomo === '-' ? '- días' : `${tiempoAutonomo} días`;
 
@@ -314,6 +345,12 @@
         function mostrarNotificacionesAdminCompras(requisiciones) {
             const container = document.getElementById('notif-container');
 
+            // NUEVO: requisiciones recién creadas, pendientes de aprobación,
+            // que Compras puede ir adelantando con cotizaciones
+            const nuevasPendientes = requisiciones.filter(r =>
+                !r.eliminado && r.estado === 'Pendiente aprobación' && r.quien_ejecuta === 'Compras'
+            );
+
             // SOLO requisiciones donde Compras es el ejecutor (no las autónomas)
             const listas = requisiciones.filter(r =>
                 !r.eliminado && r.estado === 'Pendiente' && r.quien_ejecuta === 'Compras'
@@ -322,7 +359,7 @@
                 !r.eliminado && r.estado === 'En cotización' && r.quien_ejecuta === 'Compras'
             );
 
-            if (listas.length === 0 && enCotizacion.length === 0) {
+            if (nuevasPendientes.length === 0 && listas.length === 0 && enCotizacion.length === 0) {
                 container.innerHTML = `
                     <div class="notif-banner" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);border-color:#10B981;">
                         <div class="notif-banner-icono">✅</div>
@@ -335,6 +372,30 @@
             }
 
             let html = '';
+
+            // ─── NUEVO BANNER: NUEVAS REQUISICIONES (pendientes aprobación) ───
+            if (nuevasPendientes.length > 0) {
+                html += `
+                    <div class="notif-banner notif-banner-nueva" style="background:linear-gradient(135deg,#FFFCE8,#FEF3C7);border-color:#F6D000;">
+                        <div class="notif-banner-icono">🆕</div>
+                        <div class="notif-banner-texto">
+                            <div class="notif-banner-titulo" style="color:#92400E;">${nuevasPendientes.length} requisición(es) nueva(s) esperando aprobación</div>
+                            <div class="notif-banner-detalle">Ya puedes ir cargando cotizaciones de proveedores mientras el jefe aprueba. Esto agiliza el flujo y le da al jefe contexto para decidir.</div>
+                            <div class="notif-items">
+                                ${nuevasPendientes.slice(0, 5).map(r => `
+                                    <div class="notif-item">
+                                        <span class="notif-item-id">${r.id_requisicion}</span>
+                                        <span class="notif-item-info">${r.objeto_compra.substring(0, 45)}${r.objeto_compra.length > 45 ? '...' : ''} — <em>${r.solicitante}</em></span>
+                                    </div>
+                                `).join('')}
+                                ${nuevasPendientes.length > 5 ? `<div style="font-size:var(--texto-xs);color:var(--color-gris);text-align:center;">y ${nuevasPendientes.length - 5} más...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="notif-banner-acciones">
+                            <a href="/requisiciones.html?filtro=Pendiente%20aprobaci%C3%B3n" class="btn btn-primario" style="font-size:var(--texto-sm);">Ir a cotizar</a>
+                        </div>
+                    </div>`;
+            }
 
             if (listas.length > 0) {
                 html += `
@@ -758,5 +819,6 @@
         document.addEventListener('DOMContentLoaded', inicializar);
     </script>
 
+    <script src="/js/animaciones.js" defer></script>
 </body>
 </html>

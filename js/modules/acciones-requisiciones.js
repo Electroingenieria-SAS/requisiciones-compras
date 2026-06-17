@@ -59,13 +59,34 @@ export function puedeEliminar(req, perfil) {
 
 /**
  * Verificar si el usuario puede cambiar estado
+ *
+ * Reglas:
+ * - Si está en "Pendiente aprobación": admin_compras puede mover SOLO a "En cotización"
+ *   (se valida después en cambiarEstado). El resto sigue bloqueado.
+ * - Si está en "En cotización" con aprobación pendiente: admin_compras NO puede avanzar.
+ * - Si ya fue aprobada (aprobacion_pendiente=false): flujo normal.
  */
 export function puedeCambiarEstado(req, perfil) {
     if (req.eliminado) return false;
     if (req.estado === 'Cumplido') return false;
-    if (req.estado === 'Pendiente aprobación') return false;
     if (req.estado === 'Rechazada') return false;
-    // Super admin puede cambiar estado de cualquier requisición
+
+    // CASO ESPECIAL: pendiente de aprobación
+    if (req.estado === 'Pendiente aprobación') {
+        // Solo Compras puede moverla a "En cotización" mientras espera aprobación
+        if (perfil.rol === 'admin_compras' || perfil.rol === 'administrador' || perfil.rol === 'super_admin') {
+            return true;
+        }
+        return false;
+    }
+
+    // CASO ESPECIAL: en cotización pero aún sin aprobación del jefe
+    // Compras puede editar cotizaciones, pero NO avanzar a En proceso/Cumplido
+    if (req.estado === 'En cotización' && req.aprobacion_pendiente) {
+        return false;
+    }
+
+    // Super admin puede cambiar estado de cualquier requisición aprobada
     if (perfil.rol === 'super_admin' || perfil.rol === 'administrador') return true;
     // Admin de compras gestiona los estados de las requisiciones aprobadas
     if (perfil.rol === 'admin_compras') return true;
@@ -77,13 +98,34 @@ export function puedeCambiarEstado(req, perfil) {
 }
 
 /**
+ * Verificar si el usuario puede gestionar cotizaciones
+ * Compras puede agregarlas desde "Pendiente aprobación" o "En cotización"
+ */
+export function puedeGestionarCotizaciones(req, perfil) {
+    if (req.eliminado) return false;
+    if (req.estado === 'Cumplido') return false;
+    if (req.estado === 'Rechazada') return false;
+    if (!['admin_compras', 'administrador', 'super_admin'].includes(perfil.rol)) return false;
+    // Solo en las fases donde tiene sentido cotizar
+    return ['Pendiente aprobación', 'En cotización'].includes(req.estado);
+}
+
+/**
  * Verificar si el usuario puede aprobar/rechazar una requisición
  * (Funciona para jefes Y directores - quien sea que esté asignado como aprobador)
+ *
+ * Aprueba si:
+ *   - Está en estado "Pendiente aprobación" (caso clásico), O
+ *   - Está en "En cotización" pero aprobacion_pendiente=true (Compras ya empezó)
  */
 export function puedeAprobar(req, perfil) {
     if (req.eliminado) return false;
-    if (req.estado !== 'Pendiente aprobación') return false;
-    return req.jefe_proceso_id === perfil.id;
+    if (req.jefe_proceso_id !== perfil.id) return false;
+    // Caso clásico
+    if (req.estado === 'Pendiente aprobación') return true;
+    // Compras avanzó pero aún falta aprobación
+    if (req.estado === 'En cotización' && req.aprobacion_pendiente === true) return true;
+    return false;
 }
 
 /**
@@ -407,9 +449,34 @@ export function confirmarEliminar(req, usuario, perfil, onEliminado) {
 
 /**
  * Mostrar modal de cambio de estado
+ *
+ * Comportamiento especial:
+ * - Desde "Pendiente aprobación": Compras solo puede mover a "En cotización"
+ *   (manteniendo aprobacion_pendiente=true, el jefe sigue debiendo aprobar).
+ * - Desde "En cotización" con aprobacion_pendiente=true: bloqueado (ver puedeCambiarEstado).
+ * - Desde "En cotización" aprobada: flujo normal.
  */
 export function cambiarEstado(req, usuario, perfil, onCambiado) {
-    const estados = ['Pendiente', 'En cotización', 'En proceso', 'Cumplido'];
+    // Determinar qué estados puede elegir el usuario según el caso
+    let estados;
+    let avisoBloqueo = '';
+
+    if (req.estado === 'Pendiente aprobación') {
+        // Solo permitir avanzar a "En cotización" en paralelo a la aprobación
+        estados = ['En cotización'];
+        avisoBloqueo = `
+            <div class="cot-aviso-aprob" style="margin-bottom:1rem;">
+                <span class="cot-icono-aprob">⏳</span>
+                <div>
+                    <strong>Aprobación del jefe en curso</strong><br>
+                    <span>Puedes mover la requisición a "En cotización" y cargar propuestas, pero no podrás avanzar al flujo de gestión hasta que el jefe apruebe.</span>
+                </div>
+            </div>
+        `;
+    } else {
+        estados = ['Pendiente', 'En cotización', 'En proceso', 'Cumplido'];
+    }
+
     const estadoActual = req.estado;
 
     let opcionesHTML = estados
@@ -418,6 +485,7 @@ export function cambiarEstado(req, usuario, perfil, onCambiado) {
         .join('');
 
     const html = `
+        ${avisoBloqueo}
         <div style="margin-bottom: 1rem;">
             <p style="font-size: var(--texto-sm); color: var(--color-texto-secundario);">
                 Estado actual: <span class="badge-estado ${badgeClase(req)}">${estadoActual}</span>
@@ -508,7 +576,12 @@ export function cambiarEstado(req, usuario, perfil, onCambiado) {
                         detalle: `Estado cambiado de "${estadoActual}" a "${nuevoEstado}"`
                     });
 
-                    Toast.exito(`Estado cambiado a "${nuevoEstado}".`);
+                    // Mensaje contextual según la transición
+                    if (estadoActual === 'Pendiente aprobación' && nuevoEstado === 'En cotización') {
+                        Toast.exito('Requisición lista para cotizar. El jefe aún debe aprobarla para continuar el flujo.');
+                    } else {
+                        Toast.exito(`Estado cambiado a "${nuevoEstado}".`);
+                    }
                     Modal.cerrar();
                     if (onCambiado) onCambiado();
                 }
@@ -613,8 +686,23 @@ export async function verHistorial(req) {
 
 /**
  * Mostrar modal para aprobar o rechazar una requisición
+ *
+ * Comportamiento:
+ * - Si la requisición está en "En cotización" (Compras ya empezó), aprobar
+ *   solo cambia aprobacion_pendiente=false y deja el estado intacto.
+ * - Si está en "Pendiente aprobación" (caso clásico), aprobar pasa a "Pendiente".
+ * - Si hay cotizaciones cargadas, las muestra al jefe como referencia.
  */
-export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
+export async function aprobarRequisicion(req, usuario, perfil, onProcesado) {
+    // Cargar panel de cotizaciones (puede venir vacío)
+    let panelCotizaciones = '';
+    try {
+        const mod = await import('./cotizaciones-modal.js');
+        panelCotizaciones = await mod.panelCotizacionesParaAprobacion(req.id);
+    } catch (e) { /* sin cotizaciones, sigue */ }
+
+    const estadoOrigen = req.estado;
+
     const html = `
         <div style="display:grid;gap:1rem;">
             <div style="background:var(--color-azul-light);border-radius:var(--radio-md);padding:1rem;">
@@ -626,6 +714,7 @@ export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
                     ${req.valor_estimado ? ` · Valor estimado: <strong>$${Number(req.valor_estimado).toLocaleString('es-CO')}</strong>` : (req.rango_precios ? ` · Rango: <strong>${req.rango_precios}</strong>` : '')}
                 </div>
             </div>
+            ${panelCotizaciones}
             <div class="input-grupo">
                 <label class="input-label">Motivo (obligatorio solo si rechaza)</label>
                 <textarea id="motivo-aprobacion" class="input-campo" rows="3" placeholder="Comentario para el solicitante..."></textarea>
@@ -636,7 +725,7 @@ export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
     Modal.crear({
         titulo: `Aprobar requisición - ${req.id_requisicion}`,
         contenido: html,
-        ancho: '500px',
+        ancho: '600px',
         botones: [
             { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
             { texto: 'Rechazar', clase: 'btn-peligro', onClick: async () => {
@@ -657,7 +746,7 @@ export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
                     user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
                     accion: 'cambio_estado',
                     campo_modificado: 'estado',
-                    valor_anterior: 'Pendiente aprobación',
+                    valor_anterior: estadoOrigen,
                     valor_nuevo: 'Rechazada',
                     detalle: `Rechazada: ${motivo}`
                 });
@@ -669,31 +758,56 @@ export function aprobarRequisicion(req, usuario, perfil, onProcesado) {
             { texto: '✓ Aprobar', clase: 'btn-primario', onClick: async () => {
                 const motivo = document.getElementById('motivo-aprobacion').value.trim();
 
-                const { error } = await actualizarRequisicion(req.id, {
-                    estado: 'Pendiente',
+                // Si ya está en "En cotización" (Compras adelantó), no cambiar el estado
+                // — solo marcar como aprobada para que pueda seguir el flujo.
+                const cambios = {
                     aprobado_por: usuario.id,
                     nombre_aprobador: perfil.nombre_completo,
                     fecha_aprobacion: new Date().toISOString(),
-                    motivo_rechazo: null
-                });
+                    motivo_rechazo: null,
+                    aprobacion_pendiente: false
+                };
+
+                let nuevoEstado = estadoOrigen;
+                if (estadoOrigen === 'Pendiente aprobación') {
+                    cambios.estado = 'Pendiente';
+                    nuevoEstado = 'Pendiente';
+                }
+                // Si estaba en "En cotización", el estado se conserva — Compras sigue trabajando.
+
+                const { error } = await actualizarRequisicion(req.id, cambios);
                 if (error) { Toast.error(error); return; }
 
                 await registrarHistorial({
                     requisicion_id: req.id, id_requisicion: req.id_requisicion,
                     user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
                     accion: 'cambio_estado',
-                    campo_modificado: 'estado',
-                    valor_anterior: 'Pendiente aprobación',
-                    valor_nuevo: 'Pendiente',
-                    detalle: motivo ? `Aprobada: ${motivo}` : 'Aprobada para gestión de Compras'
+                    campo_modificado: estadoOrigen === nuevoEstado ? 'aprobacion' : 'estado',
+                    valor_anterior: estadoOrigen,
+                    valor_nuevo: nuevoEstado,
+                    detalle: motivo
+                        ? `Aprobada: ${motivo}`
+                        : (estadoOrigen === nuevoEstado
+                            ? 'Aprobada por el jefe. Compras continúa el flujo.'
+                            : 'Aprobada para gestión de Compras')
                 });
 
-                Toast.exito('Requisición aprobada. Pasa al flujo de Compras.');
+                Toast.exito('Requisición aprobada.');
                 Modal.cerrar();
                 if (onProcesado) onProcesado();
             }}
         ]
     });
+
+    // Engancho los listeners para abrir archivos del panel de cotizaciones
+    if (panelCotizaciones) {
+        setTimeout(async () => {
+            try {
+                const mod = await import('./cotizaciones-modal.js');
+                mod.engancharListenersPanelJefe();
+            } catch (e) { /* no critical */ }
+        }, 100);
+    }
 }
 
 /**

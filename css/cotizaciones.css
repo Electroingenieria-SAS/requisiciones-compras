@@ -1,0 +1,607 @@
+/**
+ * ============================================================
+ * COTIZACIONES — ESTILOS Y ANIMACIONES
+ * Electroingeniería S.A.S.
+ * ============================================================
+ */
+
+/* ════════════════════════════════════════════
+   1. KEYFRAMES PROPIOS DEL MÓDULO
+   ════════════════════════════════════════════ */
+
+@keyframes cot-card-entra {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cot-pulso-ganadora {
+    0%, 100% { box-shadow: 0 8px 24px rgba(246, 208, 0, 0.30), 0 0 0 0 rgba(246, 208, 0, 0.5); }
+    50%      { box-shadow: 0 8px 24px rgba(246, 208, 0, 0.45), 0 0 0 8px rgba(246, 208, 0, 0); }
+}
+
+@keyframes cot-estrella-gira {
+    0%, 100% { transform: rotate(-8deg) scale(1); }
+    50%      { transform: rotate(8deg) scale(1.1); }
+}
+
+@keyframes cot-cinta-aparece {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cot-conteo-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.25); color: var(--color-amarillo); }
+    100% { transform: scale(1); }
+}
+
+/* ════════════════════════════════════════════
+   2. CABECERA DEL GESTOR
+   ════════════════════════════════════════════ */
+
+.cot-cabecera {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    background: linear-gradient(135deg, var(--color-azul-light), #FFFFFF);
+    border: 1px solid var(--color-azul-light);
+    border-radius: var(--radio-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.cot-cabecera-info { min-width: 0; }
+
+.cot-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--color-azul);
+    margin-bottom: 0.25rem;
+}
+
+.cot-objeto {
+    font-size: var(--texto-base);
+    font-weight: 600;
+    color: var(--color-texto);
+    line-height: 1.3;
+}
+
+.cot-meta {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    margin-top: 0.35rem;
+}
+
+.cot-aviso-aprob,
+.cot-aviso-ok {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radio-md);
+    font-size: var(--texto-xs);
+    line-height: 1.35;
+    max-width: 280px;
+}
+
+.cot-aviso-aprob {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FCD34D;
+}
+
+.cot-aviso-ok {
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+}
+
+.cot-aviso-aprob strong,
+.cot-aviso-ok strong { font-weight: 700; }
+
+.cot-icono-aprob {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════
+   3. TOOLBAR Y CONTADOR
+   ════════════════════════════════════════════ */
+
+.cot-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cot-contador {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.cot-contador-numero {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-azul);
+    display: inline-block;
+    animation: cot-conteo-pop 0.5s ease;
+}
+
+.cot-contador-label {
+    font-size: var(--texto-sm);
+    color: var(--color-texto-secundario);
+    font-weight: 500;
+}
+
+.cot-icono-mas {
+    display: inline-block;
+    font-weight: 700;
+    margin-right: 0.25rem;
+    transform: translateY(-1px);
+}
+
+/* ════════════════════════════════════════════
+   4. LISTA Y CARDS DE COTIZACIONES
+   ════════════════════════════════════════════ */
+
+.cot-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 0.25rem;
+}
+
+.cot-lista::-webkit-scrollbar { width: 8px; }
+.cot-lista::-webkit-scrollbar-track { background: var(--color-gris-light); border-radius: 4px; }
+.cot-lista::-webkit-scrollbar-thumb { background: var(--color-gris); border-radius: 4px; }
+
+.cot-card {
+    position: relative;
+    background: white;
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    padding: 1rem 1.1rem;
+    animation: cot-card-entra 0.5s ease both;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.cot-card:hover {
+    border-color: var(--color-azul);
+    box-shadow: 0 6px 18px rgba(0, 54, 156, 0.10);
+    transform: translateY(-1px);
+}
+
+.cot-card-ganadora {
+    border-color: var(--color-amarillo);
+    background: linear-gradient(135deg, #FFFEF7 0%, #FFFCE8 100%);
+    animation:
+        cot-card-entra 0.5s ease both,
+        cot-pulso-ganadora 3s ease-in-out 0.5s infinite;
+}
+
+.cot-cinta-ganadora {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: var(--radio-full);
+    box-shadow: 0 2px 8px rgba(246, 208, 0, 0.5);
+    animation: cot-cinta-aparece 0.5s ease 0.3s both;
+    z-index: 2;
+}
+
+/* Margen superior en la card ganadora para que el badge no choque con el contenido */
+.cot-card-ganadora { padding-top: 1.5rem; }
+.cot-card-ganadora .cot-card-valor { padding-right: 5rem; }
+
+.cot-card-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.cot-card-proveedor {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.cot-card-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--color-azul);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--texto-base);
+    flex-shrink: 0;
+}
+
+.cot-card-ganadora .cot-card-avatar {
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+}
+
+.cot-card-nombre {
+    font-weight: 600;
+    color: var(--color-texto);
+    font-size: var(--texto-base);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cot-card-fecha {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    margin-top: 0.1rem;
+}
+
+.cot-card-valor {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--color-azul);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.cot-card-ganadora .cot-card-valor {
+    color: var(--color-amarillo-hover);
+}
+
+.cot-card-detalles {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.4rem;
+}
+
+.cot-card-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.7rem;
+    background: var(--color-azul-light);
+    color: var(--color-azul);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-xs);
+    font-weight: 600;
+}
+
+.cot-card-chip-archivo {
+    cursor: pointer;
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    transition: all 0.15s ease;
+}
+
+.cot-card-chip-archivo:hover {
+    background: var(--color-amarillo-hover);
+    transform: translateY(-1px);
+}
+
+.cot-card-obs {
+    font-size: var(--texto-sm);
+    color: var(--color-texto-secundario);
+    background: var(--color-gris-light);
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radio-md);
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+}
+
+.cot-card-acciones {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    border-top: 1px dashed var(--color-borde);
+    padding-top: 0.6rem;
+}
+
+.btn-cot-mini {
+    padding: 0.35rem 0.75rem;
+    font-size: var(--texto-xs);
+    font-weight: 600;
+    font-family: var(--fuente-principal);
+    border: 1px solid transparent;
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: white;
+}
+
+.btn-cot-marcar {
+    color: var(--color-amarillo-hover);
+    border-color: var(--color-amarillo);
+}
+.btn-cot-marcar:hover {
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+}
+
+.btn-cot-ganadora-activa {
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    border-color: var(--color-amarillo);
+    cursor: default;
+    opacity: 0.85;
+}
+
+.btn-cot-editar {
+    color: var(--color-en-proceso);
+    border-color: var(--color-en-proceso);
+}
+.btn-cot-editar:hover {
+    background: var(--color-en-proceso-bg);
+}
+
+.btn-cot-eliminar {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+.btn-cot-eliminar:hover {
+    background: var(--color-eliminado-bg);
+}
+
+/* ════════════════════════════════════════════
+   5. ESTADO VACÍO
+   ════════════════════════════════════════════ */
+
+.cot-vacio {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background: var(--color-gris-light);
+    border-radius: var(--radio-lg);
+    border: 2px dashed var(--color-borde);
+}
+
+.cot-vacio-icono {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    animation: cot-estrella-gira 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+.cot-vacio-titulo {
+    font-size: var(--texto-base);
+    font-weight: 600;
+    color: var(--color-texto);
+    margin-bottom: 0.25rem;
+}
+
+.cot-vacio-texto {
+    font-size: var(--texto-sm);
+    color: var(--color-texto-secundario);
+}
+
+/* ════════════════════════════════════════════
+   6. FORMULARIO DE NUEVA/EDITAR COTIZACIÓN
+   ════════════════════════════════════════════ */
+
+.cot-form {
+    background: linear-gradient(135deg, #F8FAFF, #FFFFFF);
+    border: 1.5px solid var(--color-azul-light);
+    border-radius: var(--radio-lg);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    animation: cot-card-entra 0.35s ease both;
+}
+
+.cot-form-titulo {
+    font-size: var(--texto-base);
+    font-weight: 700;
+    color: var(--color-azul);
+    margin-bottom: 0.75rem;
+}
+
+.cot-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.cot-form-grid .input-grupo { margin-bottom: 0; }
+
+.cot-archivo-actual {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    padding: 0.4rem 0.6rem;
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    border-radius: var(--radio-sm);
+    margin-top: 0.4rem;
+}
+
+.cot-form-acciones {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+}
+
+/* ════════════════════════════════════════════
+   7. PANEL PARA EL JEFE (solo lectura)
+   ════════════════════════════════════════════ */
+
+.cot-panel-jefe {
+    margin-top: 1rem;
+    background: linear-gradient(135deg, #F8FAFF, #FFFFFF);
+    border: 1.5px solid var(--color-azul-light);
+    border-radius: var(--radio-lg);
+    padding: 1rem 1.1rem;
+}
+
+.cot-panel-jefe-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--texto-sm);
+    font-weight: 700;
+    color: var(--color-azul);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cot-panel-jefe-titulo span:first-child { font-size: 1.2rem; }
+
+.cot-panel-jefe-lista {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+
+.cot-card-mini {
+    position: relative;
+    background: white;
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-md);
+    padding: 0.7rem 0.85rem;
+    animation: cot-card-entra 0.5s ease both;
+}
+
+.cot-card-mini-ganadora {
+    border-color: var(--color-amarillo);
+    background: linear-gradient(135deg, #FFFEF7, #FFFCE8);
+}
+
+.cot-mini-cinta {
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: var(--radio-sm);
+}
+
+.cot-mini-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.cot-mini-cabecera strong {
+    color: var(--color-texto);
+    font-size: var(--texto-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cot-mini-valor {
+    font-weight: 800;
+    color: var(--color-azul);
+    font-size: var(--texto-base);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.cot-card-mini-ganadora .cot-mini-valor { color: var(--color-amarillo-hover); }
+
+.cot-mini-meta {
+    display: flex;
+    gap: 0.5rem;
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    margin-bottom: 0.3rem;
+}
+
+.cot-mini-link {
+    color: var(--color-azul);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cot-mini-link:hover { text-decoration: underline; }
+
+.cot-mini-obs {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-secundario);
+    padding-top: 0.3rem;
+    border-top: 1px dashed var(--color-borde);
+    line-height: 1.35;
+}
+
+/* ════════════════════════════════════════════
+   8. BADGE DE COTIZACIONES EN TABLA DE REQUISICIONES
+   ════════════════════════════════════════════ */
+
+.badge-cotizaciones {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.55rem;
+    background: var(--color-amarillo);
+    color: var(--color-azul);
+    border-radius: var(--radio-full);
+    font-size: 0.65rem;
+    font-weight: 700;
+    margin-left: 0.35rem;
+    vertical-align: middle;
+}
+
+/* Botón de acción "Cotizaciones" en tabla */
+.btn-accion-cotizar {
+    color: var(--color-amarillo-hover);
+    border-color: var(--color-amarillo) !important;
+    font-weight: 600;
+}
+.btn-accion-cotizar:hover {
+    background: var(--color-amarillo) !important;
+    color: var(--color-azul) !important;
+}
+
+/* ════════════════════════════════════════════
+   9. RESPONSIVE
+   ════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+    .cot-cabecera { grid-template-columns: 1fr; }
+    .cot-aviso-aprob, .cot-aviso-ok { max-width: 100%; }
+    .cot-form-grid { grid-template-columns: 1fr; }
+    .cot-panel-jefe-lista { grid-template-columns: 1fr; }
+    .cot-card-cabecera { flex-direction: column; align-items: flex-start; }
+    .cot-card-valor { align-self: flex-end; }
+}
+
+/* ════════════════════════════════════════════
+   10. ACCESIBILIDAD
+   ════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+    .cot-card, .cot-card-mini, .cot-form, .cot-vacio-icono,
+    .cot-card-ganadora, .cot-cinta-ganadora, .cot-contador-numero {
+        animation: none !important;
+    }
+}
