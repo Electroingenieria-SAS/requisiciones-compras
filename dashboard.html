@@ -198,8 +198,16 @@
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
             <div class="dash-card">
-                <div class="dash-card-label">Valor total compras</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor">$0</div>
+                <div class="dash-card-label">Gestionadas por Compras</div>
+                <div class="dash-card-valor" style="color:var(--color-azul);font-size:var(--texto-xl);" id="m-valor-compras">$0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Gestionadas autónomamente</div>
+                <div class="dash-card-valor" style="color:var(--color-amarillo-hover);font-size:var(--texto-xl);" id="m-valor-autonomo">$0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-label">Tiempo promedio aprobación</div>
+                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-aprobacion">- días</div>
             </div>
             <div class="dash-card">
                 <div class="dash-card-label">Tiempo promedio Compras</div>
@@ -296,7 +304,13 @@
             const enCotizacion = activas.filter(r => r.estado === 'En cotización').length;
             const enProceso = activas.filter(r => r.estado === 'En proceso').length;
             const cumplidas = activas.filter(r => r.estado === 'Cumplido').length;
-            const valorTotal = activas.filter(r => r.estado === 'Cumplido' && r.valor_real_compra)
+
+            // ─── Valor cumplido SEPARADO por quién ejecuta ───
+            const valorCompras = activas
+                .filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Compras' && r.valor_real_compra)
+                .reduce((s, r) => s + Number(r.valor_real_compra), 0);
+            const valorAutonomo = activas
+                .filter(r => r.estado === 'Cumplido' && r.quien_ejecuta === 'Proceso Autónomo' && r.valor_real_compra)
                 .reduce((s, r) => s + Number(r.valor_real_compra), 0);
 
             // Tiempo promedio SEPARADO por quien ejecuta
@@ -312,6 +326,14 @@
             const tiempoCompras = calcularPromedio(cumplidasCompras);
             const tiempoAutonomo = calcularPromedio(cumplidasAutonomo);
 
+            // ─── Tiempo promedio de APROBACIÓN del jefe ───
+            // Mide cuánto tarda el jefe en aprobar (o rechazar) desde que se creó.
+            // Considera todas las que ya tienen fecha_aprobacion registrada.
+            const aprobadas = activas.filter(r => r.fecha_aprobacion);
+            const tiempoAprobacion = aprobadas.length === 0 ? '-' : (
+                aprobadas.reduce((s, r) => s + ((new Date(r.fecha_aprobacion) - new Date(r.created_at)) / 86400000), 0) / aprobadas.length
+            ).toFixed(1);
+
             document.getElementById('m-total').textContent = activas.length;
             document.getElementById('m-pendientes-aprobacion').textContent = pendientesAprobacion;
             document.getElementById('m-rechazadas').textContent = rechazadas;
@@ -319,7 +341,9 @@
             document.getElementById('m-en-cotizacion').textContent = enCotizacion;
             document.getElementById('m-en-proceso').textContent = enProceso;
             document.getElementById('m-cumplidas').textContent = cumplidas;
-            document.getElementById('m-valor').textContent = formatearMoneda(valorTotal);
+            document.getElementById('m-valor-compras').textContent = formatearMoneda(valorCompras);
+            document.getElementById('m-valor-autonomo').textContent = formatearMoneda(valorAutonomo);
+            document.getElementById('m-tiempo-aprobacion').textContent = tiempoAprobacion === '-' ? '- días' : `${tiempoAprobacion} días`;
             document.getElementById('m-tiempo-compras').textContent = tiempoCompras === '-' ? '- días' : `${tiempoCompras} días`;
             document.getElementById('m-tiempo-autonomo').textContent = tiempoAutonomo === '-' ? '- días' : `${tiempoAutonomo} días`;
 
