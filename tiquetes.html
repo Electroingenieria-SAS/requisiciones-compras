@@ -501,24 +501,16 @@
                             <input type="text" class="input-campo input-pasajero-cedula" data-i="${i}" value="${p.cedula || ''}" placeholder="Solo números" inputmode="numeric">
                         </div>
                     </div>
-                    <div class="form-grid">
-                        <div class="input-grupo">
-                            <label class="input-label">Cédula - Frente <span class="requerido">*</span></label>
-                            <label class="upload-area ${p.fileFrente ? 'tiene-archivo' : ''}" data-upload-frente="${i}">
-                                <input type="file" class="file-pasajero-frente" data-i="${i}" accept="image/*,application/pdf">
-                                <div class="upload-icono">📷</div>
-                                <div class="upload-texto">Subir frente</div>
-                                <div class="upload-nombre">${p.fileFrente ? '✓ ' + p.fileFrente.name : ''}</div>
-                            </label>
-                        </div>
-                        <div class="input-grupo">
-                            <label class="input-label">Cédula - Reverso <span class="requerido">*</span></label>
-                            <label class="upload-area ${p.fileReverso ? 'tiene-archivo' : ''}" data-upload-reverso="${i}">
-                                <input type="file" class="file-pasajero-reverso" data-i="${i}" accept="image/*,application/pdf">
-                                <div class="upload-icono">📷</div>
-                                <div class="upload-texto">Subir reverso</div>
-                                <div class="upload-nombre">${p.fileReverso ? '✓ ' + p.fileReverso.name : ''}</div>
-                            </label>
+                    <div class="input-grupo">
+                        <label class="input-label">Documento de identidad (PDF/imagen) <span class="requerido">*</span></label>
+                        <label class="upload-area ${p.fileFrente ? 'tiene-archivo' : ''}" data-upload-frente="${i}">
+                            <input type="file" class="file-pasajero-frente" data-i="${i}" accept="image/*,application/pdf">
+                            <div class="upload-icono">📎</div>
+                            <div class="upload-texto">Subir documento (PDF o imagen)</div>
+                            <div class="upload-nombre">${p.fileFrente ? '✓ ' + p.fileFrente.name : ''}</div>
+                        </label>
+                        <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);margin-top:0.25rem;">
+                            Puede ser un solo PDF con ambos lados de la cédula.
                         </div>
                     </div>
                 </div>
@@ -544,16 +536,6 @@
                     const file = e.target.files[0];
                     if (file) {
                         pasajerosTemp[i].fileFrente = file;
-                        renderizarPasajeros();
-                    }
-                });
-            });
-            cont.querySelectorAll('.file-pasajero-reverso').forEach(inp => {
-                inp.addEventListener('change', (e) => {
-                    const i = parseInt(e.target.dataset.i);
-                    const file = e.target.files[0];
-                    if (file) {
-                        pasajerosTemp[i].fileReverso = file;
                         renderizarPasajeros();
                     }
                 });
@@ -644,30 +626,26 @@
                 const p = pasajerosTemp[i];
                 if (!p.nombre) { Toast.advertencia(`Ingrese el nombre del pasajero ${i + 1}.`); return; }
                 if (!p.cedula) { Toast.advertencia(`Ingrese la cédula del pasajero ${i + 1}.`); return; }
-                if (!p.fileFrente) { Toast.advertencia(`Suba la cédula (frente) del pasajero ${i + 1}.`); return; }
-                if (!p.fileReverso) { Toast.advertencia(`Suba la cédula (reverso) del pasajero ${i + 1}.`); return; }
+                if (!p.fileFrente) { Toast.advertencia(`Suba el documento de identidad del pasajero ${i + 1}.`); return; }
             }
 
             btn.disabled = true; btn.textContent = 'Subiendo documentos...';
 
             try {
-                // 1. Subir cédulas de todos los pasajeros
+                // 1. Subir documentos de todos los pasajeros (un solo archivo por pasajero)
                 const pasajerosConArchivos = [];
                 for (let i = 0; i < pasajerosTemp.length; i++) {
                     const p = pasajerosTemp[i];
-                    btn.textContent = `Subiendo documentos pasajero ${i + 1}/${pasajerosTemp.length}...`;
+                    btn.textContent = `Subiendo documento pasajero ${i + 1}/${pasajerosTemp.length}...`;
 
-                    const upF = await subirArchivo(p.fileFrente, 'cedulas', `${p.cedula}_frente`);
-                    if (upF.error) { Toast.error(`Error subiendo frente del pasajero ${i + 1}: ${upF.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
-
-                    const upR = await subirArchivo(p.fileReverso, 'cedulas', `${p.cedula}_reverso`);
-                    if (upR.error) { Toast.error(`Error subiendo reverso del pasajero ${i + 1}: ${upR.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
+                    const upF = await subirArchivo(p.fileFrente, 'cedulas', `${p.cedula}_${Date.now()}`);
+                    if (upF.error) { Toast.error(`Error subiendo documento del pasajero ${i + 1}: ${upF.error}`); btn.disabled = false; btn.textContent = 'Solicitar tiquete'; return; }
 
                     pasajerosConArchivos.push({
                         nombre_completo: p.nombre,
                         cedula: p.cedula,
                         cedula_frente_url: upF.path,
-                        cedula_reverso_url: upR.path,
+                        cedula_reverso_url: null,
                         orden: i + 1
                     });
                 }
@@ -946,30 +924,69 @@
             }
 
             // Generar HTML de todos los pasajeros con sus enlaces de cédula
+            // Retrocompatible: si hay reverso → registros viejos (2 enlaces); si no → 1 enlace
             let htmlPasajeros = '';
             for (const p of pasajeros) {
                 const urlF = await obtenerUrlFirmada(p.cedula_frente_url);
-                const urlR = await obtenerUrlFirmada(p.cedula_reverso_url);
+                const urlR = p.cedula_reverso_url ? await obtenerUrlFirmada(p.cedula_reverso_url) : null;
+                const enlacesCedula = urlR
+                    ? `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
+                       <a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>`
+                    : `${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">📎 Ver cédula</a>` : ''}`;
                 htmlPasajeros += `
                     <div style="background:#f8f9fc;border-left:3px solid var(--color-azul);padding:0.625rem 0.875rem;border-radius:0 6px 6px 0;margin-bottom:0.5rem;">
                         <div style="font-weight:600;color:var(--color-azul);font-size:var(--texto-sm);">Pasajero ${p.orden}: ${p.nombre_completo}</div>
                         <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);">CC ${p.cedula}</div>
                         <div style="display:flex;gap:0.4rem;margin-top:0.4rem;flex-wrap:wrap;">
-                            ${urlF ? `<a href="${urlF}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula frente</a>` : ''}
-                            ${urlR ? `<a href="${urlR}" target="_blank" style="font-size:var(--texto-xs);color:var(--color-azul);text-decoration:underline;">Ver cédula reverso</a>` : ''}
+                            ${enlacesCedula}
                         </div>
                     </div>
                 `;
             }
 
-            // URLs firmadas para PDFs
-            const urlTiquetePDF = t.tiquete_pdf_url ? await obtenerUrlFirmada(t.tiquete_pdf_url) : null;
-            const urlHotelPDF = t.hotel_confirmacion_url ? await obtenerUrlFirmada(t.hotel_confirmacion_url) : null;
+            // Cargar todas las reservas (nueva tabla). Si no hay, usa la columna legacy.
+            const { data: reservasDb } = await supabase
+                .from('tiquete_reservas')
+                .select('*')
+                .eq('tiquete_id', t.id)
+                .order('created_at', { ascending: true });
+
+            let reservas = reservasDb || [];
+            // Backward compat: si no hay nuevas y existe legacy → mostrar la del campo
+            if (reservas.length === 0 && t.codigo_reserva) {
+                reservas = [{
+                    codigo_reserva: t.codigo_reserva,
+                    tiquete_pdf_url: t.tiquete_pdf_url,
+                    observacion: '',
+                    _legacy: true
+                }];
+            }
+
+            // HTML de cada reserva con su PDF
+            let htmlReservas = '';
+            for (let i = 0; i < reservas.length; i++) {
+                const r = reservas[i];
+                const urlPdf = r.tiquete_pdf_url ? await obtenerUrlFirmada(r.tiquete_pdf_url) : null;
+                htmlReservas += `
+                    <div style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);padding:0.85rem;border-radius:8px;border-left:4px solid #10B981;margin-bottom:0.5rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:var(--texto-xs);color:#065F46;font-weight:700;letter-spacing:0.5px;margin-bottom:0.15rem;">RESERVA ${reservas.length > 1 ? `#${i + 1}` : ''}</div>
+                                <div style="font-size:1.15rem;color:#065F46;font-weight:700;font-family:'Courier New',monospace;letter-spacing:2px;">${r.codigo_reserva}</div>
+                                ${r.observacion ? `<div style="font-size:var(--texto-xs);color:#047857;margin-top:0.3rem;font-style:italic;">${r.observacion}</div>` : ''}
+                            </div>
+                            ${urlPdf ? `<a href="${urlPdf}" target="_blank" class="btn btn-primario" style="font-size:var(--texto-xs);flex-shrink:0;">📄 Descargar</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
 
             // Texto de tarifa
             const tarifaTexto = t.tipo_tarifa === 'Otro' && t.tarifa_otro
                 ? `Otro: ${t.tarifa_otro}`
                 : (t.tipo_tarifa || 'No especificada');
+
+            const urlHotelPDF = t.hotel_confirmacion_url ? await obtenerUrlFirmada(t.hotel_confirmacion_url) : null;
 
             const html = `
                 <div style="display:grid; gap:0.6rem; font-size: var(--texto-sm);">
@@ -994,14 +1011,13 @@
 
                     ${t.motivo_rechazo ? `<div style="background:#FEE2E2;padding:0.6rem;border-radius:6px;color:#991B1B;"><strong>Motivo de rechazo:</strong> ${t.motivo_rechazo}</div>` : ''}
 
-                    ${t.codigo_reserva ? `
-                    <div style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);padding:0.875rem;border-radius:8px;border-left:4px solid #10B981;margin-top:0.5rem;">
-                        <div style="font-size:var(--texto-xs);color:#065F46;font-weight:700;letter-spacing:0.5px;margin-bottom:0.25rem;">CÓDIGO DE RESERVA</div>
-                        <div style="font-size:1.25rem;color:#065F46;font-weight:700;font-family:'Courier New',monospace;letter-spacing:2px;">${t.codigo_reserva}</div>
-                        <div style="display:flex;gap:0.5rem;margin-top:0.625rem;flex-wrap:wrap;">
-                            ${urlTiquetePDF ? `<a href="${urlTiquetePDF}" target="_blank" class="btn btn-primario" style="font-size:var(--texto-xs);">📄 Descargar tiquete</a>` : ''}
-                            ${urlHotelPDF ? `<a href="${urlHotelPDF}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">🏨 Descargar hotel</a>` : ''}
+                    ${reservas.length > 0 ? `
+                    <div style="margin-top:0.5rem;">
+                        <div style="font-weight:600;color:#065F46;font-size:var(--texto-sm);margin-bottom:0.4rem;">
+                            ✈️ ${reservas.length} reserva(s):
                         </div>
+                        ${htmlReservas}
+                        ${urlHotelPDF ? `<div style="margin-top:0.5rem;"><a href="${urlHotelPDF}" target="_blank" class="btn btn-secundario" style="font-size:var(--texto-xs);">🏨 Descargar confirmación hotel</a></div>` : ''}
                     </div>` : ''}
 
                     ${t.factura_hotel ? `
