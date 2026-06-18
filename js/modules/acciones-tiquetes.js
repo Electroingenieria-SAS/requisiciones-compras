@@ -8,6 +8,7 @@
  */
 
 import { actualizarTiquete, registrarHistorialTiquete, obtenerHistorialTiquete, obtenerUrlFirmada, subirArchivo } from '../services/tiquetes.service.js';
+import { crearReserva, subirPdfReserva } from '../services/tiquete-reservas.service.js';
 import { formatearFecha, formatearFechaHora } from '../utils/formatters.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
@@ -238,7 +239,11 @@ export function iniciarGestionTiquete(tiq, usuario, perfil, onCambiado) {
 }
 
 /**
- * ─── CUMPLIR TIQUETE (sube PDFs, código y envía correo al solicitante) ───
+ * ─── CUMPLIR TIQUETE (varias reservas: cada una con código, PDF y observación) ───
+ *
+ * Compras puede haber hecho varias compras separadas para el mismo viaje
+ * (ej: 2 pasajeros en una reserva, 1 pasajero en otra). Por eso permitimos
+ * registrar N reservas, cada una con su propio PDF y observación libre.
  */
 export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
     const html = `
@@ -247,23 +252,20 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
                 <div style="font-size:var(--texto-xs);color:#065F46;font-weight:600;margin-bottom:0.25rem;">TIQUETE A CUMPLIR</div>
                 <div style="font-weight:600;color:#065F46;">${tiq.id_tiquete} — ${tiq.destino}</div>
                 <div style="font-size:var(--texto-xs);color:#1F2937;margin-top:0.25rem;">
-                    Pasajero: ${tiq.pasajero_nombre}${tiq.requiere_hotel ? ' · Con hotel' : ''}
+                    Pasajero principal: ${tiq.pasajero_nombre}${tiq.requiere_hotel ? ' · Con hotel' : ''}
                 </div>
             </div>
 
-            <div class="input-grupo">
-                <label class="input-label">Código de reserva (PNR) <span class="requerido">*</span></label>
-                <input type="text" id="cumplir-codigo" class="input-campo" placeholder="Ej: ABC123, XYZ456" style="text-transform:uppercase;font-family:'Courier New',monospace;letter-spacing:1px;">
-            </div>
-
-            <div class="input-grupo">
-                <label class="input-label">PDF del tiquete aéreo <span class="requerido">*</span></label>
-                <label class="upload-area" id="up-tiquete-pdf">
-                    <input type="file" id="file-tiquete-pdf" accept="application/pdf,image/*" style="display:none;">
-                    <div class="upload-icono">📄</div>
-                    <div class="upload-texto">Click para subir PDF del tiquete</div>
-                    <div class="upload-nombre" id="nombre-tiquete-pdf"></div>
-                </label>
+            <!-- Repetidor de reservas -->
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <label class="input-label" style="margin:0;">Reservas adquiridas <span class="requerido">*</span></label>
+                    <button type="button" id="btn-add-reserva" class="btn btn-secundario" style="font-size:var(--texto-xs);padding:0.35rem 0.75rem;">+ Agregar otra reserva</button>
+                </div>
+                <div style="font-size:var(--texto-xs);color:var(--color-texto-secundario);margin-bottom:0.5rem;">
+                    Si la compra cubrió varios pasajeros con códigos PNR distintos, agrega cada reserva por separado con su PDF.
+                </div>
+                <div id="lista-reservas"></div>
             </div>
 
             ${tiq.requiere_hotel ? `
@@ -278,8 +280,8 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
             </div>` : ''}
 
             <div class="input-grupo">
-                <label class="input-label">Observaciones para el solicitante (opcional)</label>
-                <textarea id="cumplir-observaciones" class="input-campo input-textarea" placeholder="Detalles sobre la aerolínea, escalas, notas importantes..."></textarea>
+                <label class="input-label">Observaciones generales (opcional)</label>
+                <textarea id="cumplir-observaciones" class="input-campo input-textarea" placeholder="Notas globales para el solicitante..."></textarea>
             </div>
         </div>
     `;
@@ -287,17 +289,23 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
     Modal.crear({
         titulo: `Cumplir tiquete - ${tiq.id_tiquete}`,
         contenido: html,
-        ancho: '600px',
+        ancho: '640px',
         botones: [
             { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
             { texto: '✓ Marcar como Cumplido', clase: 'btn-primario', onClick: async () => {
-                const codigo = document.getElementById('cumplir-codigo').value.trim().toUpperCase();
-                const observaciones = document.getElementById('cumplir-observaciones').value.trim();
-                const fileTiquete = document.getElementById('file-tiquete-pdf').files[0];
-                const fileHotel = tiq.requiere_hotel ? document.getElementById('file-hotel-pdf').files[0] : null;
+                // Validar al menos una reserva con código + PDF
+                const codigos = Array.from(document.querySelectorAll('.input-reserva-codigo')).map(e => e.value.trim().toUpperCase());
+                const archivos = Array.from(document.querySelectorAll('.input-reserva-archivo')).map(e => e.files[0] || null);
+                const observ = Array.from(document.querySelectorAll('.input-reserva-observ')).map(e => e.value.trim());
 
-                if (!codigo) { Toast.advertencia('Ingrese el código de reserva.'); return; }
-                if (!fileTiquete) { Toast.advertencia('Suba el PDF del tiquete.'); return; }
+                if (codigos.length === 0) { Toast.advertencia('Agregue al menos una reserva.'); return; }
+                for (let i = 0; i < codigos.length; i++) {
+                    if (!codigos[i]) { Toast.advertencia(`Falta el código de la reserva #${i + 1}.`); return; }
+                    if (!archivos[i]) { Toast.advertencia(`Falta el PDF de la reserva #${i + 1}.`); return; }
+                }
+
+                const observacionesGen = document.getElementById('cumplir-observaciones').value.trim();
+                const fileHotel = tiq.requiere_hotel ? document.getElementById('file-hotel-pdf').files[0] : null;
                 if (tiq.requiere_hotel && !fileHotel) { Toast.advertencia('Suba la confirmación del hotel.'); return; }
 
                 const btn = event.target;
@@ -305,30 +313,43 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
                 btn.textContent = 'Subiendo archivos...';
 
                 try {
-                    // Subir PDF del tiquete
-                    const upTiquete = await subirArchivo(fileTiquete, 'tiquetes', `${tiq.id_tiquete}_tiquete`);
-                    if (upTiquete.error) { Toast.error('Error subiendo tiquete: ' + upTiquete.error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
-
+                    // Subir hotel (si aplica)
                     let upHotel = { path: null };
                     if (tiq.requiere_hotel && fileHotel) {
                         upHotel = await subirArchivo(fileHotel, 'hoteles', `${tiq.id_tiquete}_hotel`);
-                        if (upHotel.error) { Toast.error('Error subiendo hotel: ' + upHotel.error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
+                        if (upHotel.error) { throw new Error('Hotel: ' + upHotel.error); }
                     }
 
-                    btn.textContent = 'Guardando...';
+                    // Subir PDF de cada reserva y guardar en tiquete_reservas
+                    btn.textContent = `Guardando reservas (0/${codigos.length})...`;
+                    for (let i = 0; i < codigos.length; i++) {
+                        btn.textContent = `Subiendo PDF (${i + 1}/${codigos.length})...`;
+                        const up = await subirPdfReserva(archivos[i], tiq.id_tiquete, i + 1);
+                        if (up.error) { throw new Error(`Reserva #${i + 1}: ${up.error}`); }
 
-                    // Actualizar el tiquete
+                        const { error: errReserva } = await crearReserva({
+                            tiquete_id: tiq.id,
+                            codigo_reserva: codigos[i],
+                            tiquete_pdf_url: up.path,
+                            observacion: observ[i] || '',
+                            creado_por: usuario.id,
+                            creado_por_nombre: perfil.nombre_completo
+                        });
+                        if (errReserva) { throw new Error(`Reserva #${i + 1}: ${errReserva}`); }
+                    }
+
+                    btn.textContent = 'Finalizando...';
+
+                    // Actualizar tiquete: estado Cumplido + primera reserva en columnas legacy (compat)
                     const cambios = {
                         estado: 'Cumplido',
-                        codigo_reserva: codigo,
-                        tiquete_pdf_url: upTiquete.path,
+                        codigo_reserva: codigos[0],
                         hotel_confirmacion_url: upHotel.path,
                         fecha_entrega: new Date().toISOString(),
                         entregado_por: usuario.id
                     };
-
                     const { error } = await actualizarTiquete(tiq.id, cambios);
-                    if (error) { Toast.error(error); btn.disabled = false; btn.textContent = '✓ Marcar como Cumplido'; return; }
+                    if (error) { throw new Error(error); }
 
                     // Registrar en historial
                     await registrarHistorialTiquete({
@@ -340,20 +361,15 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
                         campo_modificado: 'estado',
                         valor_anterior: tiq.estado,
                         valor_nuevo: 'Cumplido',
-                        detalle: `Tiquete cumplido. Código: ${codigo}${observaciones ? ' · Notas: ' + observaciones : ''}`
+                        detalle: `Tiquete cumplido con ${codigos.length} reserva(s): ${codigos.join(', ')}${observacionesGen ? ' · Notas: ' + observacionesGen : ''}`
                     });
 
-                    btn.textContent = 'Finalizando...';
-
-                    // Nota: el envío de correo automático está desactivado.
-                    // El solicitante verá el código y descargas en la app.
-
-                    Toast.exito('Tiquete cumplido. El solicitante verá los detalles en su sesión.');
+                    Toast.exito(`Tiquete cumplido con ${codigos.length} reserva(s).`);
                     Modal.cerrar();
                     if (onCumplido) onCumplido();
                 } catch (err) {
                     console.error(err);
-                    Toast.error('Error al cumplir el tiquete.');
+                    Toast.error('Error: ' + (err.message || 'No se pudo cumplir el tiquete.'));
                     btn.disabled = false;
                     btn.textContent = '✓ Marcar como Cumplido';
                 }
@@ -361,19 +377,87 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
         ]
     });
 
-    // Configurar feedback visual de los uploads (después de que el modal esté en el DOM)
+    // ─── Estado interno: array de reservas en el formulario ───
     setTimeout(() => {
-        ['tiquete-pdf', 'hotel-pdf'].forEach(id => {
-            const input = document.getElementById(`file-${id}`);
-            if (!input) return;
-            input.addEventListener('change', (e) => {
+        let reservasTemp = [{ codigo: '', archivo: null, observ: '' }];
+
+        function renderReservas() {
+            const cont = document.getElementById('lista-reservas');
+            cont.innerHTML = reservasTemp.map((r, i) => `
+                <div class="reserva-bloque" style="border:1.5px solid var(--color-borde);border-radius:8px;padding:0.85rem;margin-bottom:0.6rem;background:#FAFBFC;position:relative;animation:ei-entrada-arriba 0.35s ease both;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <strong style="color:var(--color-azul);font-size:var(--texto-sm);">Reserva #${i + 1}</strong>
+                        ${reservasTemp.length > 1 ? `<button type="button" class="btn-quitar-reserva" data-i="${i}" style="background:none;border:none;color:var(--color-error);cursor:pointer;font-weight:600;font-size:var(--texto-xs);">✕ Quitar</button>` : ''}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div class="input-grupo" style="margin:0;">
+                            <label class="input-label" style="font-size:var(--texto-xs);">Código de reserva (PNR) <span class="requerido">*</span></label>
+                            <input type="text" class="input-campo input-reserva-codigo" data-i="${i}" value="${r.codigo}" placeholder="Ej: ABC123" style="text-transform:uppercase;font-family:'Courier New',monospace;letter-spacing:1px;">
+                        </div>
+                        <div class="input-grupo" style="margin:0;">
+                            <label class="input-label" style="font-size:var(--texto-xs);">PDF del tiquete <span class="requerido">*</span></label>
+                            <input type="file" class="input-reserva-archivo" data-i="${i}" accept="application/pdf,image/*">
+                            ${r.archivo ? `<div style="font-size:var(--texto-xs);color:var(--color-cumplido);margin-top:0.25rem;">✓ ${r.archivo.name}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="input-grupo" style="margin:0.5rem 0 0;">
+                        <label class="input-label" style="font-size:var(--texto-xs);">Observación (opcional)</label>
+                        <input type="text" class="input-campo input-reserva-observ" data-i="${i}" value="${r.observ}" placeholder="Ej: Pasajeros 1 y 2 · Vuelo directo">
+                    </div>
+                </div>
+            `).join('');
+
+            // Listeners de inputs
+            cont.querySelectorAll('.input-reserva-codigo').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    reservasTemp[parseInt(e.target.dataset.i)].codigo = e.target.value;
+                });
+            });
+            cont.querySelectorAll('.input-reserva-observ').forEach(inp => {
+                inp.addEventListener('input', (e) => {
+                    reservasTemp[parseInt(e.target.dataset.i)].observ = e.target.value;
+                });
+            });
+            cont.querySelectorAll('.input-reserva-archivo').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const i = parseInt(e.target.dataset.i);
+                    const file = e.target.files[0];
+                    if (file) {
+                        reservasTemp[i].archivo = file;
+                        renderReservas();
+                    }
+                });
+            });
+            cont.querySelectorAll('.btn-quitar-reserva').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    reservasTemp.splice(parseInt(e.currentTarget.dataset.i), 1);
+                    renderReservas();
+                });
+            });
+        }
+
+        document.getElementById('btn-add-reserva').addEventListener('click', () => {
+            if (reservasTemp.length >= 9) {
+                Toast.advertencia('Máximo 9 reservas por tiquete.');
+                return;
+            }
+            reservasTemp.push({ codigo: '', archivo: null, observ: '' });
+            renderReservas();
+        });
+
+        // Listener del hotel
+        const inputHotel = document.getElementById('file-hotel-pdf');
+        if (inputHotel) {
+            inputHotel.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    document.getElementById(`up-${id}`).classList.add('tiene-archivo');
-                    document.getElementById(`nombre-${id}`).textContent = '✓ ' + file.name;
+                    document.getElementById('up-hotel-pdf').classList.add('tiene-archivo');
+                    document.getElementById('nombre-hotel-pdf').textContent = '✓ ' + file.name;
                 }
             });
-        });
+        }
+
+        renderReservas();
     }, 100);
 }
 
