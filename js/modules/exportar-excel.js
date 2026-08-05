@@ -13,7 +13,30 @@
 
 // Importar SheetJS desde CDN
 import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
-import { obtenerItemsPorRequisiciones } from '../services/requisiciones.service.js';
+import { supabase } from '../config/supabase.js';
+
+/**
+ * Traer los ítems de varias requisiciones (consulta propia, sin depender
+ * de otros módulos, para que el export nunca se caiga en cadena).
+ */
+async function traerItemsPorRequisiciones(ids) {
+    try {
+        if (!ids || ids.length === 0) return {};
+        const { data, error } = await supabase
+            .from('requisicion_items')
+            .select('*')
+            .in('requisicion_id', ids)
+            .order('orden', { ascending: true });
+        if (error) return {};
+        const mapa = {};
+        (data || []).forEach(it => {
+            (mapa[it.requisicion_id] = mapa[it.requisicion_id] || []).push(it);
+        });
+        return mapa;
+    } catch (err) {
+        return {};
+    }
+}
 
 /**
  * Exportar requisiciones a Excel con formato profesional
@@ -33,7 +56,7 @@ export async function exportarRequisicionesExcel(requisiciones, info = {}) {
     });
 
     // ─── Traer los ítems de todas las requisiciones (para una fila por ítem) ───
-    const { mapa: mapaItems } = await obtenerItemsPorRequisiciones(requisiciones.map(r => r.id));
+    const mapaItems = await traerItemsPorRequisiciones(requisiciones.map(r => r.id));
 
     // ─── Preparar datos: UNA FILA POR ÍTEM ───
     const datosExcel = [];
