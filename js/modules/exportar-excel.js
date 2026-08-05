@@ -13,13 +13,14 @@
 
 // Importar SheetJS desde CDN
 import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
+import { obtenerItemsPorRequisiciones } from '../services/requisiciones.service.js';
 
 /**
  * Exportar requisiciones a Excel con formato profesional
  * @param {Array} requisiciones - Array de requisiciones a exportar
  * @param {Object} info - { empresa, usuario, proceso, filtros }
  */
-export function exportarRequisicionesExcel(requisiciones, info = {}) {
+export async function exportarRequisicionesExcel(requisiciones, info = {}) {
     if (!requisiciones || requisiciones.length === 0) {
         throw new Error('No hay requisiciones para exportar.');
     }
@@ -31,35 +32,64 @@ export function exportarRequisicionesExcel(requisiciones, info = {}) {
         hour: '2-digit', minute: '2-digit'
     });
 
-    // ─── Preparar datos ───
-    const datosExcel = requisiciones.map(req => ({
-        'ID Requisición': req.id_requisicion,
-        'Fecha': formatearFechaExcel(req.fecha),
-        'Solicitante': req.solicitante,
-        'Proceso': req.proceso,
-        'Unidad Negocio': req.unidad_negocio,
-        'Centro Costo': req.centro_costo,
-        'Lugar Entrega': req.lugar_entrega,
-        'Objeto de Compra': req.objeto_compra,
-        'Cantidad': req.cantidad,
-        'Color': req.color || '',
-        'Dimensiones': req.dimensiones || '',
-        'Marca Sugerida': req.marca_sugerida || '',
-        'Proveedor Sugerido': req.proveedor_sugerido || '',
-        'Valor Estimado': req.valor_estimado ? Number(req.valor_estimado) : (req.rango_precios || ''),
-        'URL Referencia': req.url_referencia || '',
-        'Observaciones': req.observaciones || '',
-        'Quién Ejecuta': req.quien_ejecuta,
-        'Estado': req.eliminado ? 'Eliminada' : req.estado,
-        'Validación Presupuestal': req.validacion_presupuestal || '',
-        'Enviada Contabilidad': req.enviada_contabilidad || '',
-        'Fecha Entrega': req.fecha_entrega ? formatearFechaExcel(req.fecha_entrega) : '',
-        'Nº Factura': req.numero_factura || '',
-        'Fecha Factura': req.fecha_factura ? formatearFechaExcel(req.fecha_factura) : '',
-        'Valor Real Compra': req.valor_real_compra || '',
-        'Motivo Eliminación': req.motivo_eliminacion || '',
-        'Eliminado Por': req.eliminado_por || ''
-    }));
+    // ─── Traer los ítems de todas las requisiciones (para una fila por ítem) ───
+    const { mapa: mapaItems } = await obtenerItemsPorRequisiciones(requisiciones.map(r => r.id));
+
+    // ─── Preparar datos: UNA FILA POR ÍTEM ───
+    const datosExcel = [];
+    requisiciones.forEach(req => {
+        const base = {
+            'ID Requisición': req.id_requisicion,
+            'Fecha': formatearFechaExcel(req.fecha),
+            'Solicitante': req.solicitante,
+            'Proceso': req.proceso,
+            'Unidad Negocio': req.unidad_negocio,
+            'Centro Costo': req.centro_costo,
+            'Lugar Entrega': req.lugar_entrega,
+            'Objeto de Compra': req.objeto_compra
+        };
+        const cola = {
+            'Valor Total Requisición': req.valor_estimado ? Number(req.valor_estimado) : (req.rango_precios || ''),
+            'URL Referencia': req.url_referencia || '',
+            'Observaciones': req.observaciones || '',
+            'Quién Ejecuta': req.quien_ejecuta,
+            'Estado': req.eliminado ? 'Eliminada' : req.estado,
+            'Validación Presupuestal': req.validacion_presupuestal || '',
+            'Enviada Contabilidad': req.enviada_contabilidad || '',
+            'Fecha Entrega': req.fecha_entrega ? formatearFechaExcel(req.fecha_entrega) : '',
+            'Nº Factura': req.numero_factura || '',
+            'Fecha Factura': req.fecha_factura ? formatearFechaExcel(req.fecha_factura) : '',
+            'Valor Real Compra': req.valor_real_compra || '',
+            'Motivo Eliminación': req.motivo_eliminacion || '',
+            'Eliminado Por': req.eliminado_por || ''
+        };
+
+        const items = mapaItems[req.id] || [];
+        if (items.length === 0) {
+            // Sin ítems (caso raro): una sola fila con los totales del encabezado
+            datosExcel.push({
+                ...base,
+                'Ítem #': '', 'Descripción Ítem': '', 'Cantidad': req.cantidad || '',
+                'Color': '', 'Dimensiones': '', 'Marca Sugerida': '', 'Proveedor Sugerido': '', 'Valor Ítem': '',
+                ...cola
+            });
+        } else {
+            items.forEach((it, idx) => {
+                datosExcel.push({
+                    ...base,
+                    'Ítem #': it.orden || (idx + 1),
+                    'Descripción Ítem': it.descripcion || '',
+                    'Cantidad': it.cantidad,
+                    'Color': it.color || '',
+                    'Dimensiones': it.dimensiones || '',
+                    'Marca Sugerida': it.marca_sugerida || '',
+                    'Proveedor Sugerido': it.proveedor_sugerido || '',
+                    'Valor Ítem': it.valor_estimado ? Number(it.valor_estimado) : '',
+                    ...cola
+                });
+            });
+        }
+    });
 
     // ─── Crear libro de Excel ───
     const wb = XLSX.utils.book_new();
@@ -111,8 +141,19 @@ export function exportarRequisicionesExcel(requisiciones, info = {}) {
     const fechaArchivo = new Date().toISOString().split('T')[0];
     const nombreArchivo = `Requisiciones_${empresa.replace(/\s/g, '_')}_${fechaArchivo}.xlsx`;
 
-    // ─── Descargar ───
-    XLSX.writeFile(wb, nombreArchivo);
+    // ─── Descargar (Blob + enlace: método robusto para el navegador) ───
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
 
     return nombreArchivo;
 }
