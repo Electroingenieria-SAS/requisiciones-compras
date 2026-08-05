@@ -19,7 +19,7 @@ import {
     subirArchivoCotizacion,
     obtenerUrlFirmadaCotizacion
 } from '../services/cotizaciones.service.js';
-import { registrarHistorial } from '../services/requisiciones.service.js';
+import { registrarHistorial, obtenerItems } from '../services/requisiciones.service.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { Loader } from '../components/loader.js';
@@ -58,6 +58,7 @@ export function puedeGestionarCotizaciones(perfil) {
 export async function abrirGestorCotizaciones(req, usuario, perfil, onActualizado) {
     Loader.mostrar('Cargando cotizaciones...');
     const { cotizaciones, error } = await obtenerCotizaciones(req.id);
+    const { items } = await obtenerItems(req.id);
     Loader.ocultar();
 
     if (error) {
@@ -65,7 +66,7 @@ export async function abrirGestorCotizaciones(req, usuario, perfil, onActualizad
         return;
     }
 
-    const html = construirHTMLGestor(req, cotizaciones);
+    const html = construirHTMLGestor(req, cotizaciones, items || []);
 
     Modal.crear({
         titulo: `Cotizaciones — ${req.id_requisicion}`,
@@ -85,15 +86,21 @@ export async function abrirGestorCotizaciones(req, usuario, perfil, onActualizad
 /**
  * Construir el HTML del gestor de cotizaciones
  */
-function construirHTMLGestor(req, cotizaciones) {
+function construirHTMLGestor(req, cotizaciones, items = []) {
+    const itemsHTML = items.length
+        ? `<ul style="margin:0.4rem 0 0;padding-left:1.1rem;font-size:0.82rem;color:var(--color-texto);">` +
+            items.map(it => `<li><strong>${it.cantidad}×</strong> ${escapeHtml(it.descripcion)} — <span style="color:var(--color-texto-secundario);">$${Number(it.valor_estimado).toLocaleString('es-CO')}</span></li>`).join('') +
+          `</ul>`
+        : '';
     const cabecera = `
         <div class="cot-cabecera">
             <div class="cot-cabecera-info">
                 <div class="cot-eyebrow">Objeto de compra</div>
                 <div class="cot-objeto">${escapeHtml(req.objeto_compra)}</div>
+                ${itemsHTML}
                 <div class="cot-meta">
-                    Cantidad: <strong>${req.cantidad}</strong>
-                    ${req.rango_precios ? `· Rango estimado: <strong>${escapeHtml(req.rango_precios)}</strong>` : ''}
+                    Total ítems: <strong>${items.length}</strong>
+                    ${req.rango_precios ? `· Total estimado: <strong>${escapeHtml(req.rango_precios)}</strong>` : ''}
                 </div>
             </div>
             ${req.aprobacion_pendiente
