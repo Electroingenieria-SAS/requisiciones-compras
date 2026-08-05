@@ -427,6 +427,35 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
    VISTA SOLO LECTURA PARA EL JEFE (al aprobar)
    ============================================================ */
 
+/**
+ * Visor de SOLO LECTURA de cotizaciones (para requisiciones ya Cumplidas
+ * o Rechazadas, donde no se pueden gestionar pero sí consultar).
+ */
+export async function verCotizacionesSoloLectura(req) {
+    Loader.mostrar('Cargando cotizaciones...');
+    const panel = await panelCotizacionesParaAprobacion(req.id);
+    Loader.ocultar();
+
+    const contenido = panel || '<div style="text-align:center;color:var(--color-texto-secundario);padding:1rem;">No hay cotizaciones registradas.</div>';
+
+    Modal.crear({
+        titulo: `Cotizaciones — ${req.id_requisicion}`,
+        contenido: `
+            <div style="display:grid;gap:0.75rem;">
+                <div style="font-size:0.82rem;color:var(--color-texto-secundario);">Objeto: <strong>${escapeHtml(req.objeto_compra)}</strong></div>
+                ${contenido}
+            </div>`,
+        ancho: '640px',
+        botones: [{ texto: 'Cerrar', clase: 'btn-secundario', onClick: Modal.cerrar }]
+    });
+
+    setTimeout(() => engancharListenersPanelJefe(), 50);
+}
+
+/**
+ * Panel de SOLO LECTURA de cotizaciones que ve el jefe al aprobar.
+ * Devuelve el HTML de las tarjetas (o '' si no hay cotizaciones).
+ */
 export async function panelCotizacionesParaAprobacion(requisicionId) {
     const { cotizaciones, error } = await obtenerCotizaciones(requisicionId);
     if (error || cotizaciones.length === 0) {
