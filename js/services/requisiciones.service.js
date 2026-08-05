@@ -35,6 +35,66 @@ export async function crearRequisicion(datos) {
 }
 
 /**
+ * Insertar los ítems de una requisición
+ * @param {number} requisicionId - ID de la requisición (encabezado)
+ * @param {Array} items - Lista de ítems { orden, descripcion, cantidad, valor_estimado, color, dimensiones, marca_sugerida, proveedor_sugerido }
+ * @returns {Object} { items, error }
+ */
+export async function crearItems(requisicionId, items) {
+    try {
+        const filas = items.map(it => ({ ...it, requisicion_id: requisicionId }));
+        const { data, error } = await supabase
+            .from('requisicion_items')
+            .insert(filas)
+            .select();
+
+        if (error) {
+            console.error('Error al crear ítems:', error);
+            return { items: null, error: traducirErrorReq(error.message) };
+        }
+        return { items: data, error: null };
+    } catch (err) {
+        console.error('Error en crearItems:', err);
+        return { items: null, error: 'Error de conexión al guardar los ítems.' };
+    }
+}
+
+/**
+ * Obtener los ítems de una requisición
+ * @param {number} requisicionId - ID de la requisición
+ * @returns {Object} { items, error }
+ */
+export async function obtenerItems(requisicionId) {
+    try {
+        const { data, error } = await supabase
+            .from('requisicion_items')
+            .select('*')
+            .eq('requisicion_id', requisicionId)
+            .order('orden', { ascending: true });
+
+        if (error) {
+            console.error('Error al obtener ítems:', error);
+            return { items: [], error: traducirErrorReq(error.message) };
+        }
+        return { items: data || [], error: null };
+    } catch (err) {
+        return { items: [], error: 'Error de conexión al cargar los ítems.' };
+    }
+}
+
+/**
+ * Borrado FÍSICO de una requisición (solo para rollback interno si fallan los ítems)
+ * @param {number} id - ID de la requisición
+ */
+export async function eliminarRequisicionFisica(id) {
+    try {
+        await supabase.from('requisiciones').delete().eq('id', id);
+    } catch (err) {
+        console.error('Error en rollback de requisición:', err);
+    }
+}
+
+/**
  * Obtener requisiciones con filtros opcionales
  * @param {Object} filtros - { estado, proceso, desde, hasta, busqueda }
  * @param {Object} perfil - Perfil del usuario actual
