@@ -246,6 +246,9 @@ export function iniciarGestionTiquete(tiq, usuario, perfil, onCambiado) {
  * registrar N reservas, cada una con su propio PDF y observación libre.
  */
 export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
+    // Estado compartido de reservas (accesible tanto en el guardado como en el render)
+    let reservasTemp = [{ codigo: '', archivo: null, observ: '' }];
+
     const html = `
         <div style="display:grid;gap:1rem;">
             <div style="background:#D1FAE5;border-left:4px solid #10B981;padding:0.875rem;border-radius:6px;">
@@ -293,10 +296,12 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
         botones: [
             { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
             { texto: '✓ Marcar como Cumplido', clase: 'btn-primario', onClick: async () => {
-                // Validar al menos una reserva con código + PDF
-                const codigos = Array.from(document.querySelectorAll('.input-reserva-codigo')).map(e => e.value.trim().toUpperCase());
-                const archivos = Array.from(document.querySelectorAll('.input-reserva-archivo')).map(e => e.files[0] || null);
-                const observ = Array.from(document.querySelectorAll('.input-reserva-observ')).map(e => e.value.trim());
+                // Leer desde el estado interno (reservasTemp), NO del DOM.
+                // Al redibujar la lista, el <input type="file"> se recrea vacío por
+                // seguridad del navegador, pero el archivo sí queda guardado aquí.
+                const codigos = reservasTemp.map(r => (r.codigo || '').trim().toUpperCase());
+                const archivos = reservasTemp.map(r => r.archivo || null);
+                const observ = reservasTemp.map(r => (r.observ || '').trim());
 
                 if (codigos.length === 0) { Toast.advertencia('Agregue al menos una reserva.'); return; }
                 for (let i = 0; i < codigos.length; i++) {
@@ -377,9 +382,8 @@ export async function cumplirTiquete(tiq, usuario, perfil, onCumplido) {
         ]
     });
 
-    // ─── Estado interno: array de reservas en el formulario ───
+    // ─── Render del formulario de reservas (usa el reservasTemp del scope superior) ───
     setTimeout(() => {
-        let reservasTemp = [{ codigo: '', archivo: null, observ: '' }];
 
         function renderReservas() {
             const cont = document.getElementById('lista-reservas');
