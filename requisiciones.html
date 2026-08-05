@@ -349,7 +349,7 @@
         import { Toast } from '/js/components/toast.js';
         import { Loader } from '/js/components/loader.js';
         import { verDetalle, editarRequisicion, confirmarEliminar, cambiarEstado, verHistorial, aprobarRequisicion, reenviarAprobacion, puedeEditar, puedeEliminar, puedeCambiarEstado, puedeAprobar, puedeGestionarCotizaciones, badgeClase } from '/js/modules/acciones-requisiciones.js';
-        import { abrirGestorCotizaciones } from '/js/modules/cotizaciones-modal.js';
+        import { abrirGestorCotizaciones, verCotizacionesSoloLectura } from '/js/modules/cotizaciones-modal.js';
         import { contarCotizacionesPorRequisicion } from '/js/services/cotizaciones.service.js';
         import { exportarRequisicionesExcel } from '/js/modules/exportar-excel.js';
 
@@ -817,6 +817,8 @@
                     if (puedeGestionarCotizaciones(req, perfilActual)) {
                         const lbl = conteoCot > 0 ? `Cotizaciones (${conteoCot})` : '+ Cotizar';
                         acciones += `<button class="btn-accion btn-accion-cotizar" data-accion="cotizar" data-id="${req.id}">${lbl}</button>`;
+                    } else if (conteoCot > 0) {
+                        acciones += `<button class="btn-accion btn-accion-cotizar" data-accion="ver-cotizaciones" data-id="${req.id}">Ver cotizaciones (${conteoCot})</button>`;
                     }
                     if (puedeEditar(req, perfilActual)) {
                         acciones += `<button class="btn-accion btn-accion-editar" data-accion="editar" data-id="${req.id}">Editar</button>`;
@@ -877,6 +879,7 @@
                         case 'reenviar': reenviarAprobacion(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'estado': cambiarEstado(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                         case 'cotizar': abrirGestorCotizaciones(req, usuarioActual, perfilActual, cargarRequisiciones); break;
+                        case 'ver-cotizaciones': verCotizacionesSoloLectura(req); break;
                         case 'eliminar': confirmarEliminar(req, usuarioActual, perfilActual, cargarRequisiciones); break;
                     }
                 });
