@@ -7,11 +7,21 @@
  * ============================================================
  */
 
-import { actualizarRequisicion, eliminarRequisicion, registrarHistorial } from '../services/requisiciones.service.js';
+import { actualizarRequisicion, eliminarRequisicion, registrarHistorial, obtenerItems, reemplazarItems } from '../services/requisiciones.service.js';
 import { obtenerHistorial } from '../services/historial.service.js';
 import { formatearFecha, formatearMoneda, formatearFechaHora } from '../utils/formatters.js';
 import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
+
+/* ── Helpers de escape ── */
+function escaparHtml(s) {
+    return String(s ?? '')
+        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+function escaparAttr(s) {
+    return String(s ?? '').replaceAll('"', '&quot;');
+}
 
 /**
  * Helper: verifica si el usuario tiene delegación sobre el dueño de la requisición
@@ -131,7 +141,22 @@ export function puedeAprobar(req, perfil) {
 /**
  * Mostrar modal de detalle de requisición
  */
-export function verDetalle(req) {
+export async function verDetalle(req) {
+    const { items } = await obtenerItems(req.id);
+    const itemsArr = items || [];
+    const totalItems = itemsArr.reduce((s, it) => s + Number(it.valor_estimado || 0), 0);
+    const filasItems = itemsArr.map((it, i) => (
+        '<tr>' +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);text-align:center;">${i + 1}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);font-weight:500;">${escaparHtml(it.descripcion)}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);text-align:center;">${it.cantidad}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);">${escaparHtml(it.color) || '-'}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);">${escaparHtml(it.dimensiones) || '-'}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);">${escaparHtml(it.marca_sugerida) || '-'}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);">${escaparHtml(it.proveedor_sugerido) || '-'}</td>` +
+        `<td style="padding:0.5rem;border-bottom:1px solid var(--color-gris-light);text-align:right;white-space:nowrap;">$${Number(it.valor_estimado).toLocaleString('es-CO')}</td>` +
+        '</tr>'
+    )).join('');
     const html = `
         <div style="display: grid; gap: 1rem;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
@@ -168,11 +193,7 @@ export function verDetalle(req) {
                 <div style="font-weight: 500;">${req.objeto_compra}</div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Cantidad</div>
-                    <div style="font-weight: 500;">${req.cantidad}</div>
-                </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                 <div>
                     <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Unidad negocio</div>
                     <div style="font-weight: 500;">${req.unidad_negocio}</div>
@@ -183,28 +204,31 @@ export function verDetalle(req) {
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Color</div>
-                    <div style="font-weight: 500;">${req.color || '-'}</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Dimensiones</div>
-                    <div style="font-weight: 500;">${req.dimensiones || '-'}</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Marca sugerida</div>
-                    <div style="font-weight: 500;">${req.marca_sugerida || '-'}</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Proveedor sugerido</div>
-                    <div style="font-weight: 500;">${req.proveedor_sugerido || '-'}</div>
-                </div>
-            </div>
-
             <div>
-                <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.125rem;">Valor estimado</div>
-                <div style="font-weight: 500;">${req.valor_estimado ? '$' + Number(req.valor_estimado).toLocaleString('es-CO') : (req.rango_precios || '-')}</div>
+                <div style="font-size: 0.75rem; color: var(--color-texto-secundario); margin-bottom: 0.375rem;">Ítems de la compra (${itemsArr.length})</div>
+                <div style="overflow-x:auto;border:1px solid var(--color-borde);border-radius:var(--radio-md);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;min-width:640px;">
+                        <thead>
+                            <tr style="background:var(--color-gris-light);text-align:left;">
+                                <th style="padding:0.5rem;text-align:center;">#</th>
+                                <th style="padding:0.5rem;">Descripción</th>
+                                <th style="padding:0.5rem;text-align:center;">Cant.</th>
+                                <th style="padding:0.5rem;">Color</th>
+                                <th style="padding:0.5rem;">Dimensiones</th>
+                                <th style="padding:0.5rem;">Marca</th>
+                                <th style="padding:0.5rem;">Proveedor</th>
+                                <th style="padding:0.5rem;text-align:right;">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>${filasItems || '<tr><td colspan="8" style="padding:0.75rem;text-align:center;color:var(--color-texto-secundario);">Sin ítems</td></tr>'}</tbody>
+                        <tfoot>
+                            <tr style="border-top:2px solid var(--color-borde);font-weight:700;">
+                                <td colspan="7" style="padding:0.5rem;text-align:right;color:var(--color-texto-secundario);">Total estimado</td>
+                                <td style="padding:0.5rem;text-align:right;color:var(--color-azul);white-space:nowrap;">$${totalItems.toLocaleString('es-CO')}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
 
             ${req.url_referencia ? `
@@ -265,46 +289,39 @@ export function verDetalle(req) {
 /**
  * Mostrar modal de edición
  */
-export function editarRequisicion(req, usuario, perfil, onGuardado) {
+export async function editarRequisicion(req, usuario, perfil, onGuardado) {
+    // Cargar los ítems actuales para precargarlos en el formulario
+    const { items: itemsOriginales } = await obtenerItems(req.id);
+    const originales = itemsOriginales || [];
+
     const html = `
         <div style="display: grid; gap: 1rem;">
             <div class="input-grupo">
                 <label class="input-label">Objeto de la compra <span class="requerido">*</span></label>
-                <textarea id="edit-objeto" class="input-campo input-textarea">${req.objeto_compra}</textarea>
+                <textarea id="edit-objeto" class="input-campo input-textarea">${escaparHtml(req.objeto_compra)}</textarea>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="input-grupo">
-                    <label class="input-label">Cantidad <span class="requerido">*</span></label>
-                    <input type="number" id="edit-cantidad" class="input-campo" value="${req.cantidad}" min="1">
+
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <label class="input-label" style="margin:0;">Ítems de la compra <span class="requerido">*</span></label>
+                    <button type="button" id="edit-btn-agregar-item" class="btn btn-secundario" style="padding:0.35rem 0.75rem;font-size:0.78rem;">＋ Agregar ítem</button>
                 </div>
-                <div class="input-grupo">
-                    <label class="input-label">Color</label>
-                    <input type="text" id="edit-color" class="input-campo" value="${req.color || ''}">
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="input-grupo">
-                    <label class="input-label">Dimensiones</label>
-                    <input type="text" id="edit-dimensiones" class="input-campo" value="${req.dimensiones || ''}">
-                </div>
-                <div class="input-grupo">
-                    <label class="input-label">Marca sugerida</label>
-                    <input type="text" id="edit-marca" class="input-campo" value="${req.marca_sugerida || ''}">
+                <div id="edit-items-lista"></div>
+                <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:0.6rem;margin-top:0.4rem;padding-top:0.6rem;border-top:2px solid var(--color-borde);">
+                    <span style="font-size:0.75rem;color:var(--color-texto-secundario);text-transform:uppercase;font-weight:600;">Total estimado</span>
+                    <span id="edit-items-total" style="font-size:1.1rem;font-weight:700;color:var(--color-azul);">$0</span>
                 </div>
             </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="input-grupo">
-                    <label class="input-label">Proveedor sugerido</label>
-                    <input type="text" id="edit-proveedor" class="input-campo" value="${req.proveedor_sugerido || ''}">
-                </div>
                 <div class="input-grupo">
                     <label class="input-label">URL referencia</label>
-                    <input type="url" id="edit-url" class="input-campo" value="${req.url_referencia || ''}">
+                    <input type="url" id="edit-url" class="input-campo" value="${escaparAttr(req.url_referencia)}">
                 </div>
-            </div>
-            <div class="input-grupo">
-                <label class="input-label">Observaciones</label>
-                <textarea id="edit-observaciones" class="input-campo input-textarea">${req.observaciones || ''}</textarea>
+                <div class="input-grupo">
+                    <label class="input-label">Observaciones</label>
+                    <input type="text" id="edit-observaciones" class="input-campo" value="${escaparAttr(req.observaciones)}">
+                </div>
             </div>
         </div>
     `;
@@ -312,70 +329,76 @@ export function editarRequisicion(req, usuario, perfil, onGuardado) {
     Modal.crear({
         titulo: `Editar ${req.id_requisicion}`,
         contenido: html,
-        ancho: '650px',
+        ancho: '720px',
         botones: [
             { texto: 'Cancelar', clase: 'btn-secundario', onClick: Modal.cerrar },
             {
                 texto: 'Guardar cambios', clase: 'btn-primario', onClick: async () => {
+                    const nuevoObjeto = document.getElementById('edit-objeto').value.trim();
+                    const nuevaUrl = document.getElementById('edit-url').value.trim();
+                    const nuevasObs = document.getElementById('edit-observaciones').value.trim();
+
+                    if (!nuevoObjeto) { Toast.advertencia('El objeto de compra no puede estar vacío.'); return; }
+
+                    const { items, error: errItems } = _leerItemsEdit();
+                    if (errItems) { Toast.advertencia(errItems); return; }
+
+                    // Detectar cambios de encabezado
                     const cambios = {};
-                    const campos = [
-                        { id: 'edit-objeto', campo: 'objeto_compra', anterior: req.objeto_compra },
-                        { id: 'edit-cantidad', campo: 'cantidad', anterior: req.cantidad, esNumero: true },
-                        { id: 'edit-color', campo: 'color', anterior: req.color || '' },
-                        { id: 'edit-dimensiones', campo: 'dimensiones', anterior: req.dimensiones || '' },
-                        { id: 'edit-marca', campo: 'marca_sugerida', anterior: req.marca_sugerida || '' },
-                        { id: 'edit-proveedor', campo: 'proveedor_sugerido', anterior: req.proveedor_sugerido || '' },
-                        { id: 'edit-url', campo: 'url_referencia', anterior: req.url_referencia || '' },
-                        { id: 'edit-observaciones', campo: 'observaciones', anterior: req.observaciones || '' },
-                    ];
-
                     const cambiosHistorial = [];
+                    if (nuevoObjeto !== (req.objeto_compra || '')) {
+                        cambios.objeto_compra = nuevoObjeto;
+                        cambiosHistorial.push({ campo: 'objeto_compra', anterior: req.objeto_compra || '', nuevo: nuevoObjeto });
+                    }
+                    if (nuevaUrl !== (req.url_referencia || '')) {
+                        cambios.url_referencia = nuevaUrl;
+                        cambiosHistorial.push({ campo: 'url_referencia', anterior: req.url_referencia || '', nuevo: nuevaUrl });
+                    }
+                    if (nuevasObs !== (req.observaciones || '')) {
+                        cambios.observaciones = nuevasObs;
+                        cambiosHistorial.push({ campo: 'observaciones', anterior: req.observaciones || '', nuevo: nuevasObs });
+                    }
 
-                    campos.forEach(c => {
-                        let valor = document.getElementById(c.id).value.trim();
-                        if (c.esNumero) valor = parseInt(valor, 10);
-                        const anterior = c.esNumero ? Number(c.anterior) : (c.anterior || '');
+                    const itemsCambiaron = _firmaItems(items) !== _firmaItems(originales);
 
-                        if (valor != anterior) {
-                            cambios[c.campo] = valor;
-                            cambiosHistorial.push({ campo: c.campo, anterior: String(anterior), nuevo: String(valor) });
-                        }
-                    });
-
-                    if (Object.keys(cambios).length === 0) {
+                    if (Object.keys(cambios).length === 0 && !itemsCambiaron) {
                         Toast.info('No hay cambios para guardar.');
                         Modal.cerrar();
                         return;
                     }
 
-                    if (cambios.objeto_compra !== undefined && !cambios.objeto_compra) {
-                        Toast.advertencia('El objeto de compra no puede estar vacío.');
-                        return;
-                    }
-                    if (cambios.cantidad !== undefined && (!cambios.cantidad || cambios.cantidad < 1)) {
-                        Toast.advertencia('La cantidad debe ser mayor a 0.');
-                        return;
+                    // Guardar encabezado (si cambió)
+                    if (Object.keys(cambios).length > 0) {
+                        const { error } = await actualizarRequisicion(req.id, cambios);
+                        if (error) { Toast.error(error); return; }
                     }
 
-                    const { requisicion, error } = await actualizarRequisicion(req.id, cambios);
-
-                    if (error) {
-                        Toast.error(error);
-                        return;
+                    // Guardar ítems (si cambiaron); el trigger recalcula cantidad y total
+                    if (itemsCambiaron) {
+                        const { error: errRepl } = await reemplazarItems(req.id, items);
+                        if (errRepl) { Toast.error(errRepl); return; }
                     }
 
-                    // Registrar cada cambio en historial
+                    // Historial: cambios de encabezado
                     for (const ch of cambiosHistorial) {
                         await registrarHistorial({
-                            requisicion_id: req.id,
-                            id_requisicion: req.id_requisicion,
-                            user_id: usuario.id,
-                            nombre_usuario: perfil.nombre_completo,
-                            accion: 'edicion',
-                            campo_modificado: ch.campo,
-                            valor_anterior: ch.anterior,
-                            valor_nuevo: ch.nuevo,
+                            requisicion_id: req.id, id_requisicion: req.id_requisicion,
+                            user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
+                            accion: 'edicion', campo_modificado: ch.campo,
+                            valor_anterior: String(ch.anterior), valor_nuevo: String(ch.nuevo),
                             detalle: `Campo "${ch.campo}" modificado`
+                        });
+                    }
+                    // Historial: resumen de ítems
+                    if (itemsCambiaron) {
+                        const total = items.reduce((s, it) => s + it.valor_estimado, 0);
+                        const cantTotal = items.reduce((s, it) => s + it.cantidad, 0);
+                        await registrarHistorial({
+                            requisicion_id: req.id, id_requisicion: req.id_requisicion,
+                            user_id: usuario.id, nombre_usuario: perfil.nombre_completo,
+                            accion: 'edicion', campo_modificado: 'items',
+                            valor_nuevo: `${items.length} ítem(s), ${cantTotal} und, total $${total.toLocaleString('es-CO')}`,
+                            detalle: 'Ítems de la requisición actualizados'
                         });
                     }
 
@@ -386,6 +409,109 @@ export function editarRequisicion(req, usuario, perfil, onGuardado) {
             }
         ]
     });
+
+    // Precargar ítems y enganchar listeners una vez el modal está en el DOM
+    setTimeout(() => {
+        const btnAgregar = document.getElementById('edit-btn-agregar-item');
+        if (btnAgregar) btnAgregar.addEventListener('click', () => _agregarFilaItemEdit());
+        if (originales.length) {
+            originales.forEach(it => _agregarFilaItemEdit(it));
+        } else {
+            _agregarFilaItemEdit();
+        }
+    }, 50);
+}
+
+/* ── Helpers del editor de ítems (modal de edición) ── */
+function _filaItemEditHTML(data = {}) {
+    const valorInicial = data.valor_estimado ? Number(data.valor_estimado).toLocaleString('es-CO') : '';
+    return `
+        <div class="edit-item-fila" style="border:1px solid var(--color-borde);border-radius:var(--radio-md);padding:0.75rem;margin-bottom:0.6rem;background:#FCFCFE;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <span style="font-size:0.7rem;font-weight:700;color:var(--color-azul);text-transform:uppercase;letter-spacing:0.3px;">Ítem <span class="edit-item-num"></span></span>
+                <button type="button" class="edit-btn-borrar-item" style="background:none;border:1px solid var(--color-error);color:var(--color-error);border-radius:var(--radio-sm);padding:0.15rem 0.5rem;font-size:0.72rem;cursor:pointer;">✕ Quitar</button>
+            </div>
+            <div class="input-grupo" style="margin-bottom:0.5rem;">
+                <label class="input-label">Descripción <span class="requerido">*</span></label>
+                <input type="text" class="input-campo edit-item-descripcion" placeholder="Ej: Guantes de nitrilo talla M" value="${escaparAttr(data.descripcion)}">
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;">
+                <div class="input-grupo"><label class="input-label">Cantidad <span class="requerido">*</span></label><input type="number" min="1" class="input-campo edit-item-cantidad" placeholder="0" value="${data.cantidad || ''}"></div>
+                <div class="input-grupo"><label class="input-label">Valor (COP) <span style="color:var(--color-error);">*</span></label><input type="text" inputmode="numeric" class="input-campo edit-item-valor" placeholder="Ej: 1500000" value="${valorInicial}"></div>
+                <div class="input-grupo"><label class="input-label">Color</label><input type="text" class="input-campo edit-item-color" value="${escaparAttr(data.color)}"></div>
+                <div class="input-grupo"><label class="input-label">Dimensiones</label><input type="text" class="input-campo edit-item-dimensiones" value="${escaparAttr(data.dimensiones)}"></div>
+                <div class="input-grupo"><label class="input-label">Marca</label><input type="text" class="input-campo edit-item-marca" value="${escaparAttr(data.marca_sugerida)}"></div>
+                <div class="input-grupo"><label class="input-label">Proveedor</label><input type="text" class="input-campo edit-item-proveedor" value="${escaparAttr(data.proveedor_sugerido)}"></div>
+            </div>
+        </div>`;
+}
+
+function _agregarFilaItemEdit(data = {}) {
+    const lista = document.getElementById('edit-items-lista');
+    if (!lista) return;
+    lista.insertAdjacentHTML('beforeend', _filaItemEditHTML(data));
+    const fila = lista.lastElementChild;
+    fila.querySelector('.edit-item-valor').addEventListener('input', (e) => {
+        const n = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = n ? parseInt(n, 10).toLocaleString('es-CO') : '';
+        _recalcularTotalEdit();
+    });
+    fila.querySelector('.edit-btn-borrar-item').addEventListener('click', () => {
+        if (document.querySelectorAll('#edit-items-lista .edit-item-fila').length <= 1) {
+            Toast.advertencia('La requisición debe tener al menos un ítem.');
+            return;
+        }
+        fila.remove();
+        _renumerarItemsEdit();
+        _recalcularTotalEdit();
+    });
+    _renumerarItemsEdit();
+    _recalcularTotalEdit();
+}
+
+function _renumerarItemsEdit() {
+    document.querySelectorAll('#edit-items-lista .edit-item-fila').forEach((f, i) => {
+        f.querySelector('.edit-item-num').textContent = i + 1;
+    });
+}
+
+function _recalcularTotalEdit() {
+    let total = 0;
+    document.querySelectorAll('#edit-items-lista .edit-item-valor').forEach(inp => {
+        total += parseInt(inp.value.replace(/[^0-9]/g, ''), 10) || 0;
+    });
+    const el = document.getElementById('edit-items-total');
+    if (el) el.textContent = '$' + total.toLocaleString('es-CO');
+}
+
+function _leerItemsEdit() {
+    const items = [];
+    const filas = document.querySelectorAll('#edit-items-lista .edit-item-fila');
+    for (let i = 0; i < filas.length; i++) {
+        const f = filas[i];
+        const descripcion = f.querySelector('.edit-item-descripcion').value.trim();
+        const cantidad = parseInt(f.querySelector('.edit-item-cantidad').value, 10);
+        const valor = parseInt(f.querySelector('.edit-item-valor').value.replace(/[^0-9]/g, ''), 10) || 0;
+        if (!descripcion) return { error: `El ítem ${i + 1} necesita una descripción.` };
+        if (!cantidad || cantidad < 1) return { error: `El ítem ${i + 1} necesita una cantidad válida.` };
+        if (!valor || valor <= 0) return { error: `El ítem ${i + 1} necesita un valor estimado.` };
+        items.push({
+            orden: i + 1, descripcion, cantidad, valor_estimado: valor,
+            color: f.querySelector('.edit-item-color').value.trim(),
+            dimensiones: f.querySelector('.edit-item-dimensiones').value.trim(),
+            marca_sugerida: f.querySelector('.edit-item-marca').value.trim(),
+            proveedor_sugerido: f.querySelector('.edit-item-proveedor').value.trim()
+        });
+    }
+    if (items.length === 0) return { error: 'Agregue al menos un ítem.' };
+    return { items };
+}
+
+function _firmaItems(arr) {
+    return JSON.stringify((arr || []).map(it => ({
+        d: it.descripcion, c: Number(it.cantidad), v: Number(it.valor_estimado),
+        co: it.color || '', di: it.dimensiones || '', ma: it.marca_sugerida || '', pr: it.proveedor_sugerido || ''
+    })));
 }
 
 /**
