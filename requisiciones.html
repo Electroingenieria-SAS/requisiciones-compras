@@ -433,7 +433,7 @@
             });
 
             // Exportar a Excel
-            document.getElementById('btn-exportar-excel').addEventListener('click', () => {
+            document.getElementById('btn-exportar-excel').addEventListener('click', async () => {
                 if (requisicionesCache.length === 0) {
                     Toast.advertencia('No hay requisiciones para exportar.');
                     return;
@@ -451,14 +451,17 @@
                     if (filtroHasta) filtrosTexto.push(`Hasta: ${filtroHasta}`);
                     if (filtroBusqueda) filtrosTexto.push(`Búsqueda: "${filtroBusqueda}"`);
 
-                    const nombre = exportarRequisicionesExcel(requisicionesCache, {
+                    Loader.mostrar('Generando Excel...');
+                    const nombre = await exportarRequisicionesExcel(requisicionesCache, {
                         empresa: 'Electroingeniería S.A.S.',
                         usuario: perfilActual.nombre_completo,
                         filtros: filtrosTexto.length > 0 ? `Filtros: ${filtrosTexto.join(' | ')}` : 'Sin filtros aplicados'
                     });
+                    Loader.ocultar();
 
                     Toast.exito(`Archivo "${nombre}" descargado.`);
                 } catch (err) {
+                    Loader.ocultar();
                     Toast.error(err.message || 'Error al exportar.');
                 }
             });
