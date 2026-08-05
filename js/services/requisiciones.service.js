@@ -95,6 +95,39 @@ export async function eliminarRequisicionFisica(id) {
 }
 
 /**
+ * Reemplazar TODOS los ítems de una requisición (usado al editar).
+ * Inserta los nuevos y luego borra los viejos, para no dejar la
+ * requisición sin ítems si algo falla a mitad de camino.
+ * @param {number} requisicionId
+ * @param {Array} items
+ * @returns {Object} { error }
+ */
+export async function reemplazarItems(requisicionId, items) {
+    try {
+        const { data: viejos, error: e1 } = await supabase
+            .from('requisicion_items')
+            .select('id')
+            .eq('requisicion_id', requisicionId);
+        if (e1) return { error: traducirErrorReq(e1.message) };
+
+        const idsViejos = (viejos || []).map(v => v.id);
+        const filas = items.map(it => ({ ...it, requisicion_id: requisicionId }));
+
+        const { error: e2 } = await supabase.from('requisicion_items').insert(filas);
+        if (e2) return { error: traducirErrorReq(e2.message) };
+
+        if (idsViejos.length) {
+            const { error: e3 } = await supabase.from('requisicion_items').delete().in('id', idsViejos);
+            if (e3) return { error: traducirErrorReq(e3.message) };
+        }
+        return { error: null };
+    } catch (err) {
+        console.error('Error en reemplazarItems:', err);
+        return { error: 'Error de conexión al actualizar los ítems.' };
+    }
+}
+
+/**
  * Obtener requisiciones con filtros opcionales
  * @param {Object} filtros - { estado, proceso, desde, hasta, busqueda }
  * @param {Object} perfil - Perfil del usuario actual
