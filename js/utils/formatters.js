@@ -32,6 +32,12 @@ export function formatearMoneda(valor) {
  */
 export function formatearFecha(fecha) {
     if (!fecha) return '-';
+    // Columnas tipo `date` llegan como "YYYY-MM-DD".
+    // Se formatea sin new Date() para evitar el corrimiento a UTC.
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        const [a, m, d] = fecha.split('-');
+        return `${d}/${m}/${a}`;
+    }
     const d = new Date(fecha);
     return d.toLocaleDateString('es-CO', {
         day: '2-digit',
@@ -48,6 +54,10 @@ export function formatearFecha(fecha) {
  */
 export function formatearFechaHora(fecha) {
     if (!fecha) return '-';
+    // Si llega solo fecha (sin hora), delega para no inventar una hora.
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        return formatearFecha(fecha);
+    }
     const d = new Date(fecha);
     return d.toLocaleDateString('es-CO', {
         day: '2-digit',
