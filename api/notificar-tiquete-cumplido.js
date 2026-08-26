@@ -1,3 +1,5 @@
+import { verificarSesion } from './_lib/verificar-sesion.js';
+
 /**
  * ============================================================
  * VERCEL FUNCTION: NOTIFICACIÓN DE TIQUETE CUMPLIDO
@@ -24,6 +26,10 @@ export default async function handler(req, res) {
         if (!RESEND_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
             return res.status(500).json({ error: 'Servicio de correo no configurado.' });
         }
+
+        // ── Cortar a quien no tenga sesión válida, antes de leer el body o usar service_role ──
+        const { user, error: authError, status: authStatus } = await verificarSesion(req);
+        if (!user) return res.status(authStatus).json({ error: authError });
 
         const {
             id_tiquete,
