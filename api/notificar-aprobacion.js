@@ -1,3 +1,5 @@
+import { verificarSesion } from './_lib/verificar-sesion.js';
+
 /**
  * ============================================================
  * VERCEL FUNCTION: NOTIFICACIÓN DE APROBACIÓN AL JEFE
