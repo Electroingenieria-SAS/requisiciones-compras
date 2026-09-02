@@ -27,6 +27,30 @@
         .dash-card-label { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
         .dash-card-valor { font-size: var(--texto-3xl); font-weight: 700; }
         .dash-card-borde { border-left: 4px solid; }
+        .dash-card-secundario { display: none; }
+        .dashboard-tareas, .dashboard-indicadores {
+            background: white; border: 1px solid var(--color-borde); border-radius: var(--radio-lg);
+            box-shadow: var(--sombra-sm); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+        }
+        .dashboard-seccion-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+        .dashboard-seccion-cabecera h2 { margin: 0.15rem 0 0; font-size: var(--texto-lg); color: var(--color-texto); }
+        .dashboard-eyebrow { color: var(--color-azul); font-size: var(--texto-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+        .dashboard-seccion-ayuda { color: var(--color-texto-secundario); font-size: var(--texto-xs); }
+        .dashboard-tareas .notif-banner { margin-bottom: 0; border-radius: var(--radio-md); padding: 1rem 1.15rem; }
+        .dashboard-tareas .notif-banner + .notif-banner { margin-top: 0.75rem; }
+        .dashboard-tareas .notif-items { margin-top: 0.5rem; gap: 0.35rem; }
+        .dashboard-tareas .notif-item { padding: 0.55rem 0.75rem; }
+        .indicadores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        .indicador-item { background: var(--color-gris-light); border-radius: var(--radio-md); padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+        .indicador-item span { color: var(--color-texto-secundario); font-size: var(--texto-xs); }
+        .indicador-item strong { color: var(--color-texto); font-size: var(--texto-lg); }
+        .dashboard-detalles { margin-bottom: 1.5rem; border: 1px solid var(--color-borde); border-radius: var(--radio-lg); background: #fff; box-shadow: var(--sombra-sm); }
+        .dashboard-detalles summary { cursor: pointer; list-style: none; padding: 1rem 1.5rem; color: var(--color-azul); font-weight: 600; }
+        .dashboard-detalles summary::-webkit-details-marker { display: none; }
+        .dashboard-detalles summary::after { content: '+'; float: right; font-size: 1.25rem; }
+        .dashboard-detalles[open] summary::after { content: '−'; }
+        .dashboard-detalles summary span { color: var(--color-texto-secundario); font-size: var(--texto-xs); font-weight: 400; margin-left: 0.5rem; }
+        .charts-grid-secundarios { padding: 0 1.5rem 1.5rem; margin-bottom: 0; }
 
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
         .chart-panel { background: white; border-radius: var(--radio-lg); padding: 1.5rem; box-shadow: var(--sombra-sm); border: 1px solid var(--color-borde); }
@@ -54,6 +78,11 @@
         .info-datos { flex: 1; }
         .info-saludo { font-size: var(--texto-lg); font-weight: 600; color: var(--color-texto); }
         .info-meta { font-size: var(--texto-sm); color: var(--color-texto-secundario); margin-top: 0.125rem; }
+        .dashboard-acciones { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .dashboard-accion { flex: 1 1 180px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; text-decoration: none; }
+        .dashboard-accion-secundaria { background: white; color: var(--color-azul); border: 1px solid var(--color-azul-light); }
+        .dashboard-accion-secundaria:hover { background: var(--color-azul-light); }
+        .dashboard-actualizado { color: var(--color-texto-secundario); font-size: var(--texto-xs); font-weight: 400; }
 
         /* ─── Notificaciones internas ─── */
         .notif-banner {
@@ -80,9 +109,15 @@
 
         @media (max-width: 768px) {
             .charts-grid { grid-template-columns: 1fr; }
+            .indicadores-grid { grid-template-columns: 1fr 1fr; }
+            .dashboard-seccion-cabecera { align-items: flex-start; flex-direction: column; }
+            .chart-container { height: 260px; }
             .info-usuario-card { flex-direction: column; text-align: center; }
             .notif-banner { flex-direction: column; text-align: center; }
             .notif-banner-acciones { width: 100%; justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .indicadores-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -164,10 +199,25 @@
             </div>
         </div>
 
-        <!-- Notificaciones internas (solo admin) -->
-        <div id="notif-container"></div>
+        <nav class="dashboard-acciones" aria-label="Acciones rápidas">
+            <a class="btn btn-primario dashboard-accion" href="/requisiciones.html">＋ Nueva requisición</a>
+            <a class="btn dashboard-accion dashboard-accion-secundaria" href="/requisiciones.html?filtro=Pendiente">Ver pendientes</a>
+            <a class="btn dashboard-accion dashboard-accion-secundaria" href="/tiquetes.html">✈ Solicitar tiquete</a>
+        </nav>
 
-        <!-- Métricas -->
+        <!-- Tareas pendientes según el rol -->
+        <section class="dashboard-tareas" aria-labelledby="tareas-titulo">
+            <div class="dashboard-seccion-cabecera">
+                <div>
+                    <span class="dashboard-eyebrow">Atención requerida</span>
+                    <h2 id="tareas-titulo">Tareas pendientes</h2>
+                </div>
+                <span class="dashboard-seccion-ayuda">Acciones prioritarias</span>
+            </div>
+            <div id="notif-container"></div>
+        </section>
+
+        <!-- Indicadores principales -->
         <div class="dash-grid">
             <div class="dash-card clickeable" onclick="window.location.href='/requisiciones.html'">
                 <div class="dash-card-label">Total requisiciones</div>
@@ -177,7 +227,7 @@
                 <div class="dash-card-label">Pendientes aprobación</div>
                 <div class="dash-card-valor" style="color:#B91C1C;" id="m-pendientes-aprobacion">0</div>
             </div>
-            <div class="dash-card dash-card-borde clickeable" style="border-left-color:#991B1B;" onclick="window.location.href='/requisiciones.html?filtro=Rechazada'">
+            <div class="dash-card dash-card-borde dash-card-secundario clickeable" style="border-left-color:#991B1B;" onclick="window.location.href='/requisiciones.html?filtro=Rechazada'">
                 <div class="dash-card-label">Rechazadas</div>
                 <div class="dash-card-valor" style="color:#991B1B;" id="m-rechazadas">0</div>
             </div>
@@ -185,7 +235,7 @@
                 <div class="dash-card-label">Pendientes</div>
                 <div class="dash-card-valor" style="color:var(--color-pendiente);" id="m-pendientes">0</div>
             </div>
-            <div class="dash-card dash-card-borde clickeable" style="border-left-color:#8B5CF6;" onclick="window.location.href='/requisiciones.html?filtro=En%20cotizaci%C3%B3n'">
+            <div class="dash-card dash-card-borde dash-card-secundario clickeable" style="border-left-color:#8B5CF6;" onclick="window.location.href='/requisiciones.html?filtro=En%20cotizaci%C3%B3n'">
                 <div class="dash-card-label">En cotización</div>
                 <div class="dash-card-valor" style="color:#8B5CF6;" id="m-en-cotizacion">0</div>
             </div>
@@ -197,33 +247,9 @@
                 <div class="dash-card-label">Cumplidas</div>
                 <div class="dash-card-valor" style="color:var(--color-cumplido);" id="m-cumplidas">0</div>
             </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Valor total compras</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-valor-total">$0</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Gestionadas por Compras</div>
-                <div class="dash-card-valor" style="color:var(--color-azul);font-size:var(--texto-xl);" id="m-valor-compras">$0</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Gestionadas autónomamente</div>
-                <div class="dash-card-valor" style="color:var(--color-amarillo-hover);font-size:var(--texto-xl);" id="m-valor-autonomo">$0</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Tiempo promedio aprobación</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-aprobacion">- días</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Tiempo promedio Compras</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-compras">- días</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-card-label">Tiempo promedio P. Autónomo</div>
-                <div class="dash-card-valor" style="color:var(--color-texto);font-size:var(--texto-xl);" id="m-tiempo-autonomo">- días</div>
-            </div>
         </div>
 
-        <!-- Gráficos -->
+        <!-- Gráficos destacados -->
         <div class="charts-grid">
             <div class="chart-panel">
                 <div class="chart-titulo">Requisiciones por estado</div>
@@ -233,21 +259,51 @@
                 <div class="chart-titulo">Requisiciones por mes</div>
                 <div class="chart-container"><canvas id="chart-meses"></canvas></div>
             </div>
-            <div class="chart-panel">
-                <div class="chart-titulo">Por proceso (Top 10)</div>
-                <div class="chart-container"><canvas id="chart-procesos"></canvas></div>
-            </div>
-            <div class="chart-panel">
-                <div class="chart-titulo">Compras vs Proceso Autónomo</div>
-                <div class="chart-container"><canvas id="chart-ejecutor"></canvas></div>
-            </div>
         </div>
 
+        <details class="dashboard-detalles" id="analisis-secundario" open>
+            <summary>Análisis detallado <span>Por proceso y tipo de gestión</span></summary>
+            <div class="charts-grid charts-grid-secundarios">
+                <div class="chart-panel">
+                    <div class="chart-titulo">Por proceso (Top 10)</div>
+                    <div class="chart-container"><canvas id="chart-procesos"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-titulo">Compras vs Proceso Autónomo</div>
+                    <div class="chart-container"><canvas id="chart-ejecutor"></canvas></div>
+                </div>
+            </div>
+        </details>
+
+        <section class="dashboard-indicadores" aria-labelledby="indicadores-titulo">
+            <div class="dashboard-seccion-cabecera">
+                <div>
+                    <span class="dashboard-eyebrow">Seguimiento</span>
+                    <h2 id="indicadores-titulo">Indicadores de gestión</h2>
+                </div>
+                <span class="dashboard-actualizado" id="dashboard-actualizado">Actualizado --</span>
+            </div>
+            <div class="indicadores-grid">
+                <div class="indicador-item"><span>Valor total compras</span><strong id="m-valor-total">$0</strong></div>
+                <div class="indicador-item"><span>Gestionadas por Compras</span><strong id="m-valor-compras">$0</strong></div>
+                <div class="indicador-item"><span>Gestionadas autónomamente</span><strong id="m-valor-autonomo">$0</strong></div>
+                <div class="indicador-item"><span>Tiempo promedio aprobación</span><strong id="m-tiempo-aprobacion">- días</strong></div>
+                <div class="indicador-item"><span>Tiempo promedio Compras</span><strong id="m-tiempo-compras">- días</strong></div>
+                <div class="indicador-item"><span>Tiempo promedio P. Autónomo</span><strong id="m-tiempo-autonomo">- días</strong></div>
+            </div>
+        </section>
+
         <!-- Actividad reciente -->
-        <div class="actividad-panel">
-            <div class="chart-titulo">Actividad reciente</div>
+        <section class="actividad-panel" aria-labelledby="actividad-titulo">
+            <div class="dashboard-seccion-cabecera">
+                <div>
+                    <span class="dashboard-eyebrow">Trazabilidad</span>
+                    <h2 id="actividad-titulo">Actividad reciente</h2>
+                </div>
+                <span class="dashboard-seccion-ayuda">Últimos 5 movimientos</span>
+            </div>
             <div id="actividad-lista"></div>
-        </div>
+        </section>
 
     </main>
 
@@ -300,6 +356,9 @@
             } else {
                 await mostrarNotificacionesUsuario(usuario);
             }
+            const tareas = document.querySelector('.dashboard-tareas');
+            const contenedorTareas = document.getElementById('notif-container');
+            tareas.hidden = !contenedorTareas.textContent.trim();
 
             // Métricas
             const pendientesAprobacion = activas.filter(r => r.estado === 'Pendiente aprobación').length;
@@ -351,6 +410,7 @@
             document.getElementById('m-tiempo-aprobacion').textContent = tiempoAprobacion === '-' ? '- días' : `${tiempoAprobacion} días`;
             document.getElementById('m-tiempo-compras').textContent = tiempoCompras === '-' ? '- días' : `${tiempoCompras} días`;
             document.getElementById('m-tiempo-autonomo').textContent = tiempoAutonomo === '-' ? '- días' : `${tiempoAutonomo} días`;
+            document.getElementById('dashboard-actualizado').textContent = `Actualizado ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
 
             // Gráficos
             if (activas.length > 0) {
@@ -358,10 +418,11 @@
                 crearGraficoMeses(activas);
                 crearGraficoProcesos(activas);
                 crearGraficoEjecutor(activas);
+                document.getElementById('analisis-secundario').removeAttribute('open');
             }
 
             // Actividad reciente
-            const { historial } = await obtenerHistorialGlobal(15);
+            const { historial } = await obtenerHistorialGlobal(5);
             renderizarActividad(historial);
 
             document.getElementById('contenido-principal').style.display = 'block';
@@ -770,7 +831,7 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } } },
+                    plugins: { legend: { position: window.matchMedia('(max-width: 768px)').matches ? 'right' : 'bottom', labels: { padding: 10, boxWidth: 10, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } } },
                     cutout: '60%'
                 }
             });
@@ -830,7 +891,7 @@
             }
             const iconos = { 'creacion': '🟢', 'edicion': '✏️', 'eliminacion': '🗑️', 'cambio_estado': '🔄', 'restauracion': '♻️' };
             const acciones = { 'creacion': 'creó', 'edicion': 'editó', 'eliminacion': 'eliminó', 'cambio_estado': 'cambió estado de', 'restauracion': 'restauró' };
-            contenedor.innerHTML = historial.map(h => {
+            contenedor.innerHTML = historial.slice(0, 5).map(h => {
                 const icono = iconos[h.accion] || '📝';
                 const accion = acciones[h.accion] || h.accion;
                 let detalle = '';
