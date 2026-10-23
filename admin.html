@@ -101,7 +101,7 @@
         <!-- Acceso denegado (para no-admins) -->
         <div id="acceso-denegado" class="oculto">
             <div class="estado-vacio">
-                <div class="estado-vacio-icono">🔒</div>
+                <div class="estado-vacio-icono"></div>
                 <h2 class="estado-vacio-titulo">Acceso restringido</h2>
                 <p class="estado-vacio-mensaje">Solo los administradores pueden acceder a esta sección.</p>
                 <a href="/dashboard.html" class="btn btn-primario">Volver al Dashboard</a>
@@ -310,7 +310,7 @@
                         </table>
                     </div>
                     <div id="delegaciones-vacio" style="display:none; padding:2rem; text-align:center; color:var(--color-texto-secundario);">
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">🤝</div>
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem;"></div>
                         <p>No hay delegaciones activas. Crea una con el botón "+ Nueva Delegación".</p>
                     </div>
                 </div>
@@ -625,12 +625,12 @@
                 let jerarquiaHTML = '';
                 if (p.rol === 'usuario' || p.rol === 'admin_compras') {
                     jerarquiaHTML = p.nombre_jefe
-                        ? `<span class="badge-sm" style="background:#FEF3C7;color:#92400E;">👤 Jefe: ${p.nombre_jefe}</span>`
-                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;">⚠️ Sin jefe</span>`;
+                        ? `<span class="badge-sm" style="background:#FEF3C7;color:#92400E;"> Jefe: ${p.nombre_jefe}</span>`
+                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;"> Sin jefe</span>`;
                 } else if (p.rol === 'jefe') {
                     jerarquiaHTML = p.nombre_director
-                        ? `<span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">👔 Director: ${p.nombre_director}</span>`
-                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;">⚠️ Sin director</span>`;
+                        ? `<span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;"> Director: ${p.nombre_director}</span>`
+                        : `<span class="badge-sm" style="background:#FEE2E2;color:#B91C1C;"> Sin director</span>`;
                 }
 
                 return `
