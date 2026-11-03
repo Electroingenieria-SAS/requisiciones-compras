@@ -1,14 +1,4 @@
-/**
- * ============================================================
- * MÓDULO: GESTIÓN DE COTIZACIONES
- * ============================================================
- * Modal para que Compras gestione una o varias cotizaciones
- * de proveedores asociadas a una requisición.
- *
- * Vista del jefe: panel de solo lectura para apoyar la decisión
- * de aprobar o rechazar.
- * ============================================================
- */
+
 
 import {
     obtenerCotizaciones,
@@ -24,9 +14,6 @@ import { Modal } from '../components/modal.js';
 import { Toast } from '../components/toast.js';
 import { Loader } from '../components/loader.js';
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
 
 function formatearCOP(valor) {
     const n = Number(valor || 0);
@@ -43,17 +30,11 @@ function escapeHtml(s) {
         .replaceAll("'", '&#39;');
 }
 
-/* ============================================================
-   PERMISOS
-   ============================================================ */
 
 export function puedeGestionarCotizaciones(perfil) {
     return ['administrador', 'super_admin', 'admin_compras'].includes(perfil.rol);
 }
 
-/* ============================================================
-   MODAL PRINCIPAL DE GESTIÓN (Compras)
-   ============================================================ */
 
 export async function abrirGestorCotizaciones(req, usuario, perfil, onActualizado) {
     Loader.mostrar('Cargando cotizaciones...');
@@ -77,15 +58,11 @@ export async function abrirGestorCotizaciones(req, usuario, perfil, onActualizad
         ]
     });
 
-    // Engancho los listeners después de que el modal está en el DOM
     setTimeout(() => {
         configurarListenersGestor(req, usuario, perfil, cotizaciones, onActualizado);
     }, 50);
 }
 
-/**
- * Construir el HTML del gestor de cotizaciones
- */
 function construirHTMLGestor(req, cotizaciones, items = []) {
     const itemsHTML = items.length
         ? `<ul style="margin:0.4rem 0 0;padding-left:1.1rem;font-size:0.82rem;color:var(--color-texto);">` +
@@ -164,9 +141,6 @@ function construirHTMLGestor(req, cotizaciones, items = []) {
     `;
 }
 
-/**
- * Construir HTML de la lista de cotizaciones
- */
 function construirHTMLLista(cotizaciones) {
     if (cotizaciones.length === 0) {
         return `
@@ -208,27 +182,20 @@ function construirHTMLLista(cotizaciones) {
     `).join('');
 }
 
-/**
- * Configurar todos los listeners del gestor
- */
 function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, onActualizado) {
     let cotizacionesActuales = [...cotizacionesIniciales];
 
     const $ = (id) => document.getElementById(id);
 
-    // Mostrar formulario para nueva cotización
     $('cot-btn-agregar')?.addEventListener('click', () => abrirFormulario(null));
 
-    // Cancelar formulario
     $('cot-cancelar')?.addEventListener('click', () => cerrarFormulario());
 
-    // Formato del campo valor (sin librerías)
     $('cot-valor')?.addEventListener('input', (e) => {
         const numeros = e.target.value.replace(/[^0-9]/g, '');
         e.target.value = numeros ? Number(numeros).toLocaleString('es-CO') : '';
     });
 
-    // Guardar (crear o actualizar)
     $('cot-guardar')?.addEventListener('click', async () => {
         const editId = $('cot-edit-id').value;
         const proveedor = $('cot-proveedor').value.trim();
@@ -244,7 +211,6 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
 
         Loader.mostrar('Guardando cotización...');
 
-        // Subir archivo si hay
         let archivoPath = null;
         let archivoNombre = null;
         if (archivo) {
@@ -285,7 +251,6 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
             return;
         }
 
-        // Registrar en historial
         await registrarHistorial({
             requisicion_id: req.id,
             id_requisicion: req.id_requisicion,
@@ -303,12 +268,10 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
         cerrarFormulario();
     });
 
-    // Delegación de eventos en la lista
     $('cot-lista')?.addEventListener('click', async (e) => {
         const target = e.target.closest('[data-accion-cot]') || e.target.closest('[data-cot-archivo]');
         if (!target) return;
 
-        // Ver archivo
         const archivoPath = target.dataset.cotArchivo;
         if (archivoPath) {
             const url = await obtenerUrlFirmadaCotizacion(archivoPath);
@@ -334,7 +297,6 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
         }
     });
 
-    // ─── Funciones internas ───
 
     function abrirFormulario(cotizacion) {
         const form = $('cot-form');
@@ -423,14 +385,6 @@ function configurarListenersGestor(req, usuario, perfil, cotizacionesIniciales, 
     }
 }
 
-/* ============================================================
-   VISTA SOLO LECTURA PARA EL JEFE (al aprobar)
-   ============================================================ */
-
-/**
- * Visor de SOLO LECTURA de cotizaciones (para requisiciones ya Cumplidas
- * o Rechazadas, donde no se pueden gestionar pero sí consultar).
- */
 export async function verCotizacionesSoloLectura(req) {
     Loader.mostrar('Cargando cotizaciones...');
     const panel = await panelCotizacionesParaAprobacion(req.id);
@@ -452,14 +406,10 @@ export async function verCotizacionesSoloLectura(req) {
     setTimeout(() => engancharListenersPanelJefe(), 50);
 }
 
-/**
- * Panel de SOLO LECTURA de cotizaciones que ve el jefe al aprobar.
- * Devuelve el HTML de las tarjetas (o '' si no hay cotizaciones).
- */
 export async function panelCotizacionesParaAprobacion(requisicionId) {
     const { cotizaciones, error } = await obtenerCotizaciones(requisicionId);
     if (error || cotizaciones.length === 0) {
-        return ''; // No mostrar nada si no hay cotizaciones
+        return '';
     }
 
     const cards = cotizaciones.map((c, idx) => `
@@ -480,7 +430,7 @@ export async function panelCotizacionesParaAprobacion(requisicionId) {
     return `
         <div class="cot-panel-jefe">
             <div class="cot-panel-jefe-titulo">
-                <span>💼</span>
+                <span></span>
                 <span>Cotizaciones aportadas por Compras (${cotizaciones.length})</span>
             </div>
             <div class="cot-panel-jefe-lista">${cards}</div>
@@ -488,9 +438,6 @@ export async function panelCotizacionesParaAprobacion(requisicionId) {
     `;
 }
 
-/**
- * Engancha listeners para abrir archivos desde el panel del jefe
- */
 export function engancharListenersPanelJefe() {
     document.querySelectorAll('[data-cot-archivo-jefe]').forEach(el => {
         el.addEventListener('click', async (e) => {
