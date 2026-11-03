@@ -1,26 +1,9 @@
-/**
- * ============================================================
- * SERVICIO: AUTENTICACIÓN
- * ============================================================
- * Maneja login, logout, verificación de sesión y perfiles.
- * Usa Supabase Auth internamente.
- * 
- * IMPORTANTE: Los usuarios inician sesión con su "proceso" 
- * (nombre visible) pero internamente se autentica con email/password.
- * ============================================================
- */
 
 import { supabase } from '../config/supabase.js';
 
-/**
- * Iniciar sesión con email y contraseña
- * @param {string} email - Correo del usuario
- * @param {string} password - Contraseña
- * @returns {Object} { usuario, perfil, error }
- */
+
 export async function iniciarSesion(email, password) {
     try {
-        // 1. Autenticar con Supabase Auth
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email.trim().toLowerCase(),
             password: password
@@ -34,7 +17,6 @@ export async function iniciarSesion(email, password) {
             };
         }
 
-        // 2. Obtener perfil del usuario
         const perfil = await obtenerPerfil(data.user.id);
 
         if (!perfil) {
@@ -45,7 +27,6 @@ export async function iniciarSesion(email, password) {
             };
         }
 
-        // 3. Verificar que el usuario esté activo
         if (!perfil.activo) {
             await supabase.auth.signOut();
             return {
@@ -71,9 +52,7 @@ export async function iniciarSesion(email, password) {
     }
 }
 
-/**
- * Cerrar sesión
- */
+
 export async function cerrarSesion() {
     try {
         await supabase.auth.signOut();
@@ -84,10 +63,6 @@ export async function cerrarSesion() {
     }
 }
 
-/**
- * Obtener la sesión actual (si existe)
- * @returns {Object|null} Sesión activa o null
- */
 export async function obtenerSesion() {
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -98,11 +73,6 @@ export async function obtenerSesion() {
     }
 }
 
-/**
- * Obtener el perfil de un usuario por su ID
- * @param {string} userId - UUID del usuario
- * @returns {Object|null} Perfil del usuario
- */
 export async function obtenerPerfil(userId) {
     try {
         const { data, error } = await supabase
@@ -123,12 +93,6 @@ export async function obtenerPerfil(userId) {
     }
 }
 
-/**
- * Proteger una página: redirige al login si no hay sesión
- * También redirige a cambio de contraseña si el usuario lo requiere.
- * Debe llamarse al inicio de cada página protegida.
- * @returns {Object} { usuario, perfil }
- */
 export async function protegerRuta() {
     const sesion = await obtenerSesion();
 
@@ -144,7 +108,6 @@ export async function protegerRuta() {
         return { usuario: null, perfil: null };
     }
 
-    // Si requiere cambiar contraseña, redirigir (excepto si ya está en esa página)
     if (perfil.requiere_cambio_password && !window.location.pathname.includes('cambiar-password')) {
         window.location.href = '/cambiar-password.html';
         return { usuario: null, perfil: null };
@@ -156,26 +119,15 @@ export async function protegerRuta() {
     };
 }
 
-/**
- * Verificar si el usuario actual es super administrador
- * @param {Object} perfil - Perfil del usuario
- * @returns {boolean}
- */
 export function esAdministrador(perfil) {
     return perfil && (perfil.rol === 'super_admin' || perfil.rol === 'administrador');
 }
 
-/**
- * Verificar si el usuario puede gestionar usuarios (super_admin o admin_compras)
- */
 export function puedeGestionarUsuarios(perfil) {
     if (!perfil) return false;
     return perfil.rol === 'super_admin' || perfil.rol === 'admin_compras' || perfil.rol === 'administrador';
 }
 
-/**
- * Obtener etiqueta legible del rol
- */
 export function etiquetaRol(rol) {
     const map = {
         'super_admin': 'Super Administrador',
@@ -188,9 +140,6 @@ export function etiquetaRol(rol) {
     return map[rol] || rol;
 }
 
-/**
- * Traduce mensajes de error de Supabase al español
- */
 function traducirError(mensaje) {
     const traducciones = {
         'Invalid login credentials': 'Credenciales incorrectas. Verifique su correo y contraseña.',
