@@ -1,9 +1,3 @@
-/**
- * ============================================================
- * ESTILOS - PÁGINA DE LOGIN
- * Electroingeniería S.A.S.
- * ============================================================
- */
 
 .login-pagina {
     min-height: 100vh;
@@ -33,7 +27,6 @@
     margin-bottom: 1rem;
 }
 
-/* Placeholder cuando no hay logo */
 .login-logo-placeholder {
     width: 180px;
     height: 60px;
@@ -102,7 +95,6 @@
     color: var(--color-gris);
 }
 
-/* ─── Password toggle ─── */
 .input-password-grupo {
     position: relative;
 }
@@ -128,7 +120,6 @@
     color: var(--color-texto);
 }
 
-/* ─── Responsive ─── */
 @media (max-width: 480px) {
     .login-tarjeta {
         padding: 2rem 1.5rem;
