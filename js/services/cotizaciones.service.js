@@ -1,19 +1,8 @@
-/**
- * ============================================================
- * SERVICIO: COTIZACIONES
- * ============================================================
- * CRUD de cotizaciones asociadas a requisiciones + manejo
- * de archivos PDF de proveedores en Supabase Storage.
- * ============================================================
- */
 
 import { supabase } from '../config/supabase.js';
 
 const BUCKET = 'cotizaciones-archivos';
 
-/**
- * Obtener todas las cotizaciones de una requisición
- */
 export async function obtenerCotizaciones(requisicionId) {
     try {
         const { data, error } = await supabase
@@ -33,9 +22,6 @@ export async function obtenerCotizaciones(requisicionId) {
     }
 }
 
-/**
- * Crear una nueva cotización
- */
 export async function crearCotizacion(datos) {
     try {
         const { data, error } = await supabase
@@ -54,9 +40,6 @@ export async function crearCotizacion(datos) {
     }
 }
 
-/**
- * Actualizar una cotización
- */
 export async function actualizarCotizacion(id, cambios) {
     try {
         const { data, error } = await supabase
@@ -73,13 +56,10 @@ export async function actualizarCotizacion(id, cambios) {
     }
 }
 
-/**
- * Eliminar una cotización (y opcionalmente su archivo)
- */
+
 export async function eliminarCotizacion(id, archivoPath = null) {
     try {
         if (archivoPath) {
-            // Best effort: borrar el archivo del storage
             await supabase.storage.from(BUCKET).remove([archivoPath]).catch(() => {});
         }
         const { error } = await supabase
@@ -94,10 +74,6 @@ export async function eliminarCotizacion(id, archivoPath = null) {
     }
 }
 
-/**
- * Marcar una cotización como seleccionada (ganadora)
- * El trigger SQL se encarga de desmarcar las otras
- */
 export async function marcarSeleccionada(id, requisicionId) {
     try {
         const { error } = await supabase
@@ -113,9 +89,6 @@ export async function marcarSeleccionada(id, requisicionId) {
     }
 }
 
-/**
- * Subir archivo de cotización al bucket
- */
 export async function subirArchivoCotizacion(file, requisicionId) {
     try {
         if (!file) return { path: null, error: 'No se proporcionó archivo' };
@@ -140,9 +113,6 @@ export async function subirArchivoCotizacion(file, requisicionId) {
     }
 }
 
-/**
- * Generar URL firmada para visualizar un archivo privado
- */
 export async function obtenerUrlFirmadaCotizacion(path, segundos = 3600) {
     try {
         if (!path) return null;
@@ -156,10 +126,7 @@ export async function obtenerUrlFirmadaCotizacion(path, segundos = 3600) {
     }
 }
 
-/**
- * Contar cotizaciones por requisición (para mostrar en tabla principal)
- * Retorna un mapa { requisicion_id: cantidad }
- */
+
 export async function contarCotizacionesPorRequisicion(idsRequisiciones) {
     try {
         if (!idsRequisiciones || idsRequisiciones.length === 0) return {};
