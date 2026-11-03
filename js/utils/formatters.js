@@ -1,17 +1,4 @@
-/**
- * ============================================================
- * UTILIDADES: FORMATTERS
- * ============================================================
- * Funciones para formatear moneda colombiana, fechas, etc.
- * ============================================================
- */
 
-/**
- * Formatea un número como pesos colombianos
- * Ejemplo: 1000000 → "$1.000.000"
- * @param {number|string} valor
- * @returns {string}
- */
 export function formatearMoneda(valor) {
     if (!valor && valor !== 0) return '';
     const numero = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.-]/g, '')) : valor;
@@ -24,16 +11,10 @@ export function formatearMoneda(valor) {
     }).format(numero);
 }
 
-/**
- * Formatea una fecha para mostrar en la interfaz
- * Ejemplo: "2026-05-12T01:22:14" → "12/05/2026"
- * @param {string|Date} fecha
- * @returns {string}
- */
+
 export function formatearFecha(fecha) {
     if (!fecha) return '-';
-    // Columnas tipo `date` llegan como "YYYY-MM-DD".
-    // Se formatea sin new Date() para evitar el corrimiento a UTC.
+
     if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
         const [a, m, d] = fecha.split('-');
         return `${d}/${m}/${a}`;
@@ -46,15 +27,9 @@ export function formatearFecha(fecha) {
     });
 }
 
-/**
- * Formatea fecha y hora
- * Ejemplo: "2026-05-12T01:22:14" → "12/05/2026 01:22"
- * @param {string|Date} fecha
- * @returns {string}
- */
+
 export function formatearFechaHora(fecha) {
     if (!fecha) return '-';
-    // Si llega solo fecha (sin hora), delega para no inventar una hora.
     if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
         return formatearFecha(fecha);
     }
@@ -68,11 +43,7 @@ export function formatearFechaHora(fecha) {
     });
 }
 
-/**
- * Aplica formato monetario en tiempo real a un input
- * Se usa con addEventListener('input', ...)
- * @param {HTMLInputElement} input
- */
+
 export function aplicarFormatoMonedaInput(input) {
     input.addEventListener('input', (e) => {
         let valor = e.target.value.replace(/[^0-9]/g, '');
@@ -85,22 +56,14 @@ export function aplicarFormatoMonedaInput(input) {
     });
 }
 
-/**
- * Extrae el valor numérico de un input con formato monetario
- * Ejemplo: "1.000.000" → 1000000
- * @param {string} valorFormateado
- * @returns {number}
- */
+
 export function extraerValorNumerico(valorFormateado) {
     if (!valorFormateado) return 0;
     const limpio = valorFormateado.replace(/[^0-9]/g, '');
     return parseInt(limpio, 10) || 0;
 }
 
-/**
- * Obtiene la fecha actual en formato ISO (solo fecha)
- * @returns {string} "2026-05-12"
- */
+
 export function fechaActualISO() {
     return new Date().toISOString().split('T')[0];
 }
