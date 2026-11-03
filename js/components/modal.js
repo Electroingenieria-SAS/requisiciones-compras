@@ -1,34 +1,12 @@
-/**
- * ============================================================
- * COMPONENTE: MODAL
- * ============================================================
- * Modal reutilizable para detalle, edición, eliminación, etc.
- * 
- * Uso:
- *   import { Modal } from '../components/modal.js';
- *   const modal = Modal.crear({ titulo: 'Detalle', contenido: html, botones: [...] });
- *   Modal.cerrar();
- * ============================================================
- */
 
-/**
- * Crear y mostrar un modal
- * @param {Object} opciones
- * @param {string} opciones.titulo - Título del modal
- * @param {string} opciones.contenido - HTML del body
- * @param {Array} opciones.botones - [{texto, clase, onClick}]
- * @param {string} opciones.ancho - Ancho máximo (default: '600px')
- * @returns {HTMLElement} Elemento del modal
- */
 function crear({ titulo, contenido, botones = [], ancho = '600px' }) {
-    // Cerrar modal anterior si existe
+ 
     cerrar();
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'modal-activo';
 
-    // Cerrar al hacer clic fuera
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) cerrar();
     });
@@ -54,11 +32,9 @@ function crear({ titulo, contenido, botones = [], ancho = '600px' }) {
     `;
 
     document.body.appendChild(overlay);
-
-    // Evento cerrar
     document.getElementById('modal-cerrar-btn').addEventListener('click', cerrar);
 
-    // Eventos botones
+  
     botones.forEach((b, i) => {
         const btn = overlay.querySelector(`[data-btn-index="${i}"]`);
         if (btn && b.onClick) {
@@ -66,7 +42,7 @@ function crear({ titulo, contenido, botones = [], ancho = '600px' }) {
         }
     });
 
-    // Cerrar con Escape
+   
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
             cerrar();
@@ -78,9 +54,7 @@ function crear({ titulo, contenido, botones = [], ancho = '600px' }) {
     return overlay;
 }
 
-/**
- * Cerrar el modal activo
- */
+
 function cerrar() {
     const modal = document.getElementById('modal-activo');
     if (modal) modal.remove();
