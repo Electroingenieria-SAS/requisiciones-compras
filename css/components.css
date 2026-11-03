@@ -1,16 +1,4 @@
-/**
- * ============================================================
- * COMPONENTES REUTILIZABLES (VERSIÓN CON ANIMACIONES)
- * Electroingeniería S.A.S.
- * ============================================================
- * Mejoras:
- *  - Loader corporativo (3 puntos azul/amarillo en lugar de spinner)
- *  - Toast con animación de entrada + barra de progreso visible
- *  - Modal con entrada elástica + blur de fondo
- * ============================================================
- */
 
-/* ─── TOAST NOTIFICATIONS ─── */
 .toast-contenedor {
     position: fixed;
     top: 1.5rem;
@@ -37,7 +25,6 @@
     overflow: hidden;
 }
 
-/* Barra de progreso inferior del toast */
 .toast::after {
     content: '';
     position: absolute;
@@ -127,8 +114,6 @@
 }
 
 
-/* ─── LOADER CORPORATIVO ─── */
-/* 3 puntos saltando en azul, amarillo, azul (colores corporativos) */
 .loader-overlay {
     position: fixed;
     top: 0;
@@ -146,7 +131,6 @@
     animation: fadeIn 0.25s ease;
 }
 
-/* El spinner es un círculo central + 2 pseudo-elementos a los lados */
 .loader-spinner {
     position: relative;
     width: 18px;
@@ -206,7 +190,6 @@
     50%      { opacity: 1; }
 }
 
-/* Loader inline (dentro de botones) */
 .btn-cargando {
     position: relative;
     pointer-events: none;
@@ -228,8 +211,6 @@
     to { transform: rotate(360deg); }
 }
 
-
-/* ─── MODAL ─── */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -325,7 +306,6 @@
 }
 
 
-/* ─── RESPONSIVE ─── */
 @media (max-width: 640px) {
     .toast-contenedor {
         top: 1rem;
@@ -341,7 +321,6 @@
     .loader-spinner::after  { left: 24px; }
 }
 
-/* ─── Respeto a preferencia "reducir movimiento" ─── */
 @media (prefers-reduced-motion: reduce) {
     .toast, .modal-overlay, .modal-contenido, .loader-overlay,
     .loader-spinner, .loader-spinner::before, .loader-spinner::after,
