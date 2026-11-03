@@ -1,20 +1,4 @@
-/**
- * ============================================================
- * ESTILOS - REQUISICIONES (VERSIÓN CON ANIMACIONES)
- * Electroingeniería S.A.S.
- * ============================================================
- * Mejoras visuales:
- *  - Header con línea brillante inferior
- *  - Nav links con íconos SVG inline (compras, tiquetes, dashboard, admin)
- *  - Indicador activo animado en nav
- *  - Cards y formularios con entrada suave
- *  - Badges de estado con animación (pulse, slide)
- *  - Filas de tabla con stagger
- *  - Botones de acción con micro-interacciones
- * ============================================================
- */
 
-/* ─── HEADER ─── */
 .app-header {
     background-color: var(--color-azul);
     color: white;
@@ -32,7 +16,6 @@
         linear-gradient(var(--color-azul), var(--color-azul));
 }
 
-/* Línea amarilla animada inferior del header */
 .app-header::after {
     content: '';
     position: absolute;
@@ -120,17 +103,6 @@
     transform: translateY(-1px);
 }
 
-/* ─── NAVEGACIÓN CON EMOJIS - CENTRADA ─── */
-/*
- * Truco para centrar: Grid de 3 columnas (1fr | auto | 1fr).
- * Esto centra .nav-links PERFECTAMENTE sin importar si existe o no .nav-acciones.
- * - dashboard.html → no tiene .nav-acciones → columna 3 vacía → links centrados.
- * - requisiciones / tiquetes / admin → tienen .nav-acciones → se alinean a la derecha,
- *   y los links siguen centrados perfectamente.
- *
- * Íconos: emojis Unicode nativos (📊 📋 ✈️ ⚙️🔒). Cero archivos externos,
- * cero base64. Cada SO renderiza con su estilo nativo.
- */
 .nav-bar {
     background-color: var(--color-blanco);
     border-bottom: 1px solid var(--color-borde);
@@ -163,13 +135,11 @@
     gap: 0.5rem;
 }
 
-/* Emoji antes del texto. El font-family asegura que Windows/Linux también
-   muestren color en lugar de glifo monocromático. */
 .nav-link::before {
     font-size: 1.15rem;
     line-height: 1;
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
-    /* Asegura que el emoji no se herede el color del texto */
+
     -webkit-text-fill-color: initial;
     text-shadow: none;
     transition: transform 0.25s ease;
@@ -187,7 +157,6 @@
     transform: translateY(-1px);
 }
 
-/* Micro-zoom del emoji al hacer hover (efecto vivo, no estático) */
 .nav-link:hover::before {
     transform: scale(1.15);
 }
@@ -206,7 +175,6 @@
     gap: 0.5rem;
 }
 
-/* ─── CONTENIDO PRINCIPAL ─── */
 .contenido-principal {
     max-width: 1400px;
     margin: 0 auto;
@@ -216,7 +184,6 @@
     z-index: 1;
 }
 
-/* ─── BARRA DE FILTROS ─── */
 .filtros-barra {
     background: var(--color-blanco);
     border-radius: var(--radio-lg);
@@ -268,7 +235,6 @@
 .filtro-busqueda { flex: 1; min-width: 200px; }
 .filtro-busqueda input { width: 100%; }
 
-/* ─── TABLA DE REQUISICIONES ─── */
 .tabla-contenedor {
     background: var(--color-blanco);
     border-radius: var(--radio-lg);
@@ -320,13 +286,11 @@
     transition: all 0.25s ease;
 }
 
-/* ─── HOVER MEJORADO EN FILAS ─── */
 .tabla-req tbody tr {
     transition: all 0.2s ease;
     animation: fadeInUp 0.4s ease backwards;
 }
 
-/* Stagger - cada fila aparece 30ms después */
 .tabla-req tbody tr:nth-child(1)  { animation-delay: 0.05s; }
 .tabla-req tbody tr:nth-child(2)  { animation-delay: 0.08s; }
 .tabla-req tbody tr:nth-child(3)  { animation-delay: 0.11s; }
@@ -360,7 +324,6 @@
 .tabla-req .col-objeto { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabla-req .col-acciones { white-space: nowrap; }
 
-/* ─── BOTONES DE ACCIÓN ─── */
 .acciones-grupo { display: flex; gap: 0.25rem; justify-content: center; }
 .btn-accion {
     padding: 0.35rem 0.6rem;
@@ -391,7 +354,6 @@
 .btn-accion-eliminar { color: var(--color-error); border-color: var(--color-error); }
 .btn-accion-eliminar:hover { background-color: var(--color-eliminado-bg); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.18); }
 
-/* ─── BADGES ANIMADOS ─── */
 .badge-estado {
     display: inline-flex;
     align-items: center;
@@ -404,7 +366,6 @@
     position: relative;
 }
 
-/* Punto indicador antes del texto */
 .badge-estado::before {
     content: '';
     width: 6px;
@@ -418,7 +379,6 @@
     background-color: var(--color-pendiente-bg);
     color: var(--color-pendiente);
 }
-/* PENDIENTE - punto que pulsa amarillo */
 .badge-pendiente::before {
     animation: puntoPulse 1.8s ease-in-out infinite;
 }
@@ -440,7 +400,6 @@
     position: relative;
     overflow: hidden;
 }
-/* EN PROCESO - barra de progreso interna que se mueve */
 .badge-en-proceso::after {
     content: '';
     position: absolute;
@@ -479,7 +438,6 @@
     background-color: var(--color-cumplido-bg);
     color: var(--color-cumplido);
 }
-/* CUMPLIDO - check animado */
 .badge-cumplido::before {
     content: '✓';
     background: none;
@@ -536,7 +494,6 @@
 }
 .badge-usuario::before { display: none; }
 
-/* ─── PAGINACIÓN ─── */
 .paginacion {
     display: flex;
     justify-content: center;
@@ -569,7 +526,6 @@
 .paginacion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .paginacion-info { font-size: var(--texto-sm); color: var(--color-texto-secundario); }
 
-/* ─── FORMULARIO DENTRO DE MODAL ─── */
 .form-seccion { margin-bottom: 1.5rem; }
 .form-seccion:last-child { margin-bottom: 0; }
 .form-seccion-titulo {
@@ -579,7 +535,6 @@
     position: relative;
 }
 
-/* Línea decorativa que se anima al hover */
 .form-seccion-titulo::after {
     content: '';
     position: absolute;
@@ -609,7 +564,6 @@
     text-transform: uppercase;
 }
 
-/* Ejecución compra radio */
 .ejecuta-opciones { display: flex; gap: 1rem; margin-top: 0.5rem; }
 .ejecuta-opcion { flex: 1; position: relative; }
 .ejecuta-opcion input[type="radio"] { position: absolute; opacity: 0; }
@@ -631,7 +585,6 @@
 }
 .ejecuta-descripcion { font-size: var(--texto-xs); color: var(--color-texto-secundario); margin-top: 0.25rem; font-weight: 400; }
 
-/* Formulario header y footer */
 .form-requisicion {
     background: white;
     border-radius: var(--radio-lg);
@@ -651,7 +604,6 @@
     overflow: hidden;
 }
 
-/* Línea amarilla decorativa que se desliza */
 .form-header::after {
     content: '';
     position: absolute;
@@ -680,7 +632,6 @@
     background-color: var(--color-gris-light);
 }
 
-/* ─── DETALLE EN MODAL ─── */
 .detalle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .detalle-campo {
     padding: 0.75rem;
@@ -697,7 +648,6 @@
 .detalle-campo-full { grid-column: 1 / -1; }
 .detalle-separador { grid-column: 1 / -1; border-top: 1px solid var(--color-borde); margin: 0.5rem 0; }
 
-/* ─── ESTADO VACÍO ─── */
 .estado-vacio {
     text-align: center;
     padding: 3rem 2rem;
@@ -713,7 +663,6 @@
 .estado-vacio-titulo { font-size: var(--texto-lg); font-weight: 600; color: var(--color-texto); margin-bottom: 0.5rem; }
 .estado-vacio-mensaje { font-size: var(--texto-sm); margin-bottom: 1.5rem; }
 
-/* ─── MOTIVO ELIMINACIÓN ─── */
 .motivo-eliminacion {
     background-color: var(--color-eliminado-bg);
     color: var(--color-error);
@@ -723,7 +672,6 @@
     margin-top: 0.25rem;
 }
 
-/* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
     .header-centro, .header-info { display: none; }
     .app-header { padding: 0 1rem; }
