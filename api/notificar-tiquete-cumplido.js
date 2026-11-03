@@ -1,15 +1,5 @@
 import { verificarSesion } from './_lib/verificar-sesion.js';
 
-/**
- * ============================================================
- * VERCEL FUNCTION: NOTIFICACIÓN DE TIQUETE CUMPLIDO
- * ============================================================
- * Envía al solicitante un correo con el código de reserva,
- * enlaces para descargar el PDF del tiquete y la confirmación
- * del hotel (si aplica), más recordatorios y datos de contacto.
- * ============================================================
- */
-
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -27,7 +17,6 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Servicio de correo no configurado.' });
         }
 
-        // ── Cortar a quien no tenga sesión válida, antes de leer el body o usar service_role ──
         const { user, error: authError, status: authStatus } = await verificarSesion(req);
         if (!user) return res.status(authStatus).json({ error: authError });
 
@@ -58,7 +47,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Faltan datos obligatorios.' });
         }
 
-        // 1. Obtener email del solicitante
         const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user_id}`, {
             headers: {
                 'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -76,8 +64,6 @@ export default async function handler(req, res) {
         if (!emailSolicitante) {
             return res.status(400).json({ error: 'El solicitante no tiene correo registrado.' });
         }
-
-        // 2. Generar URLs firmadas (válidas 30 días) para los PDFs
         async function generarUrlFirmada(path) {
             if (!path) return null;
             try {
@@ -88,7 +74,7 @@ export default async function handler(req, res) {
                         'apikey': SUPABASE_SERVICE_ROLE_KEY,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ expiresIn: 30 * 24 * 60 * 60 }) // 30 días
+                    body: JSON.stringify({ expiresIn: 30 * 24 * 60 * 60 }) 
                 });
                 if (!r.ok) return null;
                 const data = await r.json();
@@ -102,14 +88,12 @@ export default async function handler(req, res) {
         const urlTiquete = await generarUrlFirmada(tiquete_pdf_path);
         const urlHotel = requiere_hotel ? await generarUrlFirmada(hotel_confirmacion_path) : null;
 
-        // 3. Formatear fechas a español
         const formatFecha = (f) => {
             if (!f) return '';
             const d = new Date(f + 'T00:00:00');
             return d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         };
 
-        // 4. Construir el correo HTML
         const htmlEmail = `
 <!DOCTYPE html>
 <html>
@@ -183,7 +167,7 @@ export default async function handler(req, res) {
 
             <!-- INFORMACIÓN DEL VIAJE -->
             <div class="viaje-card">
-                <div class="viaje-titulo">📍 Información del viaje</div>
+                <div class="viaje-titulo"> Información del viaje</div>
                 <div class="viaje-row"><span class="viaje-label">Pasajero</span><span class="viaje-value">${pasajero_nombre}</span></div>
                 <div class="viaje-row"><span class="viaje-label">Cédula</span><span class="viaje-value">${pasajero_cedula}</span></div>
                 <div class="viaje-row"><span class="viaje-label">Destino</span><span class="viaje-value">${destino}</span></div>
@@ -196,13 +180,13 @@ export default async function handler(req, res) {
 
             <!-- BOTONES DE DESCARGA -->
             <div class="botones-descarga">
-                ${urlTiquete ? `<a href="${urlTiquete}" class="btn">📄 Descargar tiquete aéreo</a>` : ''}
-                ${urlHotel ? `<a href="${urlHotel}" class="btn btn-secundario">🏨 Descargar confirmación de hotel</a>` : ''}
+                ${urlTiquete ? `<a href="${urlTiquete}" class="btn"> Descargar tiquete aéreo</a>` : ''}
+                ${urlHotel ? `<a href="${urlHotel}" class="btn btn-secundario"> Descargar confirmación de hotel</a>` : ''}
             </div>
 
             ${requiere_hotel ? `
             <div class="viaje-card">
-                <div class="viaje-titulo">🏨 Información del hotel</div>
+                <div class="viaje-titulo"> Información del hotel</div>
                 ${hotel_ciudad ? `<div class="viaje-row"><span class="viaje-label">Ciudad</span><span class="viaje-value">${hotel_ciudad}</span></div>` : ''}
                 ${hotel_fecha_checkin ? `<div class="viaje-row"><span class="viaje-label">Check-in</span><span class="viaje-value">${formatFecha(hotel_fecha_checkin)}</span></div>` : ''}
                 ${hotel_fecha_checkout ? `<div class="viaje-row"><span class="viaje-label">Check-out</span><span class="viaje-value">${formatFecha(hotel_fecha_checkout)}</span></div>` : ''}
@@ -210,7 +194,7 @@ export default async function handler(req, res) {
 
             <!-- RECORDATORIOS -->
             <div class="recordatorios">
-                <div class="recordatorios-titulo">📋 Antes de tu viaje, recuerda:</div>
+                <div class="recordatorios-titulo"> Antes de tu viaje, recuerda:</div>
                 <ul>
                     <li>Llegar al aeropuerto al menos <strong>2 horas antes</strong> del vuelo nacional, o <strong>3 horas antes</strong> del internacional</li>
                     <li>Llevar tu <strong>cédula original</strong> (no copia ni foto)</li>
@@ -231,8 +215,8 @@ export default async function handler(req, res) {
             <div class="contacto">
                 <div class="contacto-titulo">¿Necesitas hacer un cambio?</div>
                 <p>Si requieres modificar fechas, cancelar o algún tipo de ajuste, contacta lo antes posible al área de Compras:</p>
-                <p>📧 <a href="mailto:facturas@ei.com.co">facturas@ei.com.co</a></p>
-                <p>📱 <a href="tel:+573173706881">317 370 6881</a></p>
+                <p> <a href="mailto:facturas@ei.com.co">facturas@ei.com.co</a></p>
+                <p> <a href="tel:+573173706881">317 370 6881</a></p>
             </div>
 
         </div>
@@ -246,7 +230,6 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
-        // 5. Enviar correo con Resend
         const emailResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -256,7 +239,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 from: 'Tiquetes EI <onboarding@resend.dev>',
                 to: emailSolicitante,
-                subject: `✈️ Tu viaje a ${destino} está confirmado — ${id_tiquete}`,
+                subject: ` Tu viaje a ${destino} está confirmado — ${id_tiquete}`,
                 html: htmlEmail
             })
         });
