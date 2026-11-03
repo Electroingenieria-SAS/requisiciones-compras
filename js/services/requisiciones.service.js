@@ -1,19 +1,8 @@
-/**
- * ============================================================
- * SERVICIO: REQUISICIONES
- * ============================================================
- * Maneja todas las operaciones CRUD de requisiciones
- * con Supabase (crear, leer, editar, eliminar).
- * ============================================================
- */
+
 
 import { supabase } from '../config/supabase.js';
 
-/**
- * Crear una nueva requisición
- * @param {Object} datos - Datos del formulario
- * @returns {Object} { requisicion, error }
- */
+
 export async function crearRequisicion(datos) {
     try {
         const { data, error } = await supabase
@@ -34,12 +23,7 @@ export async function crearRequisicion(datos) {
     }
 }
 
-/**
- * Insertar los ítems de una requisición
- * @param {number} requisicionId - ID de la requisición (encabezado)
- * @param {Array} items - Lista de ítems { orden, descripcion, cantidad, valor_estimado, color, dimensiones, marca_sugerida, proveedor_sugerido }
- * @returns {Object} { items, error }
- */
+
 export async function crearItems(requisicionId, items) {
     try {
         const filas = items.map(it => ({ ...it, requisicion_id: requisicionId }));
@@ -59,11 +43,7 @@ export async function crearItems(requisicionId, items) {
     }
 }
 
-/**
- * Obtener los ítems de una requisición
- * @param {number} requisicionId - ID de la requisición
- * @returns {Object} { items, error }
- */
+
 export async function obtenerItems(requisicionId) {
     try {
         const { data, error } = await supabase
@@ -82,10 +62,7 @@ export async function obtenerItems(requisicionId) {
     }
 }
 
-/**
- * Borrado FÍSICO de una requisición (solo para rollback interno si fallan los ítems)
- * @param {number} id - ID de la requisición
- */
+
 export async function eliminarRequisicionFisica(id) {
     try {
         await supabase.from('requisiciones').delete().eq('id', id);
@@ -94,14 +71,7 @@ export async function eliminarRequisicionFisica(id) {
     }
 }
 
-/**
- * Reemplazar TODOS los ítems de una requisición (usado al editar).
- * Inserta los nuevos y luego borra los viejos, para no dejar la
- * requisición sin ítems si algo falla a mitad de camino.
- * @param {number} requisicionId
- * @param {Array} items
- * @returns {Object} { error }
- */
+
 export async function reemplazarItems(requisicionId, items) {
     try {
         const { data: viejos, error: e1 } = await supabase
@@ -127,12 +97,7 @@ export async function reemplazarItems(requisicionId, items) {
     }
 }
 
-/**
- * Obtener requisiciones con filtros opcionales
- * @param {Object} filtros - { estado, proceso, desde, hasta, busqueda }
- * @param {Object} perfil - Perfil del usuario actual
- * @returns {Object} { requisiciones, error }
- */
+
 export async function obtenerRequisiciones(filtros = {}, perfil = null) {
     try {
         let query = supabase
@@ -140,17 +105,14 @@ export async function obtenerRequisiciones(filtros = {}, perfil = null) {
             .select('*')
             .order('created_at', { ascending: false });
 
-        // Filtro por estado
         if (filtros.estado && filtros.estado !== 'todos') {
             query = query.eq('estado', filtros.estado);
         }
 
-        // Filtro por proceso
         if (filtros.proceso && filtros.proceso !== 'todos') {
             query = query.eq('proceso', filtros.proceso);
         }
 
-        // Filtro por rango de fechas
         if (filtros.desde) {
             query = query.gte('fecha', filtros.desde);
         }
@@ -158,7 +120,6 @@ export async function obtenerRequisiciones(filtros = {}, perfil = null) {
             query = query.lte('fecha', filtros.hasta + 'T23:59:59');
         }
 
-        // Filtro por búsqueda (en objeto_compra, solicitante, id_requisicion)
         if (filtros.busqueda) {
             query = query.or(
                 `objeto_compra.ilike.%${filtros.busqueda}%,solicitante.ilike.%${filtros.busqueda}%,id_requisicion.ilike.%${filtros.busqueda}%`
@@ -179,11 +140,6 @@ export async function obtenerRequisiciones(filtros = {}, perfil = null) {
     }
 }
 
-/**
- * Obtener una requisición por su ID
- * @param {number} id - ID numérico de la requisición
- * @returns {Object} { requisicion, error }
- */
 export async function obtenerRequisicionPorId(id) {
     try {
         const { data, error } = await supabase
@@ -202,12 +158,6 @@ export async function obtenerRequisicionPorId(id) {
     }
 }
 
-/**
- * Actualizar una requisición existente
- * @param {number} id - ID de la requisición
- * @param {Object} cambios - Campos a actualizar
- * @returns {Object} { requisicion, error }
- */
 export async function actualizarRequisicion(id, cambios) {
     try {
         const { data, error } = await supabase
@@ -228,13 +178,7 @@ export async function actualizarRequisicion(id, cambios) {
     }
 }
 
-/**
- * Eliminar requisición (soft delete)
- * @param {number} id - ID de la requisición
- * @param {string} motivo - Motivo de eliminación
- * @param {string} nombreUsuario - Quién elimina
- * @returns {Object} { exito, error }
- */
+
 export async function eliminarRequisicion(id, motivo, nombreUsuario) {
     try {
         const { error } = await supabase
@@ -258,10 +202,6 @@ export async function eliminarRequisicion(id, motivo, nombreUsuario) {
     }
 }
 
-/**
- * Registrar cambio en historial de auditoría
- * @param {Object} datos - { requisicion_id, id_requisicion, user_id, nombre_usuario, accion, campo_modificado, valor_anterior, valor_nuevo, detalle }
- */
 export async function registrarHistorial(datos) {
     try {
         await supabase
@@ -272,10 +212,7 @@ export async function registrarHistorial(datos) {
     }
 }
 
-/**
- * Obtener estadísticas para el dashboard
- * @returns {Object} Estadísticas
- */
+
 export async function obtenerEstadisticas() {
     try {
         const { data, error } = await supabase.rpc('obtener_estadisticas');
@@ -292,9 +229,7 @@ export async function obtenerEstadisticas() {
     }
 }
 
-/**
- * Traduce errores de Supabase/PostgreSQL al español
- */
+
 function traducirErrorReq(mensaje) {
     if (mensaje.includes('fecha de entrega')) return 'Debe ingresar la fecha de entrega para marcar como Cumplido.';
     if (mensaje.includes('número de factura')) return 'Debe ingresar el número de factura para marcar como Cumplido.';
