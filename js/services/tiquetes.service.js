@@ -1,18 +1,9 @@
-/**
- * ============================================================
- * SERVICIO: TIQUETES AÉREOS
- * ============================================================
- * Maneja CRUD de tiquetes aéreos y upload de documentos a Storage.
- * ============================================================
- */
 
 import { supabase } from '../config/supabase.js';
 
 const BUCKET = 'tiquetes-documentos';
 
-/**
- * Subir un archivo al bucket de Supabase Storage
- */
+
 export async function subirArchivo(file, carpeta, prefijo) {
     try {
         if (!file) return { url: null, path: null, error: 'No se proporcionó archivo' };
@@ -39,9 +30,7 @@ export async function subirArchivo(file, carpeta, prefijo) {
     }
 }
 
-/**
- * Obtener URL firmada temporal para visualizar un archivo privado
- */
+
 export async function obtenerUrlFirmada(path, segundos = 3600) {
     try {
         if (!path) return null;
@@ -55,9 +44,7 @@ export async function obtenerUrlFirmada(path, segundos = 3600) {
     }
 }
 
-/**
- * Crear un nuevo tiquete
- */
+
 export async function crearTiquete(datos) {
     try {
         const { data, error } = await supabase
@@ -75,9 +62,6 @@ export async function crearTiquete(datos) {
     }
 }
 
-/**
- * Obtener tiquetes (RLS filtra automáticamente según el rol)
- */
 export async function obtenerTiquetes(filtros = {}) {
     try {
         let query = supabase
@@ -105,9 +89,7 @@ export async function obtenerTiquetes(filtros = {}) {
     }
 }
 
-/**
- * Actualizar un tiquete
- */
+
 export async function actualizarTiquete(id, cambios) {
     try {
         const { data, error } = await supabase
@@ -123,9 +105,7 @@ export async function actualizarTiquete(id, cambios) {
     }
 }
 
-/**
- * Registrar acción en el historial de tiquetes
- */
+
 export async function registrarHistorialTiquete(datos) {
     try {
         const { error } = await supabase.from('historial_tiquetes').insert([datos]);
@@ -135,9 +115,6 @@ export async function registrarHistorialTiquete(datos) {
     }
 }
 
-/**
- * Obtener historial de un tiquete específico
- */
 export async function obtenerHistorialTiquete(tiqueteId) {
     try {
         const { data, error } = await supabase
