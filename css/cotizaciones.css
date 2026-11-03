@@ -1,13 +1,3 @@
-/**
- * ============================================================
- * COTIZACIONES — ESTILOS Y ANIMACIONES
- * Electroingeniería S.A.S.
- * ============================================================
- */
-
-/* ════════════════════════════════════════════
-   1. KEYFRAMES PROPIOS DEL MÓDULO
-   ════════════════════════════════════════════ */
 
 @keyframes cot-card-entra {
     from { opacity: 0; transform: translateY(14px) scale(0.97); }
@@ -34,10 +24,6 @@
     50%  { transform: scale(1.25); color: var(--color-amarillo); }
     100% { transform: scale(1); }
 }
-
-/* ════════════════════════════════════════════
-   2. CABECERA DEL GESTOR
-   ════════════════════════════════════════════ */
 
 .cot-cabecera {
     display: grid;
@@ -106,9 +92,6 @@
     flex-shrink: 0;
 }
 
-/* ════════════════════════════════════════════
-   3. TOOLBAR Y CONTADOR
-   ════════════════════════════════════════════ */
 
 .cot-toolbar {
     display: flex;
@@ -146,9 +129,7 @@
     transform: translateY(-1px);
 }
 
-/* ════════════════════════════════════════════
-   4. LISTA Y CARDS DE COTIZACIONES
-   ════════════════════════════════════════════ */
+
 
 .cot-lista {
     display: flex;
@@ -205,7 +186,6 @@
     z-index: 2;
 }
 
-/* Margen superior en la card ganadora para que el badge no choque con el contenido */
 .cot-card-ganadora { padding-top: 1.5rem; }
 .cot-card-ganadora .cot-card-valor { padding-right: 5rem; }
 
@@ -366,9 +346,7 @@
     background: var(--color-eliminado-bg);
 }
 
-/* ════════════════════════════════════════════
-   5. ESTADO VACÍO
-   ════════════════════════════════════════════ */
+
 
 .cot-vacio {
     text-align: center;
@@ -397,9 +375,6 @@
     color: var(--color-texto-secundario);
 }
 
-/* ════════════════════════════════════════════
-   6. FORMULARIO DE NUEVA/EDITAR COTIZACIÓN
-   ════════════════════════════════════════════ */
 
 .cot-form {
     background: linear-gradient(135deg, #F8FAFF, #FFFFFF);
@@ -443,9 +418,7 @@
     margin-top: 0.75rem;
 }
 
-/* ════════════════════════════════════════════
-   7. PANEL PARA EL JEFE (solo lectura)
-   ════════════════════════════════════════════ */
+
 
 .cot-panel-jefe {
     margin-top: 1rem;
@@ -553,9 +526,7 @@
     line-height: 1.35;
 }
 
-/* ════════════════════════════════════════════
-   8. BADGE DE COTIZACIONES EN TABLA DE REQUISICIONES
-   ════════════════════════════════════════════ */
+
 
 .badge-cotizaciones {
     display: inline-flex;
@@ -570,8 +541,6 @@
     margin-left: 0.35rem;
     vertical-align: middle;
 }
-
-/* Botón de acción "Cotizaciones" en tabla */
 .btn-accion-cotizar {
     color: var(--color-amarillo-hover);
     border-color: var(--color-amarillo) !important;
@@ -582,9 +551,6 @@
     color: var(--color-azul) !important;
 }
 
-/* ════════════════════════════════════════════
-   9. RESPONSIVE
-   ════════════════════════════════════════════ */
 
 @media (max-width: 720px) {
     .cot-cabecera { grid-template-columns: 1fr; }
@@ -595,9 +561,6 @@
     .cot-card-valor { align-self: flex-end; }
 }
 
-/* ════════════════════════════════════════════
-   10. ACCESIBILIDAD
-   ════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
     .cot-card, .cot-card-mini, .cot-form, .cot-vacio-icono,
