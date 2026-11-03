@@ -1,18 +1,7 @@
-/**
- * ============================================================
- * SERVICIO: HISTORIAL DE CAMBIOS
- * ============================================================
- * Obtiene el registro de auditoría de cada requisición.
- * ============================================================
- */
 
 import { supabase } from '../config/supabase.js';
 
-/**
- * Obtener historial de una requisición específica
- * @param {number} requisicionId - ID numérico de la requisición
- * @returns {Object} { historial, error }
- */
+
 export async function obtenerHistorial(requisicionId) {
     try {
         const { data, error } = await supabase
@@ -33,11 +22,7 @@ export async function obtenerHistorial(requisicionId) {
     }
 }
 
-/**
- * Obtener historial completo (para admins)
- * @param {number} limite - Cantidad máxima de registros
- * @returns {Object} { historial, error }
- */
+
 export async function obtenerHistorialGlobal(limite = 100) {
     try {
         const { data, error } = await supabase
