@@ -1,16 +1,4 @@
-/**
- * ============================================================
- * ANIMACIONES Y BANNERS ILUSTRADOS
- * Electroingeniería S.A.S. — Sistema visual "vivo"
- * ============================================================
- * Capa 100% visual y aditiva: no modifica lógica de negocio.
- * Colores derivados de variables.css (azul #00369C / amarillo #F6D000).
- * ============================================================
- */
 
-/* ════════════════════════════════════════════
-   1. KEYFRAMES GLOBALES
-   ════════════════════════════════════════════ */
 
 @keyframes ei-flotar {
     0%, 100% { transform: translateY(0); }
@@ -101,9 +89,7 @@
     100% { opacity: 0; transform: translateY(-90px) scale(1.1); }
 }
 
-/* ════════════════════════════════════════════
-   2. BANNER ILUSTRADO (todas las páginas internas)
-   ════════════════════════════════════════════ */
+
 
 .hero-banner {
     position: relative;
@@ -122,7 +108,7 @@
     animation: ei-entrada-zoom 0.55s ease both;
 }
 
-/* Franja diagonal amarilla decorativa */
+
 .hero-banner::before {
     content: '';
     position: absolute;
@@ -135,7 +121,7 @@
     pointer-events: none;
 }
 
-/* Resplandor circular */
+
 .hero-banner::after {
     content: '';
     position: absolute;
@@ -191,7 +177,6 @@
 
 .hero-escena svg { width: 100%; height: 100%; overflow: visible; }
 
-/* Partículas amarillas ascendentes */
 .hero-particula {
     position: absolute;
     bottom: 8px;
@@ -208,7 +193,6 @@
 .hero-particula:nth-child(3) { left: 55%; animation-delay: 2.6s; }
 .hero-particula:nth-child(4) { left: 78%; animation-delay: 0.8s; width: 4px; height: 4px; }
 
-/* ─── Elementos animados dentro de los SVG ─── */
 .svg-avion        { animation: ei-avion-cruza 9s ease-in-out infinite; }
 .svg-avion-flota  { animation: ei-flotar 3.5s ease-in-out infinite; transform-origin: center; }
 .svg-nube-1       { animation: ei-nube-deriva 7s ease-in-out infinite alternate; opacity: 0.85; }
@@ -230,10 +214,6 @@
 .svg-caja-1       { animation: ei-caja-salta 2.8s ease-in-out infinite; }
 .svg-caja-2       { animation: ei-caja-salta 2.8s ease-in-out 0.5s infinite; }
 .svg-pin-pulso    { animation: ei-pulso-brillo 2.5s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-
-/* ════════════════════════════════════════════
-   3. ENTRADAS ESCALONADAS (dashboard y tablas)
-   ════════════════════════════════════════════ */
 
 .info-usuario-card,
 .notif-banner,
@@ -262,18 +242,13 @@
 .charts-grid .chart-panel:nth-child(3) { animation-delay: 0.35s; }
 .charts-grid .chart-panel:nth-child(4) { animation-delay: 0.45s; }
 
-/* Hover más vivo en tarjetas clickeables */
 .dash-card.clickeable:hover {
     box-shadow: 0 14px 32px rgba(0, 54, 156, 0.18);
     transform: translateY(-4px) scale(1.01);
 }
 
-/* Contador animándose */
 .dash-card-valor.contando { color: inherit; }
 
-/* ════════════════════════════════════════════
-   4. BOTONES CON DESTELLO
-   ════════════════════════════════════════════ */
 
 .btn-primario,
 .login-btn {
@@ -299,9 +274,6 @@
     animation: ei-destello 0.9s ease;
 }
 
-/* ════════════════════════════════════════════
-   5. ESCENA ANIMADA DEL LOGIN
-   ════════════════════════════════════════════ */
 
 .login-escena {
     position: fixed;
@@ -314,7 +286,6 @@
 .login-pagina { position: relative; }
 .login-pagina > .login-tarjeta { position: relative; z-index: 2; }
 
-/* Tarjeta con entrada y borde superior amarillo */
 .login-tarjeta {
     animation: ei-entrada-zoom 0.6s ease both;
     border-top: 4px solid var(--color-amarillo);
@@ -325,7 +296,6 @@
 .login-subtitulo { animation: ei-entrada-arriba 0.7s ease 0.32s both; }
 .login-formulario { animation: ei-entrada-arriba 0.7s ease 0.4s both; }
 
-/* Avión que cruza toda la pantalla del login */
 .login-avion {
     position: absolute;
     top: 16%;
@@ -340,13 +310,10 @@
     100% { transform: translateX(calc(100vw + 360px)) translateY(-60px); }
 }
 
-/* Estela del avión */
 .login-avion svg .estela {
     stroke-dasharray: 5 8;
     animation: ei-ruta-punteada 1.2s linear infinite;
 }
-
-/* Elementos flotantes alrededor de la tarjeta */
 .login-flotante {
     position: absolute;
     opacity: 0.85;
@@ -370,7 +337,6 @@
     animation: ei-flotar 4.5s ease-in-out 1.2s infinite;
 }
 
-/* Nubes del login */
 .login-nube {
     position: absolute;
     border-radius: 50px;
@@ -394,7 +360,6 @@
 .login-nube.n3::before { width: 40px; height: 40px; top: -18px; left: 16px; }
 .login-nube.n3::after  { width: 30px; height: 30px; top: -10px; left: 50px; }
 
-/* Puntos de luz amarillos */
 .login-punto {
     position: absolute;
     width: 8px;
@@ -409,9 +374,7 @@
 .login-punto.p3 { top: 78%; left: 30%; animation-delay: 2.2s; width: 5px; height: 5px; }
 .login-punto.p4 { top: 14%; right: 24%; animation-delay: 0.6s; width: 6px; height: 6px; }
 
-/* ════════════════════════════════════════════
-   6. RESPONSIVE
-   ════════════════════════════════════════════ */
+
 
 @media (max-width: 900px) {
     .hero-banner { flex-direction: column; align-items: flex-start; padding: 1.25rem 1.5rem; }
@@ -425,7 +388,6 @@
     .login-flotante.tiquete { width: 84px; right: 6%; bottom: 8%; }
 }
 
-/* Banner amarillo de "Nuevas requisiciones para cotizar" — efecto sutil de atención */
 @keyframes notif-pulsa-amarillo {
     0%, 100% { box-shadow: 0 6px 18px rgba(246, 208, 0, 0.20); }
     50%      { box-shadow: 0 8px 24px rgba(246, 208, 0, 0.40); }
@@ -442,11 +404,6 @@
     .notif-banner-nueva { animation: none !important; }
 }
 
-/* ════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════
-   7. ACCESIBILIDAD — Reducir movimiento
-   ════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
