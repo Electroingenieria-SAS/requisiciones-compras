@@ -1,18 +1,7 @@
 import { verificarSesion } from './_lib/verificar-sesion.js';
 
-/**
- * ============================================================
- * VERCEL FUNCTION: NOTIFICACIÓN DE APROBACIÓN AL JEFE
- * ============================================================
- * Envía un correo al jefe directo cuando se crea una requisición
- * que requiere su aprobación.
- *
- * Usa Resend (resend.com) como servicio de email.
- * ============================================================
- */
-
 export default async function handler(req, res) {
-    // CORS
+  
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -29,7 +18,6 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Servicio de correo no configurado.' });
         }
 
-        // ── Cortar a quien no tenga sesión válida, antes de leer el body o usar service_role ──
         const { user, error: authError, status: authStatus } = await verificarSesion(req);
         if (!user) return res.status(authStatus).json({ error: authError });
 
@@ -53,7 +41,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Faltan datos obligatorios (id_requisicion o jefe_id).' });
         }
 
-        // Obtener email del jefe desde auth.users usando service_role_key
         const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${jefe_id}`, {
             headers: {
                 'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -72,7 +59,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'El jefe no tiene correo registrado.' });
         }
 
-        // Construir email HTML profesional
         const htmlEmail = `
 <!DOCTYPE html>
 <html>
@@ -102,7 +88,7 @@ export default async function handler(req, res) {
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚠️ Aprobación de Requisición Pendiente</h1>
+            <h1> Aprobación de Requisición Pendiente</h1>
             <p>Electroingeniería S.A.S.</p>
         </div>
         <div class="body">
@@ -180,7 +166,6 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
-        // Enviar correo con Resend
         const emailResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -190,7 +175,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 from: 'Requisiciones EI <onboarding@resend.dev>',
                 to: jefeEmail,
-                subject: `🔔 Aprobación pendiente: ${id_requisicion} — ${objeto_compra.substring(0, 50)}`,
+                subject: ` Aprobación pendiente: ${id_requisicion} — ${objeto_compra.substring(0, 50)}`,
                 html: htmlEmail
             })
         });
