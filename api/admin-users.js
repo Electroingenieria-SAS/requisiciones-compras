@@ -1,30 +1,19 @@
-/**
- * ============================================================
- * VERCEL FUNCTION: ADMINISTRACIÓN DE USUARIOS
- * ============================================================
- * Función serverless que crea usuarios y resetea contraseñas
- * en Supabase Auth de forma segura.
- * ============================================================
- */
 
 export default async function handler(req, res) {
-    // Headers CORS
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // Preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
-    // Solo POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
     try {
-        // Variables de entorno
         const SUPABASE_URL = process.env.SUPABASE_URL;
         const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
         const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -33,13 +22,12 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Configuración del servidor incompleta. Contacte al administrador.' });
         }
 
-        // Verificar autenticación
+      
         const authToken = req.headers.authorization?.replace('Bearer ', '');
         if (!authToken) {
             return res.status(401).json({ error: 'No autorizado.' });
         }
 
-        // Verificar el usuario que hace la petición
         const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -53,7 +41,7 @@ export default async function handler(req, res) {
 
         const currentUser = await userResponse.json();
 
-        // Verificar que es administrador
+      
         const perfilResponse = await fetch(
             `${SUPABASE_URL}/rest/v1/perfiles?id=eq.${currentUser.id}&select=rol`,
             {
@@ -71,16 +59,16 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Solo super admin o admin de compras pueden gestionar usuarios.' });
         }
 
-        // Parsear datos
+       
         const { action, email, password, nombre_completo, proceso, rol, user_id, nuevo_password, jefe_id, nombre_jefe, director_id, nombre_director } = req.body;
 
-        // ─── CREAR USUARIO ───
+      
         if (action === 'crear') {
             if (!email || !password || !nombre_completo || !proceso) {
                 return res.status(400).json({ error: 'Faltan campos obligatorios.' });
             }
 
-            // Crear en Auth
+            
             const createResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
                 method: 'POST',
                 headers: {
@@ -105,7 +93,7 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: msg });
             }
 
-            // Crear perfil
+         
             const perfilData = {
                 id: createData.id,
                 nombre_completo: nombre_completo.trim(),
@@ -131,7 +119,7 @@ export default async function handler(req, res) {
             });
 
             if (!perfilInsert.ok) {
-                // Rollback: eliminar usuario de Auth
+            
                 await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${createData.id}`, {
                     method: 'DELETE',
                     headers: {
@@ -150,7 +138,7 @@ export default async function handler(req, res) {
             });
         }
 
-        // ─── RESETEAR CONTRASEÑA ───
+     
         if (action === 'resetear_password') {
             if (!user_id || !nuevo_password) {
                 return res.status(400).json({ error: 'Falta el ID de usuario o la nueva contraseña.' });
@@ -170,7 +158,7 @@ export default async function handler(req, res) {
                 return res.status(500).json({ error: 'Error al cambiar la contraseña.' });
             }
 
-            // Marcar que el usuario debe cambiar la contraseña en su próximo login
+         
             await fetch(`${SUPABASE_URL}/rest/v1/perfiles?id=eq.${user_id}`, {
                 method: 'PATCH',
                 headers: {
