@@ -1,20 +1,6 @@
-/**
- * ============================================================
- * ESTILOS GLOBALES  (VERSIÓN CON ANIMACIONES)
- * Electroingeniería S.A.S.
- * ============================================================
- * Mejoras:
- *  - Animación de entrada de página
- *  - Botones con efecto ripple + brillo deslizante
- *  - Inputs con focus glow corporativo
- *  - Keyframes globales reutilizables en todas las páginas
- * ============================================================
- */
 
-/* ─── Google Fonts ─── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ─── Reset base ─── */
 *,
 *::before,
 *::after {
@@ -40,13 +26,7 @@ body {
     overflow-x: hidden;
 }
 
-/* ============================================================
-   FONDO DECORATIVO PARA PÁGINAS INTERNAS
-   (dashboard, requisiciones, tiquetes, admin, cambiar-password)
-   El login tiene su propio fondo y NO usa este (ver login.css)
-   ============================================================ */
 
-/* Capa 1: PATRÓN GEOMÉTRICO DE "RED NEURONAL" (puntos + líneas tenues) */
 body::before {
     content: '';
     position: fixed;
@@ -68,7 +48,6 @@ body::before {
     to   { background-position: 320px 320px; }
 }
 
-/* Capa 2: AURORAS - gradientes orgánicos de color corporativo que se mueven lento */
 body::after {
     content: '';
     position: fixed;
@@ -105,8 +84,6 @@ body::after {
     }
 }
 
-/* IMPORTANTE: Si la página tiene .login-pagina (el login), ocultar el fondo del body
-   porque el login tiene su propio fondo más elaborado */
 body:has(.login-pagina)::before,
 body:has(.login-pagina)::after {
     display: none;
@@ -132,7 +109,6 @@ img {
     height: auto;
 }
 
-/* ─── Botones globales ─── */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -156,7 +132,6 @@ img {
     cursor: not-allowed;
 }
 
-/* Efecto ripple universal en todos los botones */
 .btn::after {
     content: '';
     position: absolute;
@@ -228,7 +203,6 @@ img {
     box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
-/* ─── Inputs globales ─── */
 .input-campo {
     width: 100%;
     padding: 0.625rem 0.875rem;
@@ -267,7 +241,6 @@ img {
     margin-bottom: var(--espacio-md);
 }
 
-/* ─── Utilidades ─── */
 .texto-centro {
     text-align: center;
 }
@@ -291,9 +264,6 @@ img {
     justify-content: center;
 }
 
-/* ============================================================ */
-/* ─── KEYFRAMES GLOBALES REUTILIZABLES ─── */
-/* ============================================================ */
 
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -340,7 +310,6 @@ img {
     50%      { transform: translateY(-3px); }
 }
 
-/* ─── Respeto a preferencia "reducir movimiento" ─── */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
