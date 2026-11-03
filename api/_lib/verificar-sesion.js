@@ -1,5 +1,4 @@
-// Valida el token de sesión del que llama contra Supabase Auth.
-// Devuelve { user } si es válido, o { error, status } si no.
+
 export async function verificarSesion(req) {
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
